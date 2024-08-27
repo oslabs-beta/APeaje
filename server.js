@@ -14,7 +14,7 @@ const supabase = createClient(
   process.env.SUPABASE_KEY
 );
 
-
+// test config for dalle only 
 const config = {
   high: { size: '1024x1024', cost: 20 },
   mid: { size: '512x512', cost: 10 },
@@ -65,9 +65,19 @@ app.post('/generate-image', async (req, res) => {
     res.json({ imageUrl: openaiData.data[0].url });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'An error occurred while generating the image' });
+    res.status(500).json({ error: 'error occurred while generating the image' });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+/*"CREATE TABLE queries (
+    id SERIAL PRIMARY KEY,
+    prompt TEXT NOT NULL,
+    model_version VARCHAR(50) NOT NULL,
+    cost INTEGER NOT NULL,
+    response TEXT NOT NULL,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);"
+*/
