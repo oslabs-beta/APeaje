@@ -78,7 +78,7 @@ app.post('/generate-image', async (req, res) => {
       .insert({
         prompt: prompt,
         model_version: `${selectedConfig.model}-${selectedConfig.quality}-${selectedConfig.size}`,
-        cost: Math.round(selectedConfig.price * 100), // convert to cents
+        cost: Math.round(selectedConfig.price * 100),
         response: JSON.stringify(openaiData),
       });
 
