@@ -32,9 +32,6 @@ const config = {
 };
 
 
-
-
-
 app.post('/generate-image', async (req, res) => {
   const { prompt } = req.body;
   
@@ -72,15 +69,18 @@ app.post('/generate-image', async (req, res) => {
 
     const openaiData = await openaiResponse.json();
     
+    console.log('Selected config:', selectedConfig);
+    console.log('Selected config:', selectedConfig);
+    console.log('Price:', selectedConfig.price);
     // sotre in db
     const { data, error } = await supabase
       .from('queries')
       .insert({
         prompt: prompt,
         model_version: `${selectedConfig.model}-${selectedConfig.quality}-${selectedConfig.size}`,
-        cost: Math.round(selectedConfig.price * 100),
-        response: JSON.stringify(openaiData),
-      });
+        cost: selectedConfig.price
+      })
+      .select();
 
     if (error) throw error;
 
@@ -98,8 +98,7 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     id SERIAL PRIMARY KEY,
     prompt TEXT NOT NULL,
     model_version VARCHAR(50) NOT NULL,
-    cost INTEGER NOT NULL,
-    response TEXT NOT NULL,
+    cost NUMERIC NOT NULL,
     timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );"
 */
