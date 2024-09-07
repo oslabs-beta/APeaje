@@ -31,18 +31,56 @@ const config = {
   F: { model: 'dall-e-2', quality: 'Standard', size: '256x256', price: 0.0016 }
 };
 
+app.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id',
+      [username, hashedPassword]
+    );
+    res.json({ userId: result.rows[0].id, message: 'User registered successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error registering user' });
+  }
+});
+
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    if (result.rows.length > 0) {
+      const user = result.rows[0];
+      if (await bcrypt.compare(password, user.password)) {
+        res.json({ userId: user.id, message: 'Login successful' });
+      } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
+    } else {
+      res.status(401).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error during login' });
+  }
+});
+
+
+
+
+
 
 app.post('/generate-image', async (req, res) => {
   const { prompt } = req.body;
   
   // test for time of day
   const hour = new Date().getHours();
-  let selectedConfig = config.F; // default to mid
+  let selectedConfig = config.A; // default to mid
   
   if (hour >= 22 || hour < 6) {
     selectedConfig = config.A; // low for night hours?
   } else if (hour >= 10 && hour < 18) {
-    selectedConfig = config.D; // high hours
+    selectedConfig = config.A; // high hours
   }
 
   try {
@@ -102,3 +140,39 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );"
 */
+
+/*
+-- Users table
+CREATE TABLE user (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+-- Queries table
+CREATE TABLE queries (
+    id SERIAL PRIMARY KEY,
+    api_name VARCHAR(50) NOT NULL,
+    prompt TEXT NOT NULL,
+    tier VARCHAR(20) NOT NULL,
+    cost NUMERIC(10, 4) NOT NULL,
+    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- APIs table
+CREATE TABLE apis (
+    name VARCHAR(50) PRIMARY KEY,
+    budget NUMERIC(10, 2) NOT NULL,
+    amount_spent NUMERIC(10, 2) NOT NULL DEFAULT 0
+);
+
+-- Updated Config table
+CREATE TABLE config (
+    id SERIAL PRIMARY KEY,
+    api_name VARCHAR(50) NOT NULL,
+    tier VARCHAR(20) NOT NULL,
+    tier_config JSONB NOT NULL,
+    thresholds JSONB,
+    UNIQUE (api_name, tier)
+);
+*/ 
