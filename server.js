@@ -2,9 +2,16 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 require('dotenv').config();
+const path = require('path');
 
 const app = express();
 app.use(express.json());
+//app.use(express.static(path.resolve(__dirname,'dashboard/public')));
+app.get('/', (req, res) => {
+  res.status(450).send('YOU DO NOT HAVE ACCESS')
+});
+
+app.use(express.static(path.resolve(__dirname,'dist')));
 app.use(cors());
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
@@ -21,7 +28,13 @@ const config = {
   low: { size: '256x256', cost: 5 },
 };
 
-app.post('/generate-image', async (req, res) => {
+
+app.get('/dashboard', (req, res) => {
+  res.status(200).sendFile(path.resolve(__dirname, './dist/index.html'))
+});
+
+
+app.post('/api/generate-image', async (req, res) => {
   const { prompt } = req.body;
   
   // test for time of day
@@ -68,7 +81,25 @@ app.post('/generate-image', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+/**
+ * 404 handler
+ */
+app.use('*', (req, res) => {
+  console.log('error finding url');
+  res.status(404).send('Not Found');
+});
+
+/**
+ * Global error handler
+ */
+app.use((err, req, res, next) => {
+  console.log(err);
+  console.log('hit global error');
+
+  res.status(500).send({ error: err });
+});
+
+const PORT = process.env.PORT || 5500;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 /*"CREATE TABLE queries (
