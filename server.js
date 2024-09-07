@@ -57,7 +57,6 @@ app.post('/generate-image', async (req, res) => {
         prompt: prompt,
         model_version: selectedConfig.size,
         cost: selectedConfig.cost,
-        response: JSON.stringify(openaiData),
       });
 
     if (error) throw error;
