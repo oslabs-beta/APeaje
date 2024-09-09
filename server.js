@@ -2,17 +2,31 @@ const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 require('dotenv').config();
-const path = require('path');
-
+const path = require('path')
 const app = express();
-app.use(express.json());
-//app.use(express.static(path.resolve(__dirname,'dashboard/public')));
-app.get('/', (req, res) => {
-  res.status(450).send('YOU DO NOT HAVE ACCESS')
-});
+const WebSocket = require('ws');
 
-app.use(express.static(path.resolve(__dirname,'dist')));
+app.use(express.json())
 app.use(cors());
+
+//WebSocket server
+
+// const socket = new WebSocket.WebSocketServer({ noServer: true});
+
+// socket.on('connection', (ws) => {
+// console.log('Client Connected');
+
+// // Send datat to the client every second
+// const intervalId = setInterval(() => {
+//   const data = {time: Date.now(), value: Math.random() * 100} ;
+//   socket.send(JSON.stringify(data));
+// }, 1000);
+
+// socket.on('close', ()=> {
+//   clearInterval(intervalId);
+// })
+
+// })
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 
@@ -28,13 +42,7 @@ const config = {
   low: { size: '256x256', cost: 5 },
 };
 
-
-app.get('/dashboard', (req, res) => {
-  res.status(200).sendFile(path.resolve(__dirname, './dist/index.html'))
-});
-
-
-app.post('/api/generate-image', async (req, res) => {
+app.post('/generate-image', async (req, res) => {
   const { prompt } = req.body;
   
   // test for time of day
@@ -70,6 +78,7 @@ app.post('/api/generate-image', async (req, res) => {
         prompt: prompt,
         model_version: selectedConfig.size,
         cost: selectedConfig.cost,
+        response: JSON.stringify(openaiData),
       });
 
     if (error) throw error;
@@ -81,23 +90,14 @@ app.post('/api/generate-image', async (req, res) => {
   }
 });
 
-/**
- * 404 handler
- */
-app.use('*', (req, res) => {
-  console.log('error finding url');
-  res.status(404).send('Not Found');
-});
 
-/**
- * Global error handler
- */
-app.use((err, req, res, next) => {
-  console.log(err);
-  console.log('hit global error');
+// api for database update to frontend 
 
-  res.status(500).send({ error: err });
-});
+app.get('/dashboard/chart', (req, res) => {
+  res.status(200).json({"test1": "here you go"})
+})
+
+
 
 const PORT = process.env.PORT || 5500;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
@@ -111,3 +111,11 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );"
 */
+
+// server.on('upgrade', (request, socket, head) => {
+//   socket.handleUpgrade(request, socket, head, (ws) => {
+//     socket.emit('connection', ws, request)
+//   })
+// })
+
+
