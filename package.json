@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+<<<<<<< HEAD
     "start": "nodemon server.js & webpack-dev-server",
     "dev": "nodemon server.js",
     "build": "webpack --mode production"
@@ -51,5 +52,16 @@
     "webpack": "^5.92.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4"
+=======
+    "start": "nodemon server.js",
+    "test": "jest",
+    "testmon": "jest --watchAll",
+    "dev": "nodemon server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "supertest": "^7.0.0"
+>>>>>>> 8dbe6a5 (pulling latest from dev)
   }
 }
