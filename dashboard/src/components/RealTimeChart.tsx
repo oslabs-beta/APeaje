@@ -49,9 +49,10 @@ const RealTimeChart = () => {
     useEffect(() => {
         if (data.length > 0) {
             const svg = d3.select(svgRef.current);
-            const width = 800;
-            const height = 400;
-            const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+            const width: number = 800;
+            const height: number = 400;
+            type marginType = { top: number, right: number, bottom: number, left: number}
+            const margin: marginType = { top: 20, right: 30, bottom: 30, left: 40 };
 
             // Define scales
             const xScale = d3.scaleTime()

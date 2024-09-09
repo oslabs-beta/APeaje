@@ -12,6 +12,7 @@ app.use(express.json());
 app.use(express.static(path.resolve(__dirname,'dist')));
 app.use(cors());
 
+<<<<<<< HEAD:server.js
 app.get('/', (req, res) => {
   res.status(200).send('mainpage')
 });
@@ -34,17 +35,26 @@ app.get('/dashboard', (req, res) => {
 
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
+=======
+const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
+>>>>>>> 4fe6537 (added types to App.tsx and server.ts):server.ts
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
 
-// test config for dalle only 
-const config = {
-  high: { size: '1024x1024', cost: 20 },
-  mid: { size: '512x512', cost: 10 },
-  low: { size: '256x256', cost: 5 },
+type configType = {
+  [name: string]: {model: string, quality: string, size: string, price: number}
+}
+
+const config: configType = {
+  A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.0120 },
+  B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.0080 },
+  C: { model: 'dall-e-3', quality: 'Standard', size: '1024x1792', price: 0.0080 },
+  D: { model: 'dall-e-3', quality: 'Standard', size: '1024x1024', price: 0.0040 },
+  E: { model: 'dall-e-2', quality: 'Standard', size: '512x512', price: 0.0018 },
+  F: { model: 'dall-e-2', quality: 'Standard', size: '256x256', price: 0.0016 }
 };
 
 
@@ -52,13 +62,13 @@ app.post('/api/generate-image', async (req, res) => {
   const { prompt } = req.body;
   
   // test for time of day
-  const hour = new Date().getHours();
-  let selectedConfig = config.mid; // default to mid
+  const hour: number = new Date().getHours();
+  let selectedConfig = config.A; // default to mid
   
   if (hour >= 22 || hour < 6) {
-    selectedConfig = config.low; // low for night hours?
+    selectedConfig = config.B; // low for night hours?
   } else if (hour >= 10 && hour < 18) {
-    selectedConfig = config.high; // high hours
+    selectedConfig = config.C; // high hours
   }
 
   try {
@@ -83,7 +93,7 @@ app.post('/api/generate-image', async (req, res) => {
       .insert({
         prompt: prompt,
         model_version: selectedConfig.size,
-        cost: selectedConfig.cost,
+        cost: selectedConfig.price,
       });
 
     if (error) throw error;
@@ -113,7 +123,7 @@ app.use((err, req, res, next) => {
   res.status(500).send({ error: err });
 });
 
-const PORT = process.env.PORT || 5500;
+const PORT: (string | 5500) = process.env.PORT || 5500;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 /*"CREATE TABLE queries (
