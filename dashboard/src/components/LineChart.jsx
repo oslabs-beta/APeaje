@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
-const RealTimeChart = () => {
+const LineChart = () => {
     const [data, setData] = useState([]);
     const svgRef = useRef(null);
 
@@ -130,4 +130,4 @@ const RealTimeChart = () => {
     )
 };
 
-export default RealTimeChart;
+export default LineChart;
