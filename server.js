@@ -3,16 +3,35 @@ const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 require('dotenv').config();
 const path = require('path');
+const { default: test } = require('node:test');
 
 const app = express();
 app.use(express.json());
 //app.use(express.static(path.resolve(__dirname,'dashboard/public')));
-app.get('/', (req, res) => {
-  res.status(450).send('YOU DO NOT HAVE ACCESS')
-});
 
 app.use(express.static(path.resolve(__dirname,'dist')));
 app.use(cors());
+
+app.get('/', (req, res) => {
+  res.status(200).send('mainpage')
+});
+
+const chartTest = [
+  { "time": "2024-01-01T00:00:00Z", "cost": 10, "requests": 100 },
+  { "time": "2024-01-02T00:00:00Z", "cost": 20, "requests": 150 },
+  { "time": "2024-01-03T00:00:00Z", "cost": 15, "requests": 120 },
+  { "time": "2024-01-04T00:00:00Z", "cost": 30, "requests": 180 }
+]
+
+
+app.get('/dashboard/chart', (req, res) => {
+  res.status(200).send(chartTest)
+} )
+app.get('/dashboard', (req, res) => {
+  res.status(200).sendFile(path.resolve(__dirname, './dashboard/public/dash.html'))
+});
+
+
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 
@@ -27,11 +46,6 @@ const config = {
   mid: { size: '512x512', cost: 10 },
   low: { size: '256x256', cost: 5 },
 };
-
-
-app.get('/dashboard', (req, res) => {
-  res.status(200).sendFile(path.resolve(__dirname, './dist/index.html'))
-});
 
 
 app.post('/api/generate-image', async (req, res) => {
@@ -84,7 +98,7 @@ app.post('/api/generate-image', async (req, res) => {
 /**
  * 404 handler
  */
-app.use('*', (req, res) => {
+app.get('*', (req, res) => {
   console.log('error finding url');
   res.status(404).send('Not Found');
 });
