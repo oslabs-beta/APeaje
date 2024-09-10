@@ -1,26 +1,15 @@
 const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
 require('dotenv').config();
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const db = require('./database/sqlite.js');
+
+const openaiApiKey = process.env.OPENAI_API_KEY;
 
 const app = express();
 app.use(express.json());
 app.use(cors());
-
-const openaiApiKey = process.env.OPENAI_API_KEY;
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
-
-/*
-const config = {
-  high: { size: '1024x1024', cost: 20 },
-  mid: { size: '512x512', cost: 10 },
-  low: { size: '256x256', cost: 5 },
-};
-*/
 
 const config = {
   A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.0120 },
@@ -31,29 +20,39 @@ const config = {
   F: { model: 'dall-e-2', quality: 'Standard', size: '256x256', price: 0.0016 }
 };
 
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+};
+
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id',
-      [username, hashedPassword]
-    );
-    res.json({ userId: result.rows[0].id, message: 'User registered successfully' });
+    const insertUser = db.prepare('INSERT INTO Users (username, password, role) VALUES (?, ?, ?)');
+    const result = insertUser.run(username, hashedPassword, role);
+    res.json({ userId: result.lastInsertRowid, message: 'User registered successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Error registering user' });
   }
 });
 
-
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-    if (result.rows.length > 0) {
-      const user = result.rows[0];
+    const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
+    const user = getUser.get(username);
+    if (user) {
       if (await bcrypt.compare(password, user.password)) {
-        res.json({ userId: user.id, message: 'Login successful' });
+        const token = jwt.sign({ userId: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET);
+        res.json({ token, userId: user.id, role: user.role, message: 'Login successful' });
       } else {
         res.status(401).json({ error: 'Invalid credentials' });
       }
@@ -65,35 +64,27 @@ app.post('/login', async (req, res) => {
   }
 });
 
-
-
-
-
-
-app.post('/generate-image', async (req, res) => {
-  const { prompt } = req.body;
+app.post('/generate-image', authenticateToken, async (req, res) => {
+  const { prompt, api_name } = req.body;
   
-  // test for time of day
-  const hour = new Date().getHours();
-  let selectedConfig = config.A; // default to mid
-  
-  if (hour >= 22 || hour < 6) {
-    selectedConfig = config.A; // low for night hours?
-  } else if (hour >= 10 && hour < 18) {
-    selectedConfig = config.A; // high hours
-  }
-
   try {
+    // get the tier information
+    const getTier = db.prepare('SELECT * FROM Tiers WHERE api_name = ? ORDER BY price DESC LIMIT 1');
+    const tier = getTier.get(api_name);
+
+    if (!tier) {
+      return res.status(400).json({ error: 'Invalid API or no tiers available' });
+    }
+
     const requestBody = {
-      model: selectedConfig.model,
+      model: config[tier.tier_name].model,
       prompt: prompt,
       n: 1,
-      size: selectedConfig.size,
+      size: config[tier.tier_name].size,
     };
 
-    //  quality only for DALL-E 3
-    if (selectedConfig.model === 'dall-e-3') {
-      requestBody.quality = selectedConfig.quality;
+    if (config[tier.tier_name].model === 'dall-e-3') {
+      requestBody.quality = config[tier.tier_name].quality;
     }
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
@@ -107,72 +98,52 @@ app.post('/generate-image', async (req, res) => {
 
     const openaiData = await openaiResponse.json();
     
-    console.log('Selected config:', selectedConfig);
-    console.log('Selected config:', selectedConfig);
-    console.log('Price:', selectedConfig.price);
-    // sotre in db
-    const { data, error } = await supabase
-      .from('queries')
-      .insert({
-        prompt: prompt,
-        model_version: `${selectedConfig.model}-${selectedConfig.quality}-${selectedConfig.size}`,
-        cost: selectedConfig.price
-      })
-      .select();
+    console.log('Selected tier:', tier);
+    console.log('Price:', tier.price);
 
-    if (error) throw error;
+    // store in db
+    const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id, dynamic_cost) VALUES (?, ?, ?, ?)');
+    insertQuery.run(api_name, prompt, tier.id, tier.price);
 
-    res.json({ imageUrl: openaiData.data[0].url });
+    // update budget
+    const updateBudget = db.prepare('UPDATE Budget SET spent = spent + ?, total_spent = total_spent + ? WHERE api_name = ?');
+    updateBudget.run(tier.price, tier.price, api_name);
+
+    res.json({ imageUrl: openaiData.data[0].url, cost: tier.price });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'error occurred while generating the image' });
+    res.status(500).json({ error: 'An error occurred while generating the image' });
+  }
+});
+
+// get all tiers
+app.get('/tiers', authenticateToken, (req, res) => {
+  try {
+    const getTiers = db.prepare('SELECT * FROM Tiers');
+    const tiers = getTiers.all();
+    res.json(tiers);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching tiers' });
+  }
+});
+
+// New endpoint to update or insert a tier
+app.post('/update-tier', authenticateToken, (req, res) => {
+  const { api_name, tier_name, price, thresholds } = req.body;
+  try {
+    const upsertTier = db.prepare(`
+      INSERT INTO Tiers (api_name, tier_name, price, thresholds)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(api_name, tier_name) DO UPDATE SET
+      price = excluded.price,
+      thresholds = excluded.thresholds
+    `);
+    const result = upsertTier.run(api_name, tier_name, price, JSON.stringify(thresholds));
+    res.json({ message: 'Tier updated successfully', id: result.lastInsertRowid });
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating tier' });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-/*"CREATE TABLE queries (
-    id SERIAL PRIMARY KEY,
-    prompt TEXT NOT NULL,
-    model_version VARCHAR(50) NOT NULL,
-    cost NUMERIC NOT NULL,
-    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);"
-*/
-
-/*
--- Users table
-CREATE TABLE user (
-    id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
-);
-
--- Queries table
-CREATE TABLE queries (
-    id SERIAL PRIMARY KEY,
-    api_name VARCHAR(50) NOT NULL,
-    prompt TEXT NOT NULL,
-    tier VARCHAR(20) NOT NULL,
-    cost NUMERIC(10, 4) NOT NULL,
-    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
--- APIs table
-CREATE TABLE apis (
-    name VARCHAR(50) PRIMARY KEY,
-    budget NUMERIC(10, 2) NOT NULL,
-    amount_spent NUMERIC(10, 2) NOT NULL DEFAULT 0
-);
-
--- Updated Config table
-CREATE TABLE config (
-    id SERIAL PRIMARY KEY,
-    api_name VARCHAR(50) NOT NULL,
-    tier VARCHAR(20) NOT NULL,
-    tier_config JSONB NOT NULL,
-    thresholds JSONB,
-    UNIQUE (api_name, tier)
-);
-*/ 

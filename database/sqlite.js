@@ -1,24 +1,52 @@
 const Database = require('better-sqlite3');
-const db = new Database('database/test.db', { verbose: console.log });
+const path = require('path');
+const db = new Database(path.join(__dirname, 'test.db'), { verbose: console.log });
 db.pragma('journal_mode = WAL');
 
-const create = db.prepare(`CREATE TABLE queries (
-    id SERIAL PRIMARY KEY,
-    prompt TEXT NOT NULL,
-    model_version VARCHAR(50) NOT NULL,
-    cost INTEGER NOT NULL,
-    response TEXT NOT NULL,
-    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-)`)
 
-create.run();
 
-const stmt = db.prepare(
-  "INSERT INTO queries (prompt, model_version, cost, response) VALUES (?, '2.5', 25, ?)"
-);
-const info = stmt.run('testing', 'test response');
-const stmt2 = db.prepare('SELECT * from queries');
-const info2 = stmt2.get();
+function createTables() {
+  const tables = [
+    `CREATE TABLE IF NOT EXISTS Users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS Budget (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      api_name TEXT UNIQUE NOT NULL,
+      budget REAL NOT NULL,
+      spent REAL NOT NULL DEFAULT 0,
+      total_spent REAL NOT NULL DEFAULT 0
+    )`,
+    `CREATE TABLE IF NOT EXISTS Tiers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      api_name TEXT NOT NULL,
+      tier_name TEXT NOT NULL,
+      price REAL NOT NULL,
+      thresholds TEXT,
+      UNIQUE(api_name, tier_name)
+    )`,
+    `CREATE TABLE IF NOT EXISTS Queries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      api_name TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      tier_id INTEGER,
+      dynamic_cost REAL NOT NULL,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (tier_id) REFERENCES Tiers(id)
+    )`
+  ];
 
-console.log(info.changes);
-console.log(info2);
+  for (const sql of tables) {
+    db.prepare(sql).run();
+  }
+  console.log('Tables created successfully');
+}
+
+createTables();
+
+module.exports = db;
+
+
