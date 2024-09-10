@@ -12,11 +12,15 @@ app.use(express.json());
 app.use(express.static(path.resolve(__dirname,'dist')));
 app.use(cors());
 
-<<<<<<< HEAD:server.js
 app.get('/', (req, res) => {
   res.status(200).send('mainpage')
 });
 
+type chartType = {
+  time: string,
+  cost: number,
+  requests: number
+}
 const chartTest = [
   { "time": "2024-01-01T00:00:00Z", "cost": 10, "requests": 100 },
   { "time": "2024-01-02T00:00:00Z", "cost": 20, "requests": 150 },
@@ -33,11 +37,7 @@ app.get('/dashboard', (req, res) => {
 });
 
 
-
-const openaiApiKey = process.env.OPENAI_API_KEY;
-=======
 const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
->>>>>>> 4fe6537 (added types to App.tsx and server.ts):server.ts
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
