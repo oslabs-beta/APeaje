@@ -12,12 +12,13 @@ const LineChart = () => {
                 const data1 = await response.json();
 
                 console.log('data1', data1)
+                
                 // Ensure that the data is in the expected format;
                 // For example, if the data needs transformation:
                 const data2 = data1.map(d => ({
                     time: new Date(d.time), // Adjust based on actual data structure
-                    cost: d.cost,
-                    requests: d.requests
+                    cost: Number(d.cost),
+                    requests: Number(d.requests)
                 }));  
                 console.log('Transformed data:', data1);
                 setData(data2)
@@ -50,8 +51,10 @@ const LineChart = () => {
         if (data.length > 0) {
             const svg = d3.select(svgRef.current);
             const width = 800;
-            const height = 400;
+            const height = 500;
             const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+
+            console.log('d3 max cost', d3.max(data, d => d.cost))
 
             // Define scales
             const xScale = d3.scaleTime()

@@ -36,7 +36,7 @@ app.get('/dashboard/chart', (req, res, next) => {
 },
   dashboardController.lineGraph,
   (req, res) => {
-    res.status(200).send(chartTest);
+    res.status(200).send(res.locals.data);
   }
 )
 
