@@ -5,6 +5,7 @@ function setupDatabase() {
   const db = new Database(path.join(__dirname, 'test.db'), { verbose: console.log });
   db.pragma('journal_mode = WAL');
 
+  // if u need clean slate 
   function dropTables() {
     const tables = ['Queries', 'Tiers', 'Budget', 'Users'];
     for (const table of tables) {
@@ -43,8 +44,9 @@ function setupDatabase() {
         prompt TEXT NOT NULL,
         tier_id INTEGER,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`  // Removed FOREIGN KEY constraint for diagnosis
+      )`
     ];
+
     for (const sql of tables) {
       db.prepare(sql).run();
     }
@@ -55,10 +57,10 @@ function setupDatabase() {
     const config = {
       A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.0120 },
       B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.0080 },
-      C: { model: 'dall-e-3', quality: 'standard', size: '1024x1792', price: 0.0080 },
-      D: { model: 'dall-e-3', quality: 'standard', size: '1024x1024', price: 0.0040 },
-      E: { model: 'dall-e-2', quality: 'standard', size: '512x512', price: 0.0018 },
-      F: { model: 'dall-e-2', quality: 'standard', size: '256x256', price: 0.0016 }
+      C: { model: 'dall-e-3', quality: 'Standard', size: '1024x1792', price: 0.0080 },
+      D: { model: 'dall-e-3', quality: 'Standard', size: '1024x1024', price: 0.0040 },
+      E: { model: 'dall-e-2', quality: 'Standard', size: '512x512', price: 0.0018 },
+      F: { model: 'dall-e-2', quality: 'Standard', size: '256x256', price: 0.0016 }
     };
 
     const insertTier = db.prepare(`
@@ -75,13 +77,28 @@ function setupDatabase() {
       }
     }
 
-    console.log('Tiers insertion attempt completed');
+    console.log('tiers insertion completed');
   }
 
-  // dropTables();  //  drop tables for a fresh start
+  function peekDatabase() {
+    const tables = ['Users', 'Tiers', 'Queries', 'Budget'];
+    const result = {};
+    
+    for (const table of tables) {
+      const rows = db.prepare(`SELECT * FROM ${table}`).all();
+        return rows;
+    }
+    
+    console.log('Current Database Contents:');
+    console.log(JSON.stringify(result, null, 2));
+  }
+
+  //  drop tables and start fresh
+  // dropTables();
+  
   createTables();
   insertTiers();
-
+  peekDatabase();  
   return db;
 }
 

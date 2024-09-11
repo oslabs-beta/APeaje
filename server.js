@@ -13,6 +13,7 @@ app.use(express.json());
 app.use(cors());
 const db = setupDatabase();
 
+/*
 const config = {
   A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.0120 },
   B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.0080 },
@@ -21,7 +22,7 @@ const config = {
   E: { model: 'dall-e-2', quality: 'Standard', size: '512x512', price: 0.0018 },
   F: { model: 'dall-e-2', quality: 'Standard', size: '256x256', price: 0.0016 }
 };
-
+*/
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -133,15 +134,18 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
     
     const openaiData = await openaiResponse.json();
     
-    console.log('OpenAI API Response:', JSON.stringify(openaiData, null, 2));
+    console.log('OpenAI API Response:', JSON.stringify(openaiData));
     
-    if (!openaiData.data || !openaiData.data[0] || !openaiData.data[0].url) {
+
+    // debug response
+    /*if (!openaiData.data || !openaiData.data[0] || !openaiData.data[0].url) {
       if (openaiData.error) {
         throw new Error(`OpenAI API Error: ${openaiData.error.message}`);
       } else {
         throw new Error('Invalid response from OpenAI API');
       }
     }
+    */
     
     // store in db 
     const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
@@ -160,16 +164,7 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
   }
 });
 
-// get all tiers
-app.get('/tiers', authenticateToken, (req, res) => {
-  try {
-    const getTiers = db.prepare('SELECT * FROM Tiers');
-    const tiers = getTiers.all();
-    res.json(tiers);
-  } catch (error) {
-    res.status(500).json({ error: 'Error fetching tiers' });
-  }
-});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
