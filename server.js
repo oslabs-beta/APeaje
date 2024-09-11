@@ -3,13 +3,15 @@ const cors = require('cors');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const db = require('./database/sqlite.js');
+const Database = require('better-sqlite3');
+const setupDatabase = require('./database/sqlite.js');
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 
 const app = express();
 app.use(express.json());
 app.use(cors());
+const db = setupDatabase();
 
 const config = {
   A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.0120 },
@@ -19,6 +21,7 @@ const config = {
   E: { model: 'dall-e-2', quality: 'Standard', size: '512x512', price: 0.0018 },
   F: { model: 'dall-e-2', quality: 'Standard', size: '256x256', price: 0.0016 }
 };
+
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -32,6 +35,20 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+
+function logDatabaseContents() {
+  const tables = ['Users', 'Budget', 'Tiers', 'Queries'];
+  for (const table of tables) {
+    const rows = db.prepare(`SELECT * FROM ${table}`).all();
+    console.log(`Contents of ${table}:`, rows);
+  }
+}
+
+logDatabaseContents();
+
+
+
+
 app.post('/register', async (req, res) => {
   const { username, password, role } = req.body;
   try {
@@ -43,6 +60,8 @@ app.post('/register', async (req, res) => {
     res.status(500).json({ error: 'Error registering user' });
   }
 });
+
+
 
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -64,29 +83,45 @@ app.post('/login', async (req, res) => {
   }
 });
 
+
 app.post('/generate-image', authenticateToken, async (req, res) => {
-  const { prompt, api_name } = req.body;
+  const { prompt } = req.body;
   
   try {
-    // get the tier information
-    const getTier = db.prepare('SELECT * FROM Tiers WHERE api_name = ? ORDER BY price DESC LIMIT 1');
-    const tier = getTier.get(api_name);
-
-    if (!tier) {
-      return res.status(400).json({ error: 'Invalid API or no tiers available' });
+    const currentHour = new Date().getHours();
+    let selectedTier;
+    if (currentHour < 6) {
+      selectedTier = 'F';
+    } else if (currentHour >= 22) {
+      selectedTier = 'A';
+    } else {
+      selectedTier = 'C';
     }
-
+    
+    // get tier 
+    const getTier = db.prepare('SELECT * FROM Tiers WHERE api_name = ? AND tier_name = ?');
+    const tier = getTier.get('openai', selectedTier);
+    
+    if (!tier) {
+      return res.status(400).json({ error: 'Invalid tier or no tiers available' });
+    }
+    
+    // parse json 
+    const tierConfig = JSON.parse(tier.tier_config);
+    
     const requestBody = {
-      model: config[tier.tier_name].model,
+      model: tierConfig.model,
       prompt: prompt,
       n: 1,
-      size: config[tier.tier_name].size,
+      size: tierConfig.size,
     };
-
-    if (config[tier.tier_name].model === 'dall-e-3') {
-      requestBody.quality = config[tier.tier_name].quality;
+    
+    if (tierConfig.model === 'dall-e-3') {
+      requestBody.quality = tierConfig.quality;
     }
-
+    
+    console.log('OpenAI API Request:', JSON.stringify(requestBody, null, 2));
+    
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -95,24 +130,33 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
       },
       body: JSON.stringify(requestBody),
     });
-
+    
     const openaiData = await openaiResponse.json();
     
-    console.log('Selected tier:', tier);
-    console.log('Price:', tier.price);
-
-    // store in db
-    const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id, dynamic_cost) VALUES (?, ?, ?, ?)');
-    insertQuery.run(api_name, prompt, tier.id, tier.price);
-
-    // update budget
-    const updateBudget = db.prepare('UPDATE Budget SET spent = spent + ?, total_spent = total_spent + ? WHERE api_name = ?');
-    updateBudget.run(tier.price, tier.price, api_name);
-
-    res.json({ imageUrl: openaiData.data[0].url, cost: tier.price });
+    console.log('OpenAI API Response:', JSON.stringify(openaiData, null, 2));
+    
+    if (!openaiData.data || !openaiData.data[0] || !openaiData.data[0].url) {
+      if (openaiData.error) {
+        throw new Error(`OpenAI API Error: ${openaiData.error.message}`);
+      } else {
+        throw new Error('Invalid response from OpenAI API');
+      }
+    }
+    
+    // store in db 
+    const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
+    insertQuery.run('openai', prompt, tier.id);
+    
+    res.json({ 
+      imageUrl: openaiData.data[0].url, 
+      cost: tier.cost,
+      usedTier: selectedTier,
+      currentHour: currentHour
+    });
+    
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'An error occurred while generating the image' });
+    res.status(500).json({ error: error.message || 'An error occurred while generating the image' });
   }
 });
 
@@ -124,24 +168,6 @@ app.get('/tiers', authenticateToken, (req, res) => {
     res.json(tiers);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching tiers' });
-  }
-});
-
-// New endpoint to update or insert a tier
-app.post('/update-tier', authenticateToken, (req, res) => {
-  const { api_name, tier_name, price, thresholds } = req.body;
-  try {
-    const upsertTier = db.prepare(`
-      INSERT INTO Tiers (api_name, tier_name, price, thresholds)
-      VALUES (?, ?, ?, ?)
-      ON CONFLICT(api_name, tier_name) DO UPDATE SET
-      price = excluded.price,
-      thresholds = excluded.thresholds
-    `);
-    const result = upsertTier.run(api_name, tier_name, price, JSON.stringify(thresholds));
-    res.json({ message: 'Tier updated successfully', id: result.lastInsertRowid });
-  } catch (error) {
-    res.status(500).json({ error: 'Error updating tier' });
   }
 });
 
