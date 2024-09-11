@@ -71,9 +71,9 @@ function setupDatabase() {
     for (const [tierName, tierConfig] of Object.entries(config)) {
       try {
         insertTier.run('openai', tierName, JSON.stringify(tierConfig), null, tierConfig.price);
-        console.log(`Inserted/updated tier ${tierName} for openai`);
+        console.log(`inserted ${tierName} for openai`);
       } catch (error) {
-        console.error(`Error inserting tier ${tierName}:`, error);
+        console.error(`error`, error);
       }
     }
 

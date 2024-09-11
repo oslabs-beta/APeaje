@@ -99,7 +99,7 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
       selectedTier = 'C';
     }
     
-    // get tier 
+    // get tiers (debugging)
     const getTier = db.prepare('SELECT * FROM Tiers WHERE api_name = ? AND tier_name = ?');
     const tier = getTier.get('openai', selectedTier);
     
@@ -107,7 +107,7 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Invalid tier or no tiers available' });
     }
     
-    // parse json 
+    // parse tier from database  
     const tierConfig = JSON.parse(tier.tier_config);
     
     const requestBody = {
@@ -121,7 +121,6 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
       requestBody.quality = tierConfig.quality;
     }
     
-    console.log('OpenAI API Request:', JSON.stringify(requestBody, null, 2));
     
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -134,6 +133,8 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
     
     const openaiData = await openaiResponse.json();
     
+
+    // debug OpenAI response 
     console.log('OpenAI API Response:', JSON.stringify(openaiData));
     
 
