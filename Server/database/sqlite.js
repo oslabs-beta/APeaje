@@ -80,6 +80,8 @@ function setupDatabase() {
     console.log('tiers insertion completed');
   }
 
+
+  
   function initializeBudget() {
       const insertBudget = db.prepare(`
       INSERT OR IGNORE INTO Budget (api_name, budget)

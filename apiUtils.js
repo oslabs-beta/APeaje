@@ -93,9 +93,23 @@ function selectTierBasedOnBudget(db, apiName) {
 }
 
 
+function selectTierBasedOnTime() {
+  const currentHour = new Date().getHours();
+  
+  if (currentHour < 6) {
+    return 'F';
+  } else if (currentHour >= 22) {
+    return 'A';
+  } else {
+    return 'C';
+  }
+}
+
+
 module.exports = {
   loadAPIConfigs,
   checkBudget,
   updateBudget,
-  selectTierBasedOnBudget
+  selectTierBasedOnBudget,
+  selectTierBasedOnTime
 };

@@ -69,20 +69,10 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
   // only threshhold for now
   
   try {
-    /*
-    const currentHour = new Date().getHours();
-    let selectedTier;
-    if (currentHour < 6) {
-      selectedTier = 'F';
-    } else if (currentHour >= 22) {
-      selectedTier = 'A';
-    } else {
-      selectedTier = 'C';
-    }*/
-
+    // const selectedTierConfigselectTierBasedOnTime()
     // get tier from budget 
      const selectedTierConfig = selectTierBasedOnBudget(db, 'openai');
-     console.log('Selected Tier Config:', selectedTierConfig);  // Debug log
+     console.log('budget tier config', selectedTierConfig);  // debug 
 
     // new way of accessing the tier
     const apiConfigs = loadAPIConfigs(db);
@@ -100,14 +90,6 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
       quality: tierConfig.quality
     };
     
-
-    /*
-    if (tierConfig.model === 'dall-e-3') {
-      requestBody.quality = tierConfig.quality;
-    }
-    */
-    
-    
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -121,18 +103,7 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
     
 
     // debug OpenAI response 
-    console.log('OpenAI API Response:', JSON.stringify(openaiData));
-    
-
-    // debug response
-    /*if (!openaiData.data || !openaiData.data[0] || !openaiData.data[0].url) {
-      if (openaiData.error) {
-        throw new Error(`OpenAI API Error: ${openaiData.error.message}`);
-      } else {
-        throw new Error('Invalid response from OpenAI API');
-      }
-    }
-    */
+    console.log('openai response', JSON.stringify(openaiData));
     
     // add spent money
     updateBudget(db, 'openai', tierConfig.price);
