@@ -16,8 +16,8 @@ const LineChart = () => {
                 // For example, if the data needs transformation:
                 const data2 = data1.map(d => ({
                     time: new Date(d.time), // Adjust based on actual data structure
-                    cost: d.cost,
-                    requests: d.requests
+                    cost: Number(d.cost),
+                    requests: Number(d.requests)
                 }));  
                 console.log('Transformed data:', data1);
                 setData(data2)
@@ -54,71 +54,141 @@ const LineChart = () => {
             const margin = { top: 20, right: 30, bottom: 30, left: 40 };
 
             // Define scales
+
+            
+            // const xScale = d3.scaleTime()
+            //     .domain(d3.extent(data, d => d.time))
+            //     .range([margin.left, width - margin.right]);
+
+            // const yScaleCost = d3.scaleLinear()
+            //     .domain([0, d3.max(data, d => d.cost)])
+            //     .range([height - margin.bottom, margin.top]);
+
+            // const yScaleRequests = d3.scaleLinear()
+            //     .domain([0, d3.max(data, d => d.requests)])
+            //     .range([height - margin.bottom, margin.top]);
+
+            // svg.attr('width', width)
+            //    .attr('height', height);
+
+            // svg.selectAll('*').remove(); // Clear previous drawings
+
+            // // Draw cost line
+            // svg.append('path')
+            //    .datum(data)
+            //    .attr('fill', 'none')
+            //    .attr('stroke', 'steelblue')
+            //    .attr('stroke-width', 1.5)
+            //    .attr('d', d3.line()
+            //        .x(d => xScale(d.time))
+            //        .y(d => yScaleCost(d.cost))
+            //    );
+
+            // // Draw requests line
+            // svg.append('path')
+            //    .datum(data)
+            //    .attr('fill', 'none')
+            //    .attr('stroke', 'orange')
+            //    .attr('stroke-width', 1.5)
+            //    .attr('d', d3.line()
+            //        .x(d => xScale(d.time))
+            //        .y(d => yScaleRequests(d.requests))
+            //    );
+
+            // // Add x-axis
+            // svg.append('g')
+            //    .attr('transform', `translate(0, ${height - margin.bottom})`)
+            //    .call(d3.axisBottom(xScale));
+
+            // // Add y-axis for cost
+            // svg.append('g')
+            //    .attr('transform', `translate(${margin.left}, 0)`)
+            //    .call(d3.axisLeft(yScaleCost))
+            //    .append('text')
+            //    .attr('fill', 'black')
+            //    .attr('x', -margin.left)
+            //    .attr('y', 10)
+            //    .attr('text-anchor', 'start')
+            //    .text('Cost');
+
+            // // Add y-axis for requests
+            // svg.append('g')
+            //    .attr('transform', `translate(${width - margin.right}, 0)`)
+            //    .call(d3.axisRight(yScaleRequests))
+            //    .append('text')
+            //    .attr('fill', 'black')
+            //    .attr('x', 10)
+            //    .attr('y', 10)
+            //    .attr('text-anchor', 'start')
+            //    .text('Requests');
+
+
             const xScale = d3.scaleTime()
-                .domain(d3.extent(data, d => d.time))
-                .range([margin.left, width - margin.right]);
+            .domain(d3.extent(data, d => d.time))
+            .range([margin.left, width - margin.right]);
 
-            const yScaleCost = d3.scaleLinear()
-                .domain([0, d3.max(data, d => d.cost)])
-                .range([height - margin.bottom, margin.top]);
+        const yScaleCost = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.cost)])
+            .range([height - margin.bottom, margin.top]);
 
-            const yScaleRequests = d3.scaleLinear()
-                .domain([0, d3.max(data, d => d.requests)])
-                .range([height - margin.bottom, margin.top]);
+        const yScaleRequests = d3.scaleLinear()
+            .domain([0, d3.max(data, d => d.requests)])
+            .range([height - margin.bottom, margin.top]);
 
-            svg.attr('width', width)
-               .attr('height', height);
+        svg.attr('width', width)
+           .attr('height', height);
 
-            svg.selectAll('*').remove(); // Clear previous drawings
+        svg.selectAll('*').remove(); // Clear previous drawings
 
-            // Draw cost line
-            svg.append('path')
-               .datum(data)
-               .attr('fill', 'none')
-               .attr('stroke', 'steelblue')
-               .attr('stroke-width', 1.5)
-               .attr('d', d3.line()
-                   .x(d => xScale(d.time))
-                   .y(d => yScaleCost(d.cost))
-               );
+        // Draw cost line
+        svg.append('path')
+           .datum(data)
+           .attr('fill', 'none')
+           .attr('stroke', 'steelblue')
+           .attr('stroke-width', 1.5)
+           .attr('d', d3.line()
+               .x(d => xScale(d.time))
+               .y(d => yScaleCost(d.cost))
+           );
 
-            // Draw requests line
-            svg.append('path')
-               .datum(data)
-               .attr('fill', 'none')
-               .attr('stroke', 'orange')
-               .attr('stroke-width', 1.5)
-               .attr('d', d3.line()
-                   .x(d => xScale(d.time))
-                   .y(d => yScaleRequests(d.requests))
-               );
+        // Draw requests line
+        svg.append('path')
+           .datum(data)
+           .attr('fill', 'none')
+           .attr('stroke', 'orange')
+           .attr('stroke-width', 1.5)
+           .attr('d', d3.line()
+               .x(d => xScale(d.time))
+               .y(d => yScaleRequests(d.requests))
+           );
 
-            // Add x-axis
-            svg.append('g')
-               .attr('transform', `translate(0, ${height - margin.bottom})`)
-               .call(d3.axisBottom(xScale));
+        // Add x-axis
+        svg.append('g')
+           .attr('transform', `translate(0, ${height - margin.bottom})`)
+           .call(d3.axisBottom(xScale));
 
-            // Add y-axis for cost
-            svg.append('g')
-               .attr('transform', `translate(${margin.left}, 0)`)
-               .call(d3.axisLeft(yScaleCost))
-               .append('text')
-               .attr('fill', 'black')
-               .attr('x', -margin.left)
-               .attr('y', 10)
-               .attr('text-anchor', 'start')
-               .text('Cost');
+        // Add y-axis for cost
+        svg.append('g')
+           .attr('transform', `translate(${margin.left}, 0)`)
+           .call(d3.axisLeft(yScaleCost))
+           .append('text')
+           .attr('fill', 'black')
+           .attr('x', -margin.left)
+           .attr('y', 10)
+           .attr('text-anchor', 'start')
+           .text('Cost');
 
-            // Add y-axis for requests
-            svg.append('g')
-               .attr('transform', `translate(${width - margin.right}, 0)`)
-               .call(d3.axisRight(yScaleRequests))
-               .append('text')
-               .attr('fill', 'black')
-               .attr('x', 10)
-               .attr('y', 10)
-               .attr('text-anchor', 'start')
-               .text('Requests');
+        // Add y-axis for requests
+        svg.append('g')
+           .attr('transform', `translate(${width - margin.right}, 0)`)
+           .call(d3.axisRight(yScaleRequests))
+           .append('text')
+           .attr('fill', 'black')
+           .attr('x', 10)
+           .attr('y', 10)
+           .attr('text-anchor', 'start')
+           .text('Requests');
+
         }
     }, [data]);
 
