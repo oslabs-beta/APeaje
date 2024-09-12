@@ -4,8 +4,7 @@ import * as d3 from 'd3';
 const BarChart = () => {
     const [data, setData] = useState([]);
     const svgRef = useRef(null);
- 
-    console.log('hellllllo???')
+
     useEffect(()=> {
         const fetchData = async() => {
             try{
@@ -41,8 +40,8 @@ const BarChart = () => {
         if (data.length === 0) return ;
 
             const svg = d3.select(svgRef.current);
-            const width = 800;
-            const height = 500;
+            const width = 300;
+            const height = 150;
             const margin = { top: 20, right: 0, bottom: 30, left: 40 };
 
             svg.selectAll("*").remove(); // Clear previous contents
@@ -91,7 +90,7 @@ const BarChart = () => {
         .attr("fill", "#000")
         .attr("x", -50)
         .attr("y", -40)
-        .attr("dy", ".71em")
+        .attr("dy", ".25em")
         .attr("text-anchor", "end")
         .text("Cost");
 
@@ -104,7 +103,7 @@ const BarChart = () => {
         .attr("fill", "#000")
         .attr("x", 50)
         .attr("y", -40)
-        .attr("dy", ".71em")
+        .attr("dy", ".25em")
         .attr("text-anchor", "end")
         .text("Requests");
 
