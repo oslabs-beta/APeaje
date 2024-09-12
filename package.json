@@ -5,21 +5,21 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon server.js & webpack-dev-server",
-    "dev": "nodemon server.js",
+    "dev": "nodemon server.ts",
     "build": "webpack --mode production"
   },
   "author": "Mobius Collective",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.2",
+    "bcrypt": "^5.1.1",
+    "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.2.1",
     "cors": "^2.8.5",
     "d3": "^7.9.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "ts-node": "^10.9.2"
+    "nodemon": "^3.1.4"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",

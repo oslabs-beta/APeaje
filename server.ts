@@ -1,137 +1,131 @@
 const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const setupDatabase = require('./Server/database/sqlite.js');
+const { loadAPIConfigs, checkBudget, updateBudget, selectTierBasedOnBudget } = require('./apiUtils.js');
 require('dotenv').config();
-const path = require('path');
-const { default: test } = require('node:test');
+
+const openaiApiKey = process.env.OPENAI_API_KEY;
 
 const app = express();
 app.use(express.json());
-//app.use(express.static(path.resolve(__dirname,'dashboard/public')));
-
-app.use(express.static(path.resolve(__dirname,'dist')));
 app.use(cors());
-
-app.get('/', (req, res) => {
-  res.status(200).send('mainpage')
-});
-
-type chartType = {
-  time: string,
-  cost: number,
-  requests: number
-}
-const chartTest = [
-  { "time": "2024-01-01T00:00:00Z", "cost": 10, "requests": 100 },
-  { "time": "2024-01-02T00:00:00Z", "cost": 20, "requests": 150 },
-  { "time": "2024-01-03T00:00:00Z", "cost": 15, "requests": 120 },
-  { "time": "2024-01-04T00:00:00Z", "cost": 30, "requests": 180 }
-]
+const db = setupDatabase();
 
 
-app.get('/dashboard/chart', (req, res) => {
-  res.status(200).send(chartTest)
-} )
-app.get('/dashboard', (req, res) => {
-  res.status(200).sendFile(path.resolve(__dirname, './dashboard/public/dash.html'))
-});
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (token == null) return res.sendStatus(401);
 
-
-const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
-
-type configType = {
-  [name: string]: {model: string, quality: string, size: string, price: number}
-}
-
-const config: configType = {
-  A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.0120 },
-  B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.0080 },
-  C: { model: 'dall-e-3', quality: 'Standard', size: '1024x1792', price: 0.0080 },
-  D: { model: 'dall-e-3', quality: 'Standard', size: '1024x1024', price: 0.0040 },
-  E: { model: 'dall-e-2', quality: 'Standard', size: '512x512', price: 0.0018 },
-  F: { model: 'dall-e-2', quality: 'Standard', size: '256x256', price: 0.0016 }
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
 };
 
-
-app.post('/api/generate-image', async (req, res) => {
-  const { prompt } = req.body;
-  
-  // test for time of day
-  const hour: number = new Date().getHours();
-  let selectedConfig = config.A; // default to mid
-  
-  if (hour >= 22 || hour < 6) {
-    selectedConfig = config.B; // low for night hours?
-  } else if (hour >= 10 && hour < 18) {
-    selectedConfig = config.C; // high hours
+app.post('/register', async (req, res) => {
+  const { username, password, role } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const insertUser = db.prepare('INSERT INTO Users (username, password, role) VALUES (?, ?, ?)');
+    const result = insertUser.run(username, hashedPassword, role);
+    res.json({ userId: result.lastInsertRowid, message: 'User registered successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error registering user' });
   }
+});
+
+
+
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
+    const user = getUser.get(username);
+    if (user) {
+      if (await bcrypt.compare(password, user.password)) {
+        const token = jwt.sign({ userId: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET);
+        res.json({ token, userId: user.id, role: user.role, message: 'Login successful' });
+      } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
+    } else {
+      res.status(401).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Error during login' });
+  }
+});
+
+
+app.post('/generate-image', authenticateToken, async (req, res) => {
+  
+  const { prompt } = req.body;
 
   try {
+    // const selectedTierConfigselectTierBasedOnTime()
+    // get tier from budget 
+     const selectedTierConfig = selectTierBasedOnBudget(db, 'openai'); // => A
+     console.log('budget tier config', selectedTierConfig);  // debug 
+
+    // new way of accessing the tier
+    const apiConfigs = loadAPIConfigs(db);
+
+
+
+    const tierConfig = selectedTierConfig;
+
+    if (!tierConfig) {
+      return res.status(400).json({ error: 'no tiers available' });
+    }
+   
+    const requestBody = {
+      model: tierConfig.model,
+      prompt: prompt,
+      n: 1,
+      size: tierConfig.size,
+      quality: tierConfig.quality
+    };
+    
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${openaiApiKey}`,
       },
-      body: JSON.stringify({
-        prompt: prompt,
-        n: 1,
-        size: selectedConfig.size,
-      }),
+      body: JSON.stringify(requestBody),
     });
-
+    
     const openaiData = await openaiResponse.json();
     
-    // sotre in db
-    const { data, error } = await supabase
-      .from('queries')
-      .insert({
-        prompt: prompt,
-        model_version: selectedConfig.size,
-        cost: selectedConfig.price,
-      });
 
-    if (error) throw error;
+    // debug OpenAI response 
+    console.log('openai response', JSON.stringify(openaiData));
+    
+    // add spent money
+    updateBudget(db, 'openai', tierConfig.price);
 
-    res.json({ imageUrl: openaiData.data[0].url });
+    // store in db 
+    const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
+    insertQuery.run('openai', prompt, tierConfig.id);
+    
+
+
+    // ideally in the future we would like to be as neutral as possible, so maybe returning whole response so that thyhe user can do anything, and think what other things are important to add to the response (tier used)
+    res.json({ 
+      imageUrl: openaiData.data[0].url, 
+    });
+    
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'error occurred while generating the image' });
+    res.status(500).json({ error: error.message || 'An error occurred while generating the image' });
   }
 });
 
-/**
- * 404 handler
- */
-app.get('*', (req, res) => {
-  console.log('error finding url');
-  res.status(404).send('Not Found');
-});
 
-/**
- * Global error handler
- */
-app.use((err, req, res, next) => {
-  console.log(err);
-  console.log('hit global error');
 
-  res.status(500).send({ error: err });
-});
-
-const PORT: (string | 5500) = process.env.PORT || 5500;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-/*"CREATE TABLE queries (
-    id SERIAL PRIMARY KEY,
-    prompt TEXT NOT NULL,
-    model_version VARCHAR(50) NOT NULL,
-    cost INTEGER NOT NULL,
-    response TEXT NOT NULL,
-    timestamp TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);"
-*/
