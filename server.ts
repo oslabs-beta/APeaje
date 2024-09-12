@@ -1,11 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const Database = require('better-sqlite3');
 const setupDatabase = require('./Server/database/sqlite.js');
 const { loadAPIConfigs, checkBudget, updateBudget, selectTierBasedOnBudget } = require('./apiUtils.js');
+require('dotenv').config();
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 
@@ -63,6 +62,7 @@ app.post('/login', async (req, res) => {
 
 
 app.post('/generate-image', authenticateToken, async (req, res) => {
+  
   const { prompt } = req.body;
 
   try {
