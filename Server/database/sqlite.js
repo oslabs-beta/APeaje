@@ -55,12 +55,12 @@ function setupDatabase() {
 
   function insertTiers() {
     const config = {
-      A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.0120 },
-      B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.0080 },
-      C: { model: 'dall-e-3', quality: 'standard', size: '1024x1792', price: 0.0080 },
-      D: { model: 'dall-e-3', quality: 'standard', size: '1024x1024', price: 0.0040 },
-      E: { model: 'dall-e-2', quality: 'standard', size: '512x512', price: 0.0018 },
-      F: { model: 'dall-e-2', quality: 'standard', size: '256x256', price: 0.0016 }
+      A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.120 },
+      B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.080 },
+      C: { model: 'dall-e-3', quality: 'standard', size: '1024x1792', price: 0.080 },
+      D: { model: 'dall-e-3', quality: 'standard', size: '1024x1024', price: 0.040 },
+      E: { model: 'dall-e-2', quality: 'standard', size: '512x512', price: 0.018 },
+      F: { model: 'dall-e-2', quality: 'standard', size: '256x256', price: 0.016 }
     };
 
     const insertTier = db.prepare(`
@@ -87,7 +87,7 @@ function setupDatabase() {
       INSERT OR IGNORE INTO Budget (api_name, budget)
       VALUES (?, ?)
     `);
-    insertBudget.run('openai', 100.00);  //  initial budget set to $100
+    insertBudget.run('openai', 0.10);  //  initial budget set to $100
     console.log('Budget initialized');
    }
 
@@ -101,11 +101,11 @@ function setupDatabase() {
     }
     
     console.log('Current Database Contents:');
-    console.log(JSON.stringify(result, null, 2));
+    console.log(JSON.stringify(result));
   }
 
   //  drop tables and start fresh
-  // dropTables();
+  dropTables();
   createTables();
   insertTiers();
   initializeBudget()
