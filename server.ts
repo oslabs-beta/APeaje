@@ -64,18 +64,18 @@ app.post('/login', async (req, res) => {
 
 app.post('/generate-image', authenticateToken, async (req, res) => {
   const { prompt } = req.body;
-  
 
-  // only threshhold for now
-  
   try {
     // const selectedTierConfigselectTierBasedOnTime()
     // get tier from budget 
-     const selectedTierConfig = selectTierBasedOnBudget(db, 'openai');
+     const selectedTierConfig = selectTierBasedOnBudget(db, 'openai'); // => A
      console.log('budget tier config', selectedTierConfig);  // debug 
 
     // new way of accessing the tier
     const apiConfigs = loadAPIConfigs(db);
+
+
+
     const tierConfig = selectedTierConfig;
 
     if (!tierConfig) {
@@ -112,6 +112,9 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
     const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
     insertQuery.run('openai', prompt, tierConfig.id);
     
+
+
+    // ideally in the future we would like to be as neutral as possible, so maybe returning whole response so that thyhe user can do anything, and think what other things are important to add to the response (tier used)
     res.json({ 
       imageUrl: openaiData.data[0].url, 
     });
