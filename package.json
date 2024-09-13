@@ -4,10 +4,8 @@
   "version": "1.0.0",
   "main": "server/server.ts",
   "scripts": {
-    "start": "nodemon server/server.ts & webpack-dev-server",
-    "devv": "nodemon server/server.ts",
-    "dev:server2": "nodemon server/server2.js",
-    "dev": "npm run dev:server1 & npm run dev:server2",
+    "start": "nodemon server/server.js & webpack-dev-server",
+    "dev": "nodemon server/server.js",
     "build": "webpack --mode production"
   },
   "author": "Mobius Collective",
