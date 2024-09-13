@@ -2,15 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const setupDatabase = require('./Server/database/sqlite.js');
-const { loadAPIConfigs, checkBudget, updateBudget, selectTierBasedOnBudget } = require('./apiUtils.js');
+const path = require('path');
+const dashboardController = require('./controller/dashboardController')
+const setupDatabase = require('./database/sqlite.js');
+ const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
+const config = require('../config.js');
 require('dotenv').config();
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 
+
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(express.static(path.resolve(__dirname, '../dist')));
 const db = setupDatabase();
 
 
@@ -26,7 +31,28 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-app.post('/register', async (req, res) => {
+app.get('/', (req, res) => {
+  res.status(200).send('mainpage');
+});
+
+app.get('/dashboard/chart', (req, res, next) => {
+
+  next();
+},
+  dashboardController.lineGraph,
+  (req, res) => {
+    res.status(200).send(res.locals.data);
+  }
+)
+
+app.get('/dashboard', (req, res) => {
+  res
+    .status(200)
+    .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
+});
+
+
+app.post('/api/register', async (req, res) => {
   const { username, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -38,9 +64,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
-
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
@@ -62,34 +86,25 @@ app.post('/login', async (req, res) => {
 
 
 app.post('/generate-image', authenticateToken, async (req, res) => {
-  
-  const { prompt } = req.body;
+  const { prompt, useTimeBasedTier } = req.body;
 
   try {
-    // const selectedTierConfigselectTierBasedOnTime()
-    // get tier from budget 
-     const selectedTierConfig = selectTierBasedOnBudget(db, 'openai'); // => A
-     console.log('budget tier config', selectedTierConfig);  // debug 
+    const selectedTierConfig = useTimeBasedTier ? selectTierBasedOnTime(db, 'openai')  : selectTierBasedOnBudget(db, 'openai');
 
-    // new way of accessing the tier
-    const apiConfigs = loadAPIConfigs(db);
+    console.log('Selected tier config:', selectedTierConfig);
 
-
-
-    const tierConfig = selectedTierConfig;
-
-    if (!tierConfig) {
-      return res.status(400).json({ error: 'no tiers available' });
+    if (!selectedTierConfig) {
+      return res.status(400).json({ error: 'No tiers available' });
     }
-   
+
     const requestBody = {
-      model: tierConfig.model,
+      model: selectedTierConfig.model,
       prompt: prompt,
       n: 1,
-      size: tierConfig.size,
-      quality: tierConfig.quality
+      size: selectedTierConfig.size,
+      quality: selectedTierConfig.quality
     };
-    
+
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
@@ -98,25 +113,19 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
       },
       body: JSON.stringify(requestBody),
     });
-    
+
     const openaiData = await openaiResponse.json();
-    
 
-    // debug OpenAI response 
-    console.log('openai response', JSON.stringify(openaiData));
-    
-    // add spent money
-    updateBudget(db, 'openai', tierConfig.price);
+    console.log('OpenAI response:', JSON.stringify(openaiData));
 
-    // store in db 
+    updateBudget(db, 'openai', selectedTierConfig.price);
+
     const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
-    insertQuery.run('openai', prompt, tierConfig.id);
-    
+    insertQuery.run('openai', prompt, selectedTierConfig.id);
 
-
-    // ideally in the future we would like to be as neutral as possible, so maybe returning whole response so that thyhe user can do anything, and think what other things are important to add to the response (tier used)
-    res.json({ 
-      imageUrl: openaiData.data[0].url, 
+    res.json({
+      ...openaiData,
+      tier: selectedTierConfig
     });
     
   } catch (error) {
@@ -125,7 +134,24 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * 404 handler
+ */
+app.get('*', (req, res) => {
+  console.log('error finding url');
+  res.status(404).send('Not Found');
+});
+
+/**
+ * Global error handler
+ */
+app.use((err, req, res, next) => {
+  console.log(err);
+  console.log('hit global error');
+
+  res.status(500).send({ error: err });
+});
 
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 2024;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

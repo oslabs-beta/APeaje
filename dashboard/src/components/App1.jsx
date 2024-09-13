@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import BarChart from './BarChart.jsx'
+import BarChart from './BarChart.js'
 import '../../public/style.css'
 import Dashboard from '../pages/Dashboard.jsx'
 
