@@ -2,9 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const setupDatabase = require('./Server/database/sqlite.js');
+const setupDatabase = require('./database/sqlite.js');
  const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
-const config = require('./config');
+const config = require('../config');
 require('dotenv').config();
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
