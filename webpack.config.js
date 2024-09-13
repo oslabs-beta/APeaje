@@ -8,7 +8,7 @@ const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 require('dotenv').config();
 
 module.exports = {
-  entry: './dashboard/src/index.js',
+  entry: './dashboard/src/index.tsx',
   mode: 'development',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -63,8 +63,7 @@ module.exports = {
   },
   devServer: {
     headers: {"Access-Control-Allow-Origin": "*"},
-    historyApiFallback: true,
-    hot: true,
+    historyApiFallback: false,
     static: {
       //   publicPath: '/dist',
       // directory: path.resolve(__dirname, 'dist'),
@@ -72,9 +71,9 @@ module.exports = {
     },
     proxy: [
       {
-        context: ['/api'],
-        target: 'http://localhost:5500',
-        logLevel: 'info',
+        context: ['/api', '/route', '/dashboard'],
+        target: 'http://localhost:2024',
+        logLevel:   'info',
       },
     ],
   },

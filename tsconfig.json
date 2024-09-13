@@ -1,6 +1,13 @@
 {
   "compilerOptions": {
+    "sourceMap": true,
+    "target": "es2017",
     "module": "commonjs",
+    "esModuleInterop": true,
     "noImplicitAny": false,
-  }
+    "jsx": "react"
+
+  },
+  "include": ["/**/*.ts", "/**/*.tsx"],
+  "exclude": ["node_modules"]
 }

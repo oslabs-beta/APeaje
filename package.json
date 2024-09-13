@@ -2,10 +2,10 @@
   "name": "apeaje",
   "description": "",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server/server.ts",
   "scripts": {
-    "start": "nodemon server.js & webpack-dev-server",
-    "dev": "nodemon server.ts",
+    "start": "nodemon server/server.ts & webpack-dev-server",
+    "dev": "nodemon server/server.ts",
     "build": "webpack --mode production"
   },
   "author": "Mobius Collective",
@@ -15,11 +15,17 @@
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.2.1",
+    "bootstrap": "^5.3.3",
     "cors": "^2.8.5",
     "d3": "^7.9.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "nodemon": "^3.1.4"
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.12.0",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.4",
+    "react-dom": "^18.3.1",
+    "ts-node": "^10.9.2"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
