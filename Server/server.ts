@@ -2,16 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const path = require('path');
+const dashboardController = require('./controller/dashboardController')
 const setupDatabase = require('./database/sqlite.js');
  const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
-const config = require('../config');
+const config = require('../config.js');
 require('dotenv').config();
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 
+
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(express.static(path.resolve(__dirname, '../dist')));
 const db = setupDatabase();
 
 
@@ -27,7 +31,28 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-app.post('/register', async (req, res) => {
+app.get('/', (req, res) => {
+  res.status(200).send('mainpage');
+});
+
+app.get('/dashboard/chart', (req, res, next) => {
+
+  next();
+},
+  dashboardController.lineGraph,
+  (req, res) => {
+    res.status(200).send(res.locals.data);
+  }
+)
+
+app.get('/dashboard', (req, res) => {
+  res
+    .status(200)
+    .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
+});
+
+
+app.post('/api/register', async (req, res) => {
   const { username, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -39,9 +64,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
-
-
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
@@ -111,8 +134,24 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
   }
 });
 
+/**
+ * 404 handler
+ */
+app.get('*', (req, res) => {
+  console.log('error finding url');
+  res.status(404).send('Not Found');
+});
+
+/**
+ * Global error handler
+ */
+app.use((err, req, res, next) => {
+  console.log(err);
+  console.log('hit global error');
+
+  res.status(500).send({ error: err });
+});
 
 
-
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 2024;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

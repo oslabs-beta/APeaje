@@ -26,7 +26,6 @@ query = (text, params, callback) => {
   }
 
 dashboardController.lineGraph = async (req, res, next) => {
-  const supabase = res.locals.db;
 
   //console.log('supabase', supabase
   const data = await query("SELECT DATE_TRUNC('day', timestamp) as time, CAST(SUM(cost) as DECIMAL) as cost, COUNT(id) as requests FROM queries GROUP BY time ORDER BY time"); //await supabase.from('queries').select('*');

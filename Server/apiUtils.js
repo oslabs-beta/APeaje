@@ -1,4 +1,4 @@
-const config = require('./config');
+const config = require('../config');
 
 function loadAPIConfigs(db) {
   const tiers = db.prepare('SELECT * FROM Tiers').all();

@@ -2,9 +2,9 @@
   "name": "apeaje",
   "description": "",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server/server.ts",
   "scripts": {
-    "start": "nodemon server/server.js & webpack-dev-server",
+    "start": "nodemon server/server.ts & webpack-dev-server",
     "dev": "nodemon server/server.ts",
     "build": "webpack --mode production"
   },
