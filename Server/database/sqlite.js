@@ -1,8 +1,10 @@
 const Database = require('better-sqlite3');
 const path = require('path');
+const config = require('../config');
 
 function setupDatabase() {
-  const db = new Database(path.join(__dirname, 'test.db'), { verbose: console.log });
+  //using config for db sett
+  const db = new Database(path.join(__dirname, config.database.filename), { verbose: console.log });
   db.pragma('journal_mode = WAL');
 
   // if u need clean slate 
@@ -53,64 +55,61 @@ function setupDatabase() {
     console.log('Tables created successfully');
   }
 
-  function insertTiers() {
-    const config = {
-      A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.120 },
-      B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.080 },
-      C: { model: 'dall-e-3', quality: 'standard', size: '1024x1792', price: 0.080 },
-      D: { model: 'dall-e-3', quality: 'standard', size: '1024x1024', price: 0.040 },
-      E: { model: 'dall-e-2', quality: 'standard', size: '512x512', price: 0.018 },
-      F: { model: 'dall-e-2', quality: 'standard', size: '256x256', price: 0.016 }
-    };
 
-    const insertTier = db.prepare(`
-      INSERT OR REPLACE INTO Tiers (api_name, tier_name, tier_config, thresholds, cost)
-      VALUES (?, ?, ?, ?, ?)
-    `);
+    function insertTiers() {
+      // prepare SQL 
+      const insertTier = db.prepare(`
+        INSERT OR REPLACE INTO Tiers (api_name, tier_name, tier_config, cost)
+        VALUES (?, ?, ?, ?)
+      `);
 
-    for (const [tierName, tierConfig] of Object.entries(config)) {
-      try {
-        insertTier.run('openai', tierName, JSON.stringify(tierConfig), null, tierConfig.price);
-        console.log(`inserted ${tierName} for openai`);
-      } catch (error) {
-        console.error(`error`, error);
+      // iterate through each tier in the config
+      for (const [tierName, tierConfig] of Object.entries(config.apis.openai.tiers)) {
+        // insert each tier in the database
+        insertTier.run(
+          'openai',
+          tierName,
+          JSON.stringify(tierConfig),
+          tierConfig.price
+        );
       }
-    }
 
-    console.log('tiers insertion completed');
-  }
+      // log completion message
+      console.log('Tiers insertion completed');
+    }
 
 
   
-  function initializeBudget() {
+    function initializeBudget() {
       const insertBudget = db.prepare(`
-      INSERT OR IGNORE INTO Budget (api_name, budget)
-      VALUES (?, ?)
-    `);
-    insertBudget.run('openai', 0.10);  //  initial budget set to $100
-    console.log('Budget initialized');
-   }
-
-  function peekDatabase() {
-    const tables = ['Users', 'Tiers', 'Queries', 'Budget'];
-    const result = {};
-    
-    for (const table of tables) {
-      const rows = db.prepare(`SELECT * FROM ${table}`).all();
-        return rows;
+        INSERT OR IGNORE INTO Budget (api_name, budget)
+        VALUES (?, ?)
+      `);
+      insertBudget.run('openai', config.apis.openai.initialBudget);
+      console.log('Budget initialized');
     }
+
+    function peekDatabase() {
+      const tables = ['Users', 'Tiers', 'Queries', 'Budget'];
+      const result = {};
     
-    console.log('Current Database Contents:');
-    console.log(JSON.stringify(result));
+      for (const table of tables) {
+        const rows = db.prepare(`SELECT * FROM ${table}`).all();
+        return rows;
+      }
+    
+      console.log('Current Database Contents:');
+      console.log(JSON.stringify(result));
+    }
+
+    //  drop tables and start fresh
+    // dropTables();
+    createTables();
+    insertTiers();
+    initializeBudget()
+    peekDatabase();
+    return db;
   }
 
-  //  drop tables and start fresh
-  dropTables();
-  createTables();
-  insertTiers();
-  initializeBudget()
-  peekDatabase();  
-  return db;
-}
 
 module.exports = setupDatabase;
