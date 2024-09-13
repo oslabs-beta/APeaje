@@ -4,13 +4,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-<<<<<<< HEAD
     "start": "nodemon server/server.js & webpack-dev-server",
     "dev": "nodemon server/server.js",
-=======
-    "start": "nodemon server.js & webpack-dev-server",
-    "dev": "nodemon server.ts",
->>>>>>> 8ed9da1acf1334fbbc9fa78d142434f1fe6f2d12
     "build": "webpack --mode production"
   },
   "author": "Mobius Collective",
@@ -25,16 +20,13 @@
     "d3": "^7.9.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-<<<<<<< HEAD
     "node-fetch": "^3.3.2",
     "pg": "^8.12.0",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.4",
     "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.2",
     "ts-node": "^10.9.2"
-=======
-    "nodemon": "^3.1.4"
->>>>>>> 8ed9da1acf1334fbbc9fa78d142434f1fe6f2d12
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
