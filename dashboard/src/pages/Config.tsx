@@ -3,14 +3,9 @@
 
     const Config = () => {
         const [inputBudget, setInputBudget] = useState('');
-        const [inputTimeRange, setInputTimeRange] = useState('')
     
         const handleChange = (e) => {
             setInputBudget(e.target.value)
-        }
-
-        const handleTimeRange = (e) => {
-            setInputTimeRange(e.target.value)
         }
     
          // Handle form submission
@@ -43,15 +38,6 @@
                             onChange={handleChange}
                             placeholder="Enter budget"
                         />
-                    </label>
-                    <label>
-                        Date Range: 
-                        <input className = "inputOrganization"
-                        type = "text"
-                        value={inputTimeRange}
-                        onChange= {handleTimeRange}/>
-                         - 
-                        <input type = 'text' />
                     </label>
                     <button type="submit" className="config-save">
                         Save
