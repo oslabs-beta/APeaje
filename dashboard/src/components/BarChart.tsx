@@ -37,7 +37,7 @@ const BarChart = () => {
     const chartBox = svgRef.current;
 
     const svg = d3.select(chartBox);
-    const width = 700;
+    const width = 800;
     const height = 400;
 
     svg.attr('width', width).attr('height', height);
@@ -194,10 +194,10 @@ const BarChart = () => {
   // }, [data]);
 
   return (
-    <>
-      <h2>BAR CHART Cost and Number of Requests Over Time</h2>
-      <svg ref={svgRef}></svg>
-    </>
+    <div className = "barChart">
+      <h6>Cost and Number of Requests Over Time</h6>
+      <svg className="bar-chart" ref={svgRef}></svg>
+    </div>
   );
 };
 
