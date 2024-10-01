@@ -11,7 +11,7 @@ const BarChart = () => {
         const response = await fetch('/dashboard/chart');
         const data1 = await response.json();
 
-        console.log('data1', data1);
+        // console.log('data1', data1);
 
         // Ensure that the data is in the expected format;
         // For example, if the data needs transformation:
@@ -20,7 +20,7 @@ const BarChart = () => {
           cost: Number(d.total_spent),
           requests: Number(d.number_of_requests),
         }));
-        console.log('Transformed data:', data2);
+        // console.log('Transformed data:', data2);
         setData(data2);
       } catch (error) {
         console.log('error found from barChart fetchData');
@@ -30,7 +30,7 @@ const BarChart = () => {
     fetchData();
   }, []);
 
-  console.log('current data', data);
+  // console.log('current data', data);
 
   useEffect(() => {
     if (data.length === 0) return;
@@ -162,55 +162,6 @@ const BarChart = () => {
       .attr('height', (d) => height - margin.bottom - y2(d.requests))
       .attr('fill', 'white');
   }, [data]);
-
-  // Create SVG Container
-
-  // d3.create("svg")
-  //     .attr("viewBox", [0,0,width,height])
-  //     .attr("style", `max-width: ${width}px; height: auto; font: 10px san-serif; overflow: visible;`);
-
-  // // Create a bar for each time.
-  // const bar = svg.append("g")
-  //             .attr("fill", "yellow")
-  //             .selectAll("rect")
-  //             .data(data)
-  //             .join("rect")
-  //                 .style("mix-blend-mode", "multiply") // Darker color when bars overlaps during the transition.
-  //                 .attr("x", d=> x(d.time))
-  //                 .attr("y", d=> y(d.requests))
-  //                 .attr("height", d=> y(0) - y(d.requests))
-  //                 .attr("width", x.bandwidth());
-
-  // Create the axes.
-  // const gx = svg.append("g") // use call method to apply a functino , axisLeft(y) creates a left-oriented axis based on the y scale.
-  //     .attr("transfrom", `translate(0,${height - margin.bottom})`)
-  //     .call(d3.axisLeft(y).tickFormat((y) => (y * 100).toFixed())) // tickFormat func, formats the tick labels on the axis
-  //     .call(g=> g.select(".domain").remove()) // .domain class line that represents the axis line and removing it to style the axis without the default line
-
-  // Return the chart, with an update function that takes as input a domain
-  // comparator and transitions the x axis and bar positions accordingly.
-
-  // return Object.assign(svg.node(), {
-  //     update(order) {
-  //         x.domain(data.sort(order).map(d => d.time));
-
-  //         const t= svg.transition()
-  //         .duration(750);
-
-  //         bar.data(data, d=> d.requests) // change to x-axis which is time?
-  //         .order()
-  //         .transition(t)
-  //         .delay((d,i)=> i * 20)
-  //         .attr("x", d => x(d.time));
-
-  //         gx.transition(t)
-  //         .call(xAxis)
-  //         .selectAll(".tick")
-  //         .delay((d,i) => i * 20);
-  //         }
-  //     });
-  // }
-  // }, [data]);
 
   return (
     <div className = "barChart">
