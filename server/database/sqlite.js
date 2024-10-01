@@ -49,6 +49,7 @@ function setupDatabase() {
       )`
     ];
 
+    // 
     for (const sql of tables) {
       db.prepare(sql).run();
     }
@@ -88,6 +89,8 @@ function setupDatabase() {
       insertBudget.run('openai', config.apis.openai.initialBudget);
       console.log('Budget initialized');
     }
+
+
 
     function peekDatabase() {
       const tables = ['Users', 'Tiers', 'Queries', 'Budget'];
