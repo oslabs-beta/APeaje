@@ -6,7 +6,6 @@
   "scripts": {
     "start": "nodemon server/server.ts & webpack-dev-server",
     "dev": "nodemon server/server.ts",
-    "dev:server2": "nodemon server/server2.ts",
     "build": "webpack --mode production"
   },
   "author": "Mobius Collective",
