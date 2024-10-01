@@ -14,13 +14,15 @@ function loadAPIConfigs(db) {
       price: tier.cost
     };
   }
-
+  console.log('what is apiConfigs', apiCongfigs)
   return apiConfigs;
+  
 }
 
 
 function checkBudget(db, api_name) {
   const budget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get(api_name);
+  console.log('checking budget',)
   return budget;
 }
 
