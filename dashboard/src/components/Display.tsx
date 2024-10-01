@@ -81,4 +81,8 @@ return (
 
 }
 
+<<<<<<< HEAD
 export default Display
+=======
+export default Display
+>>>>>>> Dev

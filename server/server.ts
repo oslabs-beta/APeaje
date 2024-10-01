@@ -20,6 +20,10 @@ app.use(express.static(path.resolve(__dirname, '../dist')));
 const db = setupDatabase();
 
 // console.log('sqlite db in server.tx', db)
+<<<<<<< HEAD:Server/server.ts
+=======
+
+>>>>>>> Dev:server/server.ts
 
 
 const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
