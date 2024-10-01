@@ -179,7 +179,7 @@ box-shadow: 0 0 02 #FFFFFF;
 /* configuration  */
 
 .inputBudget {
-    color: var(--pri-black)
+    color: var(--pri-black);
 }
 
 .config-save {
