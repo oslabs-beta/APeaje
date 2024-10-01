@@ -6,7 +6,7 @@
   "scripts": {
 <<<<<<< HEAD
     "start": "nodemon server/server.ts & webpack-dev-server",
-    "dev:server1": "nodemon server/server.ts",
+    "devv": "nodemon server/server.ts",
     "dev:server2": "nodemon server/server2.js",
     "dev": "npm run dev:server1 & npm run dev:server2",
     "build": "webpack --mode production"
