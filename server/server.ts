@@ -54,12 +54,14 @@ app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req, res
   res.status(200).send(res.locals.remainingBalance)
 })
 
+app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req, res) => {
+  res.status(200).send(res.locals.tierInfo)
+})
+
 app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req, res) => {
   res.status(200).send(res.locals.totalRequests)
 })
-app.get('/dashboard/tiers'), dashboardSQL.tierInfo, (req, res) => {
-  res.status(200).send(res.locals.tierInfo)
-}
+
 
 app.get('/dashboard', (req, res) => {
   res

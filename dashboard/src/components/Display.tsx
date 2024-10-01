@@ -7,7 +7,7 @@ const Display = () => {
     const [initialAmount, setInitialAmount] = useState({budget:0})
     const [remainingBalance, setRemainingBalance] = useState({remaining_balance: 0})
     const [budget, setBudget] = useState({budget: 0})
-    const requestRef = useRef(null);
+
 
     useEffect(() => {
         const numberOfRequest = async () => {
@@ -15,7 +15,7 @@ const Display = () => {
                 const response = await fetch('/dashboard/totalRequests');
                 const number = await response.json();
 
-                console.log('number of Request in the Display function', number)
+                // console.log('number of Request in the Display function', number)
                 
              
                 setTotalRequest(number[0]) // {total_requests: 5}
@@ -30,7 +30,7 @@ const Display = () => {
          const response = await fetch('/dashboard/initialAmount')
          const initial = await response.json()
 
-         console.log('checking initialAmount', initial) //{ budget: 100 }
+        //  console.log('checking initialAmount', initial) //{ budget: 100 }
          setInitialAmount(initial[0])
         } catch(error) {
             console.log('error found from frontend fetching initialAmount')
@@ -42,7 +42,7 @@ const Display = () => {
                 const response = await fetch('/dashboard/remaining_balance');
                 const remaining = await response.json()
 
-                console.log('remaining balance from front', remaining)
+                // console.log('remaining balance from front', remaining)
 
                 setRemainingBalance(remaining[0])
             }catch(error) {
@@ -55,9 +55,9 @@ const Display = () => {
         remainingBalance ()
     },[])
 
-console.log('totalRequest Number', totalRequest)
-console.log('initialAmount from front', initialAmount )
-console.log('remainingBalance from front', remainingBalance )
+// console.log('totalRequest Number', totalRequest)
+// console.log('initialAmount from front', initialAmount )
+// console.log('remainingBalance from front', remainingBalance )
 return (
 
 

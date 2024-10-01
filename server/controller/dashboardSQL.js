@@ -37,7 +37,6 @@ dashboardSQL.remainingBalance = async (req, res, next) => {
     next()
   }catch(error) {
     console.error('Error fetching remainingBalance:', error); 
-    res.status(500).send('Error from remainingBalance middleware')
   }
 
 }
@@ -75,7 +74,14 @@ dashboardSQL.totalRequests = async (req, res, next) => {
 
 dashboardSQL.tierInfo = async (req, res, next) => {
   try{
-    const tierBreakdown = await query(`SELECT `)
+    const tierBreakdown = await query(`SELECT tier_name, COUNT(*) AS count FROM Tiers GROUP BY tier_name`)
+
+    console.log('tier breakdown', tierBreakdown)
+    res.locals.tierInfo = tierBreakdown
+    next();
+  } catch (error) {
+    console.error('Error fetching tier breakdown:', error); 
+    res.status(500).send('Error from tierInfo middleware')
   }
 }
 
