@@ -134,7 +134,10 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
     updateBudget(db, 'openai', selectedTierConfig.price);
 
     const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
+
     insertQuery.run('openai', prompt, selectedTierConfig.id);
+
+    console.log('Inserting query with tier_id:', selectedTierConfig.id);
 
     res.json({
       ...openaiData,

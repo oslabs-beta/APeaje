@@ -44,15 +44,20 @@ function selectTierBasedOnThreshold(apiName, thresholdType, value) {
   for (const threshold of thresholds) {
     // if budget threshold and value is above or equal to threshold
     if (thresholdType === 'budget' && value >= threshold.threshold) {
-      return config.apis[apiName].tiers[threshold.tier];
+      const selectedTier = config.apis[apiName].tiers[threshold.tier];
+      selectedTier.id = threshold.tier;
+      return selectedTier;
     // if time threshold and value is within the time range
     } else if (thresholdType === 'time' && value >= threshold.start && value < threshold.end) {
-      return config.apis[apiName].tiers[threshold.tier];
+      const selectedTier = config.apis[apiName].tiers[threshold.tier];
+      selectedTier.id = threshold.tier;
+      return selectedTier
     }
   }
   
-  // if no threshold is met, return the lowest tier
-  return config.apis[apiName].tiers['F'];
+  const lowestTier = config.apis[apiName].tiers['F'];
+  lowestTier.id = 'F';
+  return lowestTier;
 }
 
 function selectTierBasedOnBudget(db, apiName) {
