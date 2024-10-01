@@ -1,7 +1,9 @@
-
+// const setupDatabase = require('../database/sqlite.js');
+// const db = setupDatabase();
 const dashboardController = {};
-
 require('dotenv').config();
+
+// console.log('sqlite database', db)
 
 const { Pool } = require('pg');
 
@@ -34,6 +36,8 @@ dashboardController.lineGraph = async (req, res, next) => {
   res.locals.data = data.rows;
   next();
 }
+
+
 
 
 module.exports = dashboardController;

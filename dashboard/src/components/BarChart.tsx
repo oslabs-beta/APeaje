@@ -16,14 +16,14 @@ const BarChart = () => {
         // Ensure that the data is in the expected format;
         // For example, if the data needs transformation:
         const data2 = data1.map((d) => ({
-          time: new Date(d.time), // Adjust based on actual data structure
-          cost: Number(d.cost),
-          requests: Number(d.requests),
+          time: new Date(d.date), // Adjust based on actual data structure
+          cost: Number(d.total_spent),
+          requests: Number(d.number_of_requests),
         }));
-        console.log('Transformed data:', data1);
+        console.log('Transformed data:', data2);
         setData(data2);
       } catch (error) {
-        console.log('error found from fetchData');
+        console.log('error found from barChart fetchData');
       }
     };
 
@@ -71,10 +71,25 @@ const BarChart = () => {
     //Define axes
     const xAxis = d3
       .axisBottom(x)
-      .tickFormat(d3.timeFormat('%b %Y'))
-      .tickSize(0);
+      .tickFormat(d3.timeFormat('%m-%d-%Y'))
+      .tickSize(1);
     const yAxisLeft = d3.axisLeft(y1);
     const yAxisRight = d3.axisRight(y2);
+
+  // Append horizontal grid lines
+  svg.append('g')
+  .attr('class', 'grid')
+  .selectAll('line')
+  .data(y1.ticks()) // Use the ticks of the left y-axis
+  .enter()
+  .append('line')
+  .attr('x1', margin.left)
+  .attr('x2', width - margin.right)
+  .attr('y1', (d) => y1(d))
+  .attr('y2', (d) => y1(d))
+  .attr('stroke', '#ccc') // Color of the grid lines
+  .attr('stroke-dasharray', '2,2') // Dotted line style
+  .attr('stroke-opacity', 0.7); // Adjust opacity
 
     // Append x-axis
     svg
@@ -84,8 +99,8 @@ const BarChart = () => {
       .call(xAxis)
       .selectAll('text')
       .attr('class', 'axis-label')
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
+      .attr('transform', 'rotate(0)')
+      .style('text-anchor', 'end')
 
     // Append left y-axis for cost
     svg
@@ -93,10 +108,13 @@ const BarChart = () => {
       .attr('class', 'y-axis')
       .attr('transform', `translate(${margin.left}, 0)`)
       .call(yAxisLeft)
-      .append('text')
-      .attr('fill', '#000')
-      .attr('x', -50)
-      .attr('y', -40)
+
+      // Append label for left y-axis (Cost)
+      svg.append('text')
+      .attr('fill', 'skyblue')
+      .attr('class','axis-label')
+      .attr('x', 40)
+      .attr('y', 5)
       .attr('dy', '.25em')
       .attr('text-anchor', 'end')
       .text('Cost');
@@ -108,11 +126,11 @@ const BarChart = () => {
       .attr('transform', `translate(${width - margin.right}, 0)`)
       .call(yAxisRight)
       .append('text')
-      .attr('fill', '#000')
-      .attr('x', 50)
-      .attr('y', -40)
+      .attr('fill', 'skyblue')
+      .attr('x', 0)
+      .attr('y', 5)
       .attr('dy', '.25em')
-      .attr('text-anchor', 'end')
+      .attr('text-anchor', 'start')
       .text('Requests');
 
     // Append bars for cost
@@ -127,7 +145,8 @@ const BarChart = () => {
       .attr('y', (d) => y1(d.cost))
       .attr('width', x.bandwidth() / 2)
       .attr('height', (d) => height - margin.bottom - y1(d.cost))
-      .attr('fill', 'pink');
+      .attr('fill', 'pink')
+      
 
     // Append bars for requests
     svg
@@ -141,7 +160,7 @@ const BarChart = () => {
       .attr('y', (d) => y2(d.requests))
       .attr('width', x.bandwidth() / 2)
       .attr('height', (d) => height - margin.bottom - y2(d.requests))
-      .attr('fill', 'orange');
+      .attr('fill', 'white');
   }, [data]);
 
   // Create SVG Container

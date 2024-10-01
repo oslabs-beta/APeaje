@@ -16,7 +16,7 @@ const LineChart = () => {
                 // Ensure that the data is in the expected format;
                 // For example, if the data needs transformation:
                 const data2 = data1.map(d => ({
-                    time: new Date(d.time), // Adjust based on actual data structure
+                    time: new Date(d.date), // Adjust based on actual data structure
                     cost: Number(d.cost),
                     requests: Number(d.requests)
                 }));  
