@@ -71,7 +71,13 @@ dashboardSQL.totalRequests = async (req, res, next) => {
     }
 }
 
-// gives the break down of tiers with different type of 
+// gives the break down of tiers with different type of resolutions with cost 
+
+dashboardSQL.tierInfo = async (req, res, next) => {
+  try{
+    const tierBreakdown = await query(`SELECT `)
+  }
+}
 
 
 
