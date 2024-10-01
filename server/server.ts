@@ -20,11 +20,6 @@ app.use(express.static(path.resolve(__dirname, '../dist')));
 const db = setupDatabase();
 
 // console.log('sqlite db in server.tx', db)
-<<<<<<< HEAD:Server/server.ts
-=======
-
->>>>>>> Dev:server/server.ts
-
 
 const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
@@ -171,5 +166,5 @@ app.use((err, req, res, next) => {
   res.status(500).send({ error: err });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 2024;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

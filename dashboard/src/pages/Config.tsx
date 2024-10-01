@@ -37,7 +37,7 @@
                     <label>
                         Budget:
                         <input 
-                            className = "inputBuget"
+                            className = "inputBudget"
                             type="text"
                             value={inputBudget}
                             onChange={handleChange}
@@ -62,8 +62,4 @@
     };
     
     
-<<<<<<< HEAD
     export default Config;
-=======
-    export default Config;
->>>>>>> Dev

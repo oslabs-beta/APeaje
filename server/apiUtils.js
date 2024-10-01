@@ -36,7 +36,6 @@ function updateBudget(db, api_name, cost) {
   updateBudget.run(cost, cost, api_name);
 }
 
-
 function selectTierBasedOnThreshold(apiName, thresholdType, value) {
   const thresholds = config.apis[apiName].thresholds[thresholdType];
   
