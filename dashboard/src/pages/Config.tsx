@@ -62,8 +62,4 @@
     };
     
     
-<<<<<<< HEAD
     export default Config;
-=======
-    export default Config;
->>>>>>> Dev
