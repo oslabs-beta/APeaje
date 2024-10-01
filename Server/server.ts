@@ -3,7 +3,9 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const path = require('path');
-const dashboardController = require('./controller/dashboardController')
+// const dashboardController = require('./controller/dashboardController')
+
+const dashboardSQL = require('./controller/dashboardSQL')
 const setupDatabase = require('./database/sqlite.js');
  const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
 const config = require('../config.js');
@@ -18,9 +20,12 @@ app.use(cors());
 app.use(express.static(path.resolve(__dirname, '../dist')));
 const db = setupDatabase();
 
+// console.log('sqlite db in server.tx', db)
+
 
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
+  console.log('authHeader', authHeader)
   const token = authHeader && authHeader.split(' ')[1];
   if (token == null) return res.sendStatus(401);
 
@@ -35,15 +40,23 @@ app.get('/', (req, res) => {
   res.status(200).send('mainpage');
 });
 
-app.get('/dashboard/chart', (req, res, next) => {
+// app.get('/dashboard/chart', dashboardController.lineGraph, (req, res) =>{
+//   res.status(200).send(res.locals.data)
+// } )
 
-  next();
-},
-  dashboardController.lineGraph,
-  (req, res) => {
-    res.status(200).send(res.locals.data);
-  }
-)
+app.get('/dashboard/chart', dashboardSQL.barGraph, (req, res) =>{
+  res.status(200).send(res.locals.bargraph)
+} )
+app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req, res) => {
+  res.status(200).send(res.locals.initialAmount)
+})
+app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req, res) => {
+  res.status(200).send(res.locals.remainingBalance)
+})
+
+app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req, res) => {
+  res.status(200).send(res.locals.totalRequests)
+})
 
 app.get('/dashboard', (req, res) => {
   res
@@ -141,7 +154,7 @@ app.post('/generate-image', authenticateToken, async (req, res) => {
  * 404 handler
  */
 app.get('*', (req, res) => {
-  console.log('error finding url');
+  console.log('error finding url for 404 error');
   res.status(404).send('Not Found');
 });
 
