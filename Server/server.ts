@@ -1,4 +1,4 @@
-const express = require('express');
+import express, {Express, Request, Response, NextFunction } from 'express';
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -9,24 +9,23 @@ const setupDatabase = require('./database/sqlite.js');
 const config = require('../config.js');
 require('dotenv').config();
 
-const openaiApiKey = process.env.OPENAI_API_KEY;
+const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
 
-
-const app = express();
+const app: Express = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.resolve(__dirname, '../dist')));
 const db = setupDatabase();
 
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.sendStatus(403);
-    req.user = user;
+    req.body.user = user;
     next();
   });
 };
@@ -51,8 +50,7 @@ app.get('/dashboard', (req, res) => {
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
 });
 
-
-app.post('/api/register', async (req, res) => {
+app.post('/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -64,7 +62,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/login', async (req: Request, res: Response) => {
   const { username, password } = req.body;
   try {
     const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
@@ -85,7 +83,8 @@ app.post('/api/login', async (req, res) => {
 });
 
 
-app.post('/generate-image', authenticateToken, async (req, res) => {
+app.post('/generate-image', authenticateToken, async (req: Request, res: Response) => {
+  
   const { prompt, useTimeBasedTier } = req.body;
 
   try {
@@ -152,6 +151,5 @@ app.use((err, req, res, next) => {
   res.status(500).send({ error: err });
 });
 
-
-const PORT = process.env.PORT || 2024;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

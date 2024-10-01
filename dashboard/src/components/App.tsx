@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import LineChart from './LineChart';
-import BarChart from './BarChart';
-import Button from 'react-bootstrap/Button'
-import '../../public/style.css';
+import RealTimeChart from './RealTimeChart.tsx'
+import '../../public/style.css'
 
-const App = () => (
-
+const App = (): React.JSX.Element => {
+  return(
     <>
-     <h1>Dashboard</h1>
-     <BarChart />
-    </>
-) 
+      <h1>Dashboard</h1>
+      <RealTimeChart />
+  </>
+  )
+}
+
 
 export default App;

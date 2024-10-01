@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(express.static(path.resolve(__dirname,'dist')));
 app.use(cors());
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res) => {
   res.status(200).send('mainpage')
 });
 
@@ -29,10 +29,10 @@ const chartTest: chartType = [
 ]
 
 
-app.get('/dashboard/chart', (req, res) => {
+app.get('/dashboard/chart', (req: Request, res) => {
   res.status(200).send(chartTest)
 } )
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', (req: Request, res) => {
   res.status(200).sendFile(path.resolve(__dirname, './dashboard/public/dash.html'))
 });
 
@@ -58,7 +58,7 @@ const config: configType = {
 };
 
 
-app.post('/api/generate-image', async (req, res) => {
+app.post('/api/generate-image', async (req: Request, res) => {
   const { prompt } = req.body;
   
   // test for time of day
@@ -109,7 +109,7 @@ app.post('/api/generate-image', async (req, res) => {
  * 404 handler
  */
 /*
-app.get('*', (req, res) => {
+app.get('*', (req: Request, res) => {
   console.log('error finding url');
   res.status(404).send('Not Found');
 });
@@ -119,7 +119,7 @@ app.get('*', (req, res) => {
  * Global error handler
  */
 /*
-app.use((err, req, res, next) => {
+app.use((err, req: Request, res, next) => {
   console.log(err);
   console.log('hit global error');
 
