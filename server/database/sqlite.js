@@ -103,7 +103,7 @@ function setupDatabase() {
     }
 
     //  drop tables and start fresh
-    // dropTables();
+    //dropTables();
     createTables();
     insertTiers();
     initializeBudget()

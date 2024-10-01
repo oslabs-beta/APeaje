@@ -1,15 +1,29 @@
-import React, { useState } from 'react';
-import LineChart from './LineChart';
+import React from 'react';
 import BarChart from './BarChart';
-import Button from 'react-bootstrap/Button'
-import '../../public/style.css';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './AuthContext';
+import Login from './Login';
+import Register from './Register';
+import Dashboard from './Dashboard';
 
-const App = () => (
+const PrivateRoute: React.FC<{ element: React.ReactElement }> = ({ element }) => {
+    const { user } = useAuth();
+    return user ? element : <Navigate to="/login" />;
+};
 
-    <>
-     <h1>Dashboard</h1>
-     <BarChart />
-    </>
-) 
+const App: React.FC = () => {
+    return (
+        <AuthProvider>
+            <Router>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/dashboard" element={<PrivateRoute element={<Dashboard />} />} />
+                    <Route path="/" element={<Navigate to="/login" />} />
+                </Routes>
+            </Router>
+        </AuthProvider>
+    );
+};
 
 export default App;
