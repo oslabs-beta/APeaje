@@ -37,7 +37,7 @@
                     <label>
                         Budget:
                         <input 
-                            className = "inputBuget"
+                            className = "inputBudget"
                             type="text"
                             value={inputBudget}
                             onChange={handleChange}
