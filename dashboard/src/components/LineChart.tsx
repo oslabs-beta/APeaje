@@ -8,7 +8,7 @@ const LineChart = () => {
     useEffect(()=> {
         const fetchData = async() => {
             try{
-                const response = await fetch('http://localhost:5500/dashboard/chart')
+                const response = await fetch('dashboard/chart')
                 const data1 = await response.json();
 
                 console.log('data1', data1)
@@ -16,7 +16,7 @@ const LineChart = () => {
                 // Ensure that the data is in the expected format;
                 // For example, if the data needs transformation:
                 const data2 = data1.map(d => ({
-                    time: new Date(d.time), // Adjust based on actual data structure
+                    time: new Date(d.date), // Adjust based on actual data structure
                     cost: Number(d.cost),
                     requests: Number(d.requests)
                 }));  
@@ -32,26 +32,13 @@ const LineChart = () => {
     }, []);
 
 
-
-    // // useEffect(() => {
-    // //     //Connect to WebSocket server
-    // //     const socket = new WebSocket('ws://localhost:5500');
-
-    // //     socket.onmessage = (event) => {  // onmessage is same thing as socket.addEventListener("message", (event) = {})
-    // //         const newData = JSON.parse(event.data);
-    // //         setData((prevData) => [...prevData, newData].slice(-20));
-    // //         // updating previous data and keep last 20 points 
-    // //     }
-
-    // //     return () => socket.close();
-    // // }, []);
     console.log('current data', data)
 
     useEffect(() => {
         if (data.length > 0) {
             const svg = d3.select(svgRef.current);
-            const width = 800;
-            const height = 500;
+            const width = 400;
+            const height = 250;
             const margin = { top: 20, right: 30, bottom: 30, left: 40 };
 
             console.log('d3 max cost', d3.max(data, d => d.cost))
@@ -126,10 +113,10 @@ const LineChart = () => {
     }, [data]);
 
     return (
-        <>
-        <h2>Cost and Number of Requests Over Time</h2>
+        <div className = "line-chart">
+        <h6>Cost and Number of Requests Over Time</h6>
         <svg ref = {svgRef}></svg>
-        </>
+        </div>
     )
 };
 
