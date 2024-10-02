@@ -133,7 +133,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-test.db-shm
-test.db-wal
+*/test.db-shm
+*/test.db-wal
 
 .DS_Store
