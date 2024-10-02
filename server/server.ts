@@ -104,7 +104,7 @@ app.post('/login', async (req: Request, res: Response) => {
 });
 
 
-app.post('/generate-image', authenticateToken, async (req: Request, res: Response) => {
+app.post('/generate-image', async (req: Request, res: Response) => {
   
   const { prompt, useTimeBasedTier } = req.body;
 
