@@ -132,3 +132,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+test.db-shm
+test.db-wal
+
+.DS_Store
