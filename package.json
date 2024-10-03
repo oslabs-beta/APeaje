@@ -13,6 +13,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.45.2",
     "@types/react-router-dom": "^5.3.3",
+    "antd": "^5.21.2",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^11.2.1",
