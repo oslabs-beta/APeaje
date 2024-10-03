@@ -98,7 +98,7 @@ function setupDatabase() {
     
       for (const table of tables) {
         const rows = db.prepare(`SELECT * FROM ${table}`).all();
-        return rows;
+        result[table] =  rows;
       }
     
       console.log('Current Database Contents:');
@@ -110,7 +110,7 @@ function setupDatabase() {
     createTables();
     insertTiers();
     initializeBudget()
-    peekDatabase();
+    //peekDatabase();
     return db;
   }
 
