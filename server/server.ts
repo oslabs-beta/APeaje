@@ -1,14 +1,14 @@
 import express, {Express, Request, Response, NextFunction } from 'express';
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const path = require('path');
+import cors from 'cors';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import path from 'path';
 // const dashboardController = require('./controller/dashboardController')
 
 const dashboardSQL = require('./controller/dashboardSQL')
-const setupDatabase = require('./database/sqlite.js');
- const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
-const config = require('../config.js');
+import setupDatabase from './database/sqlite.ts';
+const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
+import config from '../config.js';
 require('dotenv').config();
 
 const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
@@ -164,12 +164,16 @@ app.get('*', (req, res) => {
 /**
  * Global error handler
  */
-app.use((err, req, res, next) => {
-  console.log(err);
-  console.log('hit global error');
-
-  res.status(500).send({ error: err });
-});
+app.use('/', (err: Error, req: Request, res: Response, _next: NextFunction) => {
+  const defaultErr = {
+    log: 'Express error handler caught unknown error',
+    status: 500,
+    message: { err: 'An error occurred' },
+  };
+  const errorObj = Object.assign({}, defaultErr, err);
+  console.log(errorObj.log);
+  return res.status(errorObj.status).json(errorObj.message);
+})
 
 const PORT = process.env.PORT || 2024;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
