@@ -67,7 +67,7 @@ app.get('/dashboard', (req:Request, res:Response) => {
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
 });
 
-// app.post('/configuration',configController.newBudget, (req:Request, res:Response) => {
+// app.post('/configuration',configController.updateBudget, (req:Request, res:Response) => {
 //   res.status(200).send('budget has been updated')
 // })
 

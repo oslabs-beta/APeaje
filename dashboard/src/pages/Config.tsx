@@ -199,7 +199,7 @@ import config from '../../../config.js'
                     <label>
                         Tiers:
                         <select className="tiers" value = {tiers} onChange={handleTiers}>
-                            <option value = "" className="tier-table">Select Tiers</option> 
+                            <option value="" className="tier-table">Select Tiers</option> 
                             {/* {generateTiers2()} */}
                         </select>
                         {/* <table>{generateTiers()}</table> */}

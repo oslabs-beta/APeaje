@@ -7,37 +7,32 @@ import React from 'react';
 // export the array of objects to the SideBar for each tab.
 // Define a TypeScript interface for the sidebar items
 // interface SidebarItem {
-//     title: string;
+//     label: string;
 //     // icon: string;
 //     link: string;
 // }
 
 
-export const SideBarComp = [
+export const sideBarComp = [
 
     {
-        title: "Dashboard", 
+        label: "Dashboard", 
         // icon: homeIcon,
         link: "/dashboard"
     },
     {
-        title: "Configuration", 
+        label: "Configuration", 
         // icon: configIcon,
         link: "/configuration"
     },
     {
-        title: "Manage Team", 
+        label: "Manage Team", 
         // icon: teamicon,
         link: "/manage"
     },
     {
-        title: "Profile", 
+        label: "Profile", 
         // icon: profileIcon,
         link: "/profile"
     }
 ]
-
-
-
-
-
