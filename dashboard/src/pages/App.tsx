@@ -8,8 +8,6 @@ import Manage from './Manage';
 import Profile from './Profile';
 import { Route, Routes } from 'react-router-dom'
 
-
-
 const App = () => (
     <div className = "App">
     <SideBar />
