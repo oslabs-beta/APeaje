@@ -1,16 +1,22 @@
 import express, {Express, Request, Response, NextFunction } from 'express';
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const path = require('path');
-// const dashboardController = require('./controller/dashboardController')
+import cors from 'cors';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import path from 'path';
+//import dashboardController from './controller/dashboardController'
+import dashboardSQL from './controller/dashboardSQL'
+import setupDatabase from './database/sqlite';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
 
-const dashboardSQL = require('./controller/dashboardSQL')
-const setupDatabase = require('./database/sqlite.js');
+import config from '../config';
+
 const configController = require('./controller/configController.ts')
-const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
-const config = require('../config.js');
+
 require('dotenv').config();
+
+console.log(setupDatabase)
+
+export const db = setupDatabase();
 
 const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
 
@@ -18,7 +24,11 @@ const app: Express = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.resolve(__dirname, '../dist')));
-const db = setupDatabase();
+
+// set up database
+const realDB = setupDatabase();
+
+const dummyDB = setupDatabase();
 
 // console.log('sqlite db in server.tx', db)
 
@@ -67,6 +77,14 @@ app.get('/dashboard', (req:Request, res:Response) => {
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
 });
 
+interface User {
+  id: number;
+  username: string;
+  password: string;
+  role: string;
+}
+
+
 app.post('/configuration', (req:Request, res:Response) => {
   res.status(200).send('budget has been updated')
 })
@@ -83,28 +101,39 @@ app.post('/register', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/login', async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  try {
-    const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
-    const user = getUser.get(username);
-    if (user) {
-      if (await bcrypt.compare(password, user.password)) {
-        const token = jwt.sign({ userId: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET);
-        res.json({ token, userId: user.id, role: user.role, message: 'Login successful' });
+
+  app.post('/login', async (req: Request, res: Response) => {
+    const { username, password } = req.body;
+    try {
+      const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
+      const user = getUser.get(username) as User | undefined;
+
+      if (user) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (isPasswordValid) {
+          const token = jwt.sign(
+            { userId: user.id, username: user.username, role: user.role },
+            process.env.JWT_SECRET as string
+          );
+          res.json({
+            token,
+            userId: user.id,
+            role: user.role,
+            message: 'Login successful',
+          });
+        } else {
+          res.status(401).json({ error: 'Invalid credentials' });
+        }
       } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(401).json({ error: 'User not found' });
       }
-    } else {
-      res.status(401).json({ error: 'User not found' });
+    } catch (error) {
+      res.status(500).json({ error: 'Error during login' });
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Error during login' });
-  }
-});
+  });
 
 
-app.post('/generate-image', authenticateToken, async (req: Request, res: Response) => {
+app.post('/generate-image', async (req: Request, res: Response) => {
   
   const { prompt, useTimeBasedTier } = req.body;
 
@@ -160,7 +189,7 @@ app.post('/generate-image', authenticateToken, async (req: Request, res: Respons
 /**
  * 404 handler
  */
-app.get('*', (req, res) => {
+app.get('*', (req: Request, res: Response) => {
   console.log('error finding url for 404 error');
   res.status(404).send('Not Found');
 });
@@ -168,12 +197,16 @@ app.get('*', (req, res) => {
 /**
  * Global error handler
  */
-app.use((err, req, res, next) => {
-  console.log(err);
-  console.log('hit global error');
-
-  res.status(500).send({ error: err });
-});
+app.use('/', (err: Error, req: Request, res: Response, _next: NextFunction) => {
+  const defaultErr = {
+    log: 'Express error handler caught unknown error',
+    status: 500,
+    message: { err: 'An error occurred' },
+  };
+  const errorObj = Object.assign({}, defaultErr, err);
+  console.log(errorObj.log);
+  return res.status(errorObj.status).json(errorObj.message);
+})
 
 const PORT = process.env.PORT || 2024;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, (): void => console.log(`Server running on port ${PORT}`));
