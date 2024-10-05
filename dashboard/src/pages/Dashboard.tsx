@@ -18,11 +18,11 @@ return (
         <Col>
             <LineChart />
         </Col>
-    </Row>
-    <Row>
         <Col>
             <PieChart />
         </Col>
+    </Row>
+    <Row>
         <Col>
             <BarChart />
         </Col>

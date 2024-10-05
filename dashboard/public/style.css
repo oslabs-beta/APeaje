@@ -138,24 +138,18 @@ box-shadow: 0 0 02 #FFFFFF;
     border-radius: 10px;
     padding: 10px;
 }
-
-.barChart {
+*/
+.barChartContainer {
         width: 1100px;
         height: 500px; 
-        background: rgba(61, 35, 35, 0.2);
-        backdrop-filter: blur(10px) saturate(150%);
-        box-sizing: border-box;
-        text-align: left;
-        box-shadow: 0px 4px 8px rgba(170, 133, 133, 0.2);;
-        border: 1px solid rgba(196, 152, 152, 0.5);
-        border-radius: 10px;
         padding: 30px;
-        margin: 0 auto;
-        justify-content: center;
-        align-items: center;
     }
 
+.barChart{
+    margin:30px;
+}
 
+/*
 //overview tracking
 .overview {
     display: flex;
