@@ -2,6 +2,7 @@
 import { GeneratedIdentifierFlags } from 'typescript';
 import { Table } from "antd";
 import config from '../../../config.js'
+import Display from '../components/Display'
 
 
     const Config = (): React.ReactNode => {
@@ -170,6 +171,7 @@ import config from '../../../config.js'
 
         return (
             <div className="dashboard">
+                <Display />
                 <form onSubmit={saveConfig}>
                     <label>
                         Budget:
