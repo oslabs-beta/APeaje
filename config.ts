@@ -1,4 +1,6 @@
-const config = {
+
+
+const config : any = {
   database: {
     filename: 'test.db',
     verbose: console.log
@@ -13,7 +15,7 @@ const config = {
         E: { model: 'dall-e-2', quality: 'standard', size: '512x512', price: 0.018 },
         F: { model: 'dall-e-2', quality: 'standard', size: '256x256', price: 0.016 }
       },
-      initialBudget: 100,
+      initialBudget: 0.2,
       thresholds: {
         budget: [
           { threshold: 80, tier: 'A' },
@@ -32,5 +34,4 @@ const config = {
     }
   }
 };
-
-module.exports = config;
+export default config;

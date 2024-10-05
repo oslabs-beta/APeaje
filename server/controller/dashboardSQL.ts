@@ -1,17 +1,21 @@
-const setupDatabase = require('../database/sqlite.js');
-const db = setupDatabase();
+import setupDatabase from '../database/sqlite';
+import { Request, Response, NextFunction } from 'express';
+import { Database } from 'better-sqlite3'
+import {db} from '../server'
+
+//const db: Database = setupDatabase();
 
 // console.log('sqlite database', db)
 
-const dashboardSQL = {}
+const dashboardSQL: any = {}
 
 
 // Example of a query method
-const query = (sql, params = []) => {
+const query  = (sql : string, params  = []) => {
   return db.prepare(sql).all(params)
 }
 
-dashboardSQL.barGraph = async (req, res, next) => {
+dashboardSQL.barGraph = async (req: Request, res: Response, next: NextFunction ) => {
 try{
 
 // Query to get budget and queries
@@ -27,7 +31,7 @@ res.locals.bargraph = budgetData;
 }}
 
 // give data to the front-end current remaining balance using Budget table
-dashboardSQL.remainingBalance = async (req, res, next) => {
+dashboardSQL.remainingBalance = async (req: Request, res: Response, next: NextFunction) => {
  // Query to get the remaining balance
   try {
     const remainingBalance = await query(`SELECT budget - total_spent AS remaining_balance FROM Budget`)
@@ -85,12 +89,4 @@ dashboardSQL.tierInfo = async (req, res, next) => {
   }
 }
 
-
-
-
-
-
-
-
-
-module.exports = dashboardSQL;
+export default dashboardSQL;

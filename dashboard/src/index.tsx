@@ -5,7 +5,7 @@ import App from './pages/App';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter as Router} from 'react-router-dom'
 
-const root = createRoot(document.getElementById('root'));
+const root : any = createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <Router>
@@ -14,3 +14,5 @@ root.render(
   </React.StrictMode>
   
 );
+
+export default root

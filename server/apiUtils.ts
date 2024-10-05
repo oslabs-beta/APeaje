@@ -1,4 +1,4 @@
-const config = require('../config');
+import config from '../config';
 
 function loadAPIConfigs(db) {
   const tiers = db.prepare('SELECT * FROM Tiers').all();
@@ -14,7 +14,7 @@ function loadAPIConfigs(db) {
       price: tier.cost
     };
   }
-  console.log('what is apiConfigs', apiCongfigs)
+  console.log('what is apiConfigs', apiConfigs)
   return apiConfigs;
   
 }
@@ -68,14 +68,14 @@ function selectTierBasedOnBudget(db, apiName) {
   return selectTierBasedOnThreshold(apiName, 'budget', remainingBudgetPercentage);
 }
 
-function selectTierBasedOnTime(apiName) {
+function selectTierBasedOnTime(db, apiName) {
   const currentHour = new Date().getHours();
 
   // select tier based on time threshold
   return selectTierBasedOnThreshold(apiName, 'time', currentHour);
 }
 
-module.exports = {
+export {
   loadAPIConfigs,
   checkBudget,
   updateBudget,
