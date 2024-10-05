@@ -4,10 +4,10 @@
     "target": "es2017",
     "module": "commonjs",
     "esModuleInterop": true,
-    "noImplicitAny": true,
-    "jsx": "react"
+    "noImplicitAny": false,
+    "jsx": "react",
 
   },
-  "include": ["/**/*.ts", "/**/*.tsx"],
+  "include": ["/**/*.ts", "/**/*.tsx", "server/apiUtils.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,9 +1,10 @@
-import Database from 'better-sqlite3';
+import DatabaseConstructor, {Database} from 'better-sqlite3';
 import path from 'path';
 import config from '../../config';
 
-function setupDatabase(): any {
-  const db = new Database(path.join(__dirname, config.database.filename), {
+
+const setupDatabase = (): Database => {
+  const db : Database = new DatabaseConstructor(path.join(__dirname, config.database.filename), {
     verbose: console.log,
   });
   db.pragma('journal_mode = WAL');
@@ -79,7 +80,7 @@ function setupDatabase(): any {
       VALUES (?, ?, ?, ?, ?)
     `);
 
-    type configType = {
+    interface Tier {
       model: string;
       quality: string;
       size: string;
@@ -88,7 +89,7 @@ function setupDatabase(): any {
 
     for (const [tierName, tierConfig] of Object.entries(
       config.apis.openai.tiers
-    ) as [tierName: string, tierConfig: configType][]) {
+    ) as [tierName: string, tierConfig: Tier][]) {
       try {
         insertTier.run(
           'openai',
@@ -117,11 +118,11 @@ function setupDatabase(): any {
 
   function peekDatabase(): void {
     const tables: string[] = ['Users', 'Tiers', 'Queries', 'Budget'];
-    const result: {} = {};
+    const result: any[][] = [];
 
     for (const table of tables) {
-      const rows = db.prepare(`SELECT * FROM ${table}`).all();
-      return rows;
+      const rows : any[] = db.prepare(`SELECT * FROM ${table}`).all();
+      result.push(rows);
     }
 
     console.log('Current Database Contents:');

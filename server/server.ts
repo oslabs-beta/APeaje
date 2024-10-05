@@ -3,13 +3,17 @@ import cors from 'cors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import path from 'path';
-// const dashboardController = require('./controller/dashboardController')
+//import dashboardController from './controller/dashboardController'
+import dashboardSQL from './controller/dashboardSQL'
+import setupDatabase from './database/sqlite';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
 
-const dashboardSQL = require('./controller/dashboardSQL')
-import setupDatabase from './database/sqlite.ts';
-const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('./apiUtils.js');
-import config from '../config.js';
+import config from '../config';
 require('dotenv').config();
+
+console.log(setupDatabase)
+
+export const db = setupDatabase();
 
 const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
 
@@ -17,7 +21,11 @@ const app: Express = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.resolve(__dirname, '../dist')));
-const db = setupDatabase();
+
+// set up database
+const realDB = setupDatabase();
+
+const dummyDB = setupDatabase();
 
 // console.log('sqlite db in server.tx', db)
 
@@ -34,7 +42,7 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response ) => {
   res.status(200).send('mainpage');
 });
 
@@ -42,30 +50,38 @@ app.get('/', (req, res) => {
 //   res.status(200).send(res.locals.data)
 // } )
 
-app.get('/dashboard/chart', dashboardSQL.barGraph, (req, res) =>{
+app.get('/dashboard/chart', dashboardSQL.barGraph, (req: Request, res: Response) =>{
   res.status(200).send(res.locals.bargraph)
 } )
-app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req, res) => {
+app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req: Request, res: Response) => {
   res.status(200).send(res.locals.initialAmount)
 })
-app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req, res) => {
+app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req: Request, res: Response) => {
   res.status(200).send(res.locals.remainingBalance)
 })
 
-app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req, res) => {
+app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req: Request, res: Response) => {
   res.status(200).send(res.locals.tierInfo)
 })
 
-app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req, res) => {
+app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req: Request, res: Response) => {
   res.status(200).send(res.locals.totalRequests)
 })
 
 
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', (req: Request, res: Response) => {
   res
     .status(200)
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
 });
+
+interface User {
+  id: number;
+  username: string;
+  password: string;
+  role: string;
+}
+
 
 app.post('/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;
@@ -79,25 +95,36 @@ app.post('/register', async (req: Request, res: Response) => {
   }
 });
 
-app.post('/login', async (req: Request, res: Response) => {
-  const { username, password } = req.body;
-  try {
-    const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
-    const user = getUser.get(username);
-    if (user) {
-      if (await bcrypt.compare(password, user.password)) {
-        const token = jwt.sign({ userId: user.id, username: user.username, role: user.role }, process.env.JWT_SECRET);
-        res.json({ token, userId: user.id, role: user.role, message: 'Login successful' });
+
+  app.post('/login', async (req: Request, res: Response) => {
+    const { username, password } = req.body;
+    try {
+      const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
+      const user = getUser.get(username) as User | undefined;
+
+      if (user) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (isPasswordValid) {
+          const token = jwt.sign(
+            { userId: user.id, username: user.username, role: user.role },
+            process.env.JWT_SECRET as string
+          );
+          res.json({
+            token,
+            userId: user.id,
+            role: user.role,
+            message: 'Login successful',
+          });
+        } else {
+          res.status(401).json({ error: 'Invalid credentials' });
+        }
       } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(401).json({ error: 'User not found' });
       }
-    } else {
-      res.status(401).json({ error: 'User not found' });
+    } catch (error) {
+      res.status(500).json({ error: 'Error during login' });
     }
-  } catch (error) {
-    res.status(500).json({ error: 'Error during login' });
-  }
-});
+  });
 
 
 app.post('/generate-image', async (req: Request, res: Response) => {
@@ -156,7 +183,7 @@ app.post('/generate-image', async (req: Request, res: Response) => {
 /**
  * 404 handler
  */
-app.get('*', (req, res) => {
+app.get('*', (req: Request, res: Response) => {
   console.log('error finding url for 404 error');
   res.status(404).send('Not Found');
 });
@@ -176,4 +203,4 @@ app.use('/', (err: Error, req: Request, res: Response, _next: NextFunction) => {
 })
 
 const PORT = process.env.PORT || 2024;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, (): void => console.log(`Server running on port ${PORT}`));
