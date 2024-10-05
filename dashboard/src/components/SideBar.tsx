@@ -1,34 +1,43 @@
-import React, {useState} from 'react'
-import '../../public/style.css'
-import {SideBarComp} from './SideBarComp'
+import React, {useState} from 'react';
+import '../../public/style.css';
+import {sideBarComp} from './SideBarComp';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import type { MenuProps } from 'antd';
+import { Menu } from 'antd';
 const SideBar = () => {
     const location = useLocation(); // Hook to get the current route
     const navigate = useNavigate(); // Hook to navigate
 
+    type MenuItem = Required<MenuProps>['items'][number];
+
+    const items: MenuItem[] = [];
+    for (let i = 0; i < sideBarComp.length; i++) {
+        const item = sideBarComp[i];
+        items.push({
+            key: item.link,
+            label: (<div>{item.label}</div>)
+        });
+    }
+
+
+    const onClick: MenuProps['onClick'] = (e): void => {
+        console.log('click ', e);
+        navigate(e.key);
+    };
+
+    interface LevelKeysProps {
+        key?: string;
+        children?: LevelKeysProps[];
+    }
 
     return (
-        <div className = "sideBar">
-            <ul className = "sidebarList">
-        {SideBarComp.map((val, key) => (
-            <li key={key} 
-                className = {`listBox ${location.pathname === val.link ? 'active' : '' }`}
-                onClick={()=> navigate(val.link)}> 
-            {/* <div>{val.icon}</div>{" "} */}
-            <div>{val.title}</div>
-            </li>
-            // <div to= `${data.link}`> 
-            //     {data.icon} 
-            //     {data.title}
-            // </div>
-        ))}
-
-    </ul>
-        </div>
+        <Menu
+            mode="inline"
+            style={{height: '100%' }}
+            items={items}
+            onClick={onClick}
+        />
     )
-
 }
-
 
 export default SideBar
