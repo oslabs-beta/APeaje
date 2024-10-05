@@ -16,7 +16,7 @@ const SideBar = () => {
         items.push({
             key: i,
             label: (<div onClick={()=> navigate(item.link)}>{item.label}</div>)
-        })
+        });
     }
 
     interface LevelKeysProps {
@@ -27,7 +27,7 @@ const SideBar = () => {
     return (
         <Menu
             mode="inline"
-            style={{ width: '256px', height: '100vh', position: 'fixed' }}
+            style={{height: '100%' }}
             items={items}
         />
     )
