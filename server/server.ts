@@ -7,6 +7,8 @@ import path from 'path';
 import dashboardSQL from './controller/dashboardSQL'
 import setupDatabase from './database/sqlite';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
+import configController from './controller/configController.ts';
+
 
 import config from '../config';
 require('dotenv').config();
@@ -82,6 +84,9 @@ interface User {
   role: string;
 }
 
+app.post('/configuration', (req:Request, res:Response) => {
+  res.status(200).send('budget has been updated')
+})
 
 app.post('/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;
