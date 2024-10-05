@@ -8,7 +8,7 @@ const Dashboard: React.FC = () => {
     const { logout } = useAuth();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
+    const handleLogout = (): void => {
         logout();
         navigate('/login');
     };

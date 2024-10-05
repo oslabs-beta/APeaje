@@ -5,8 +5,7 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "noImplicitAny": false,
-    "jsx": "react"
-
+    "jsx": "react",
   },
   "include": ["/**/*.ts", "/**/*.tsx"],
   "exclude": ["node_modules"]

@@ -1,10 +1,15 @@
 * {
     font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-    color: var(--pri-white);
+    /* color: var(--pri-white); */
+    color: white;
     background-color: var(var(--pri-black))
 }
 
 /* theme color */
+
+.tiersTable{
+    color: black;
+}
 
 :root {
 --pri-black : #141416; 

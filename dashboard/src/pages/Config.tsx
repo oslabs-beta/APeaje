@@ -203,7 +203,7 @@ import config from '../../../config.js'
                             {/* {generateTiers2()} */}
                         </select>
                         {/* <table>{generateTiers()}</table> */}
-                        <Table rowSelection={{type:'radio', ...rowSelection}} dataSource={tierGroup} columns={columns} />;
+                        <Table className='tiersTable' rowSelection={{type:'radio', ...rowSelection}} dataSource={tierGroup} columns={columns} />;
                     </label>
 
                     <label>

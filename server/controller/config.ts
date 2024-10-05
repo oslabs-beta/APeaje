@@ -23,7 +23,8 @@ const query = (sql, params = []) => {
       SET budget = ?
       WHERE api_name = ?`)
 
-      updateBudget.run(data.budget, )
+      console.log()
+      // updateBudget.run(data.budget)
 
       next()
     } catch(error) {

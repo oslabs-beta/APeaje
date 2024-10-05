@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
-const BarChart = () => {
-  const [data, setData] = useState([]);
-  const svgRef = useRef(null);
+interface ChartData {
+  time: Date;
+  cost: number;
+  requests: number;
+}
+
+const BarChart: React.FC = () => {
+  // need to define the return type of value in array, but also the structure 
+  const [data, setData] = useState<ChartData[]>([]);
+  //SVGSVGElement type is part of the TypeScript DOM library, which provides type definitions for the standard DOM API, including various SVG elements.
+  const svgRef = useRef<SVGSVGElement | null >(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -15,7 +23,7 @@ const BarChart = () => {
 
         // Ensure that the data is in the expected format;
         // For example, if the data needs transformation:
-        const data2 = data1.map((d) => ({
+        const data2: ChartData[] = data1.map((d:any) => ({
           time: new Date(d.date), // Adjust based on actual data structure
           cost: Number(d.total_spent),
           requests: Number(d.number_of_requests),
