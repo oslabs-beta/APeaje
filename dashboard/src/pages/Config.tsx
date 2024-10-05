@@ -1,7 +1,7 @@
  import React, {useEffect, useState} from 'react'
 import { GeneratedIdentifierFlags } from 'typescript';
 import { Table } from "antd";
-import config from '../../../config.js'
+import config from '../../../config'
 import Display from '../components/Display'
 
 
