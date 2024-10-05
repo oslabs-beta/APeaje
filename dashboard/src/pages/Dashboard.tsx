@@ -28,7 +28,6 @@ return (
         </Col>
     </Row>
 
-    
 
     {/* dropdown menu for different chart */}
     {/* <select className="dropdown" value = {selectedValue} onChange={(e)=> setSelectedValue(e.target.value)}>

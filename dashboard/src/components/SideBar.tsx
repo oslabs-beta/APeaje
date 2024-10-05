@@ -14,10 +14,16 @@ const SideBar = () => {
     for (let i = 0; i < sideBarComp.length; i++) {
         const item = sideBarComp[i];
         items.push({
-            key: i,
-            label: (<div onClick={()=> navigate(item.link)}>{item.label}</div>)
+            key: item.link,
+            label: (<div>{item.label}</div>)
         });
     }
+
+
+    const onClick: MenuProps['onClick'] = (e): void => {
+        console.log('click ', e);
+        navigate(e.key);
+    };
 
     interface LevelKeysProps {
         key?: string;
@@ -29,6 +35,7 @@ const SideBar = () => {
             mode="inline"
             style={{height: '100%' }}
             items={items}
+            onClick={onClick}
         />
     )
 }
