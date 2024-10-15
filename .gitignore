@@ -133,6 +133,9 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+server/database/test.db-shm
+server/database/test.db-wal
+
 */test.db-shm
 */test.db-wal
 

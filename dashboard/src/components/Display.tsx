@@ -1,66 +1,50 @@
 import React, {useState , useEffect, useRef } from 'react'
 
-const Display = () => {
+const Display: React.FC = () => {
+
+    // define the type of return state after API
+    interface TotalRequest {
+        total_requests: number;
+    }
+
+    interface InitialAmount {
+        budget: number;
+    }
+
+    interface RemainingBalance {
+        remaining_balance: number;
+    }
 
 // calling data for current threshold amount, remaining aount, total request
-    const [totalRequest, setTotalRequest] = useState({total_requests: 0})
-    const [initialAmount, setInitialAmount] = useState({budget:0})
-    const [remainingBalance, setRemainingBalance] = useState({remaining_balance: 0})
+    const [totalRequest, setTotalRequest] = useState<TotalRequest>({total_requests: 0})
+    const [initialAmount, setInitialAmount] = useState<InitialAmount>({budget: 0})
+    const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({remaining_balance: 0})
     const [budget, setBudget] = useState({budget: 0})
 
 
     useEffect(() => {
-        const numberOfRequest = async () => {
-            try{
-                const response = await fetch('/dashboard/totalRequests');
-                const number = await response.json();
+        const fetchData = async () => {
+            try {
+                const numberOfRequestResponse = await fetch('/dashboard/totalRequests');
+                const numberOfRequest: TotalRequest[] = await numberOfRequestResponse.json();
+                setTotalRequest(numberOfRequest[0]); // { total_requests:5 }
+            
+                const initialValueResponse = await fetch('/dashboard/initialAmount');
+                const initialValue: InitialAmount[] = await initialValueResponse.json()
+                setInitialAmount(initialValue[0]); // {budget: 0}
 
-                // console.log('number of Request in the Display function', number)
-                
-             
-                setTotalRequest(number[0]) // {total_requests: 5}
+                const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
+                const remainingBalance: RemainingBalance[] = await remainingBalanceResponse.json();
+                setRemainingBalance(remainingBalance[0])
 
             } catch (error) {
-                console.log('error found from frontend fetching totalRequest')
+                console.error('Error fetching data:', error);
             }
-        }
-        
-        const initialValue = async () => {
-            try {
-         const response = await fetch('/dashboard/initialAmount')
-         const initial = await response.json()
+         } 
+        fetchData();
+    },[]);
 
-        //  console.log('checking initialAmount', initial) //{ budget: 100 }
-         setInitialAmount(initial[0])
-        } catch(error) {
-            console.log('error found from frontend fetching initialAmount')
-        }
-        }
-
-        const remainingBalance = async () => {
-            try{
-                const response = await fetch('/dashboard/remaining_balance');
-                const remaining = await response.json()
-
-                // console.log('remaining balance from front', remaining)
-
-                setRemainingBalance(remaining[0])
-            }catch(error) {
-                console.log('error found from frontend fetching remainingBalance')
-            }
-        }
-        
-        numberOfRequest();
-        initialValue();
-        remainingBalance ()
-    },[])
-
-// console.log('totalRequest Number', totalRequest)
-// console.log('initialAmount from front', initialAmount )
-// console.log('remainingBalance from front', remainingBalance )
-return (
-
-
+    return (
 <div className = "overview">
     <div className = "item budget">
         <p>Budget</p>

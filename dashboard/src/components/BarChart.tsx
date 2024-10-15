@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 
-const BarChart = () => {
-  const [data, setData] = useState([]);
-  const svgRef = useRef(null);
+interface ChartData {
+  time: Date;
+  cost: number;
+  requests: number;
+}
+
+const BarChart: React.FC = () => {
+  // need to define the return type of value in array, but also the structure 
+  const [data, setData] = useState<ChartData[]>([]);
+  //SVGSVGElement type is part of the TypeScript DOM library, which provides type definitions for the standard DOM API, including various SVG elements.
+  const svgRef = useRef<SVGSVGElement | null >(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -15,7 +23,7 @@ const BarChart = () => {
 
         // Ensure that the data is in the expected format;
         // For example, if the data needs transformation:
-        const data2 = data1.map((d) => ({
+        const data2: ChartData[] = data1.map((d:any) => ({
           time: new Date(d.date), // Adjust based on actual data structure
           cost: Number(d.total_spent),
           requests: Number(d.number_of_requests),
@@ -41,7 +49,7 @@ const BarChart = () => {
     const height = 400;
 
     svg.attr('width', width).attr('height', height);
-    const margin = { top: 20, right: 40, bottom: 50, left: 40 };
+    const margin = { top: 30, right: 45, bottom: 50, left: 40 };
 
     svg.selectAll('*').remove(); // Clear previous contents
 
@@ -55,6 +63,7 @@ const BarChart = () => {
       .scaleBand()
       .domain(data.map((d) => d.time))
       .range([margin.left, width - margin.right])
+      .round(true)
       .padding(0.1);
 
     // Declare the y (vertical postio)
@@ -76,20 +85,20 @@ const BarChart = () => {
     const yAxisLeft = d3.axisLeft(y1);
     const yAxisRight = d3.axisRight(y2);
 
-  // Append horizontal grid lines
-  svg.append('g')
-  .attr('class', 'grid')
-  .selectAll('line')
-  .data(y1.ticks()) // Use the ticks of the left y-axis
-  .enter()
-  .append('line')
-  .attr('x1', margin.left)
-  .attr('x2', width - margin.right)
-  .attr('y1', (d) => y1(d))
-  .attr('y2', (d) => y1(d))
-  .attr('stroke', '#ccc') // Color of the grid lines
-  .attr('stroke-dasharray', '2,2') // Dotted line style
-  .attr('stroke-opacity', 0.7); // Adjust opacity
+    // Append horizontal grid lines
+    svg.append('g')
+    .attr('class', 'grid')
+    .selectAll('line')
+    .data(y1.ticks()) // Use the ticks of the left y-axis
+    .enter()
+    .append('line')
+    .attr('x1', margin.left)
+    .attr('x2', width - margin.right)
+    .attr('y1', (d) => y1(d))
+    .attr('y2', (d) => y1(d))
+    .attr('stroke', '#ccc') // Color of the grid lines
+    .attr('stroke-dasharray', '2,2') // Dotted line style
+    .attr('stroke-opacity', 0.7); // Adjust opacity
 
     // Append x-axis
     svg
@@ -114,7 +123,7 @@ const BarChart = () => {
       .attr('fill', 'skyblue')
       .attr('class','axis-label')
       .attr('x', 40)
-      .attr('y', 5)
+      .attr('y', 15)
       .attr('dy', '.25em')
       .attr('text-anchor', 'end')
       .text('Cost');
@@ -128,7 +137,7 @@ const BarChart = () => {
       .append('text')
       .attr('fill', 'skyblue')
       .attr('x', 0)
-      .attr('y', 5)
+      .attr('y', 15)
       .attr('dy', '.25em')
       .attr('text-anchor', 'start')
       .text('Requests');
@@ -164,9 +173,9 @@ const BarChart = () => {
   }, [data]);
 
   return (
-    <div className = "barChart">
+    <div className = "barChartContainer">
       <h6>Cost and Number of Requests Over Time</h6>
-      <svg className="bar-chart" ref={svgRef}></svg>
+      <svg className="barChart" ref={svgRef}></svg>
     </div>
   );
 };
