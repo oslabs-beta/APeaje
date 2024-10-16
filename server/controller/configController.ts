@@ -1,8 +1,11 @@
 import express, {Express, Request, Response, NextFunction } from 'express';
+import {db} from '../server';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from '../apiUtils';
 
-const setupDatabase = require('../database/sqlite.js');
-const db = setupDatabase();
-const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('../apiUtils.js');
+// const setupDatabase = require('../database/sqlite.js');
+// const db = setupDatabase();
+
+//const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('../apiUtils.js');
 
 const query = (sql, params = []) => {
     return db.prepare(sql).all(params)
@@ -23,7 +26,8 @@ const query = (sql, params = []) => {
       SET budget = ?
       WHERE api_name = ?`)
 
-      updateBudget.run(data.budget, )
+      console.log()
+      // updateBudget.run(data.budget)
 
       next()
     } catch(error) {

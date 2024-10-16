@@ -6,12 +6,17 @@
   "scripts": {
     "start": "nodemon server/server.ts & webpack-dev-server",
     "dev": "nodemon server/server.ts",
+    "dash": "webpack-dev-server",
     "build": "webpack --mode production"
   },
   "author": "Mobius Collective",
   "license": "MIT",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.2",
+    "@types/bcrypt": "^5.0.2",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/cors": "^2.8.17",
+    "@types/jsonwebtoken": "^9.0.7",
     "@types/react-router-dom": "^5.3.3",
     "antd": "^5.21.2",
     "bcrypt": "^5.1.1",
