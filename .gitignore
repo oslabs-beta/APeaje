@@ -142,3 +142,19 @@ dist
 server/database/test.db-shm
 server/database/test.db-wal
 >>>>>>> bb11d08 (running on mickeys comp)
+
+server/database/test.db-shm
+server/database/test.db-wal
+
+*/test.db-shm
+*/test.db-wal
+
+.DS_Store
+
+server/database/test.db-shm
+server/database/test.db-wal
+
+*/test.db-shm
+*/test.db-wal
+
+.DS_Store
