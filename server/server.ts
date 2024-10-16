@@ -89,7 +89,7 @@ app.post('/configuration', (req:Request, res:Response) => {
   res.status(200).send('budget has been updated')
 })
 
-app.post('/register', async (req: Request, res: Response) => {
+app.post('/api/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -102,7 +102,7 @@ app.post('/register', async (req: Request, res: Response) => {
 });
 
 
-  app.post('/login', async (req: Request, res: Response) => {
+  app.post('/api/login', async (req: Request, res: Response) => {
     const { username, password } = req.body;
     try {
       const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
