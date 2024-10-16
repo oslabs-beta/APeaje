@@ -7,11 +7,10 @@ import path from 'path';
 import dashboardSQL from './controller/dashboardSQL'
 import setupDatabase from './database/sqlite';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
+import configController from './controller/configController';
+
 
 import config from '../config';
-
-const configController = require('./controller/configController.ts')
-
 require('dotenv').config();
 
 console.log(setupDatabase)
@@ -45,7 +44,7 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-app.get('/', (req:Request, res:Response) => {
+app.get('/', (req: Request, res: Response ) => {
   res.status(200).send('mainpage');
 });
 
@@ -53,25 +52,26 @@ app.get('/', (req:Request, res:Response) => {
 //   res.status(200).send(res.locals.data)
 // } )
 
-app.get('/dashboard/chart', dashboardSQL.barGraph, (req:Request, res:Response) =>{
+app.get('/dashboard/chart', dashboardSQL.barGraph, (req: Request, res: Response) =>{
   res.status(200).send(res.locals.bargraph)
 } )
-app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req:Request, res:Response) => {
+app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req: Request, res: Response) => {
   res.status(200).send(res.locals.initialAmount)
 })
-app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req:Request, res:Response) => {
+app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req: Request, res: Response) => {
   res.status(200).send(res.locals.remainingBalance)
 })
 
-app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req:Request, res:Response) => {
+app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req: Request, res: Response) => {
   res.status(200).send(res.locals.tierInfo)
 })
 
-app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req:Request, res:Response) => {
+app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req: Request, res: Response) => {
   res.status(200).send(res.locals.totalRequests)
 })
 
-app.get('/dashboard', (req:Request, res:Response) => {
+
+app.get('/dashboard', (req: Request, res: Response) => {
   res
     .status(200)
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
@@ -84,12 +84,11 @@ interface User {
   role: string;
 }
 
-
 app.post('/configuration', (req:Request, res:Response) => {
   res.status(200).send('budget has been updated')
 })
 
-app.post('/register', async (req: Request, res: Response) => {
+app.post('/api/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -102,7 +101,7 @@ app.post('/register', async (req: Request, res: Response) => {
 });
 
 
-  app.post('/login', async (req: Request, res: Response) => {
+  app.post('/api/login', async (req: Request, res: Response) => {
     const { username, password } = req.body;
     try {
       const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
