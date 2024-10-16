@@ -1,12 +1,10 @@
-// src/database/database.ts
-
 import DatabaseConstructor, { Database } from 'better-sqlite3';
 import path from 'path';
 import config from '../../config';
 import { Request, Response, NextFunction } from 'express';
 
-// Interface for our database controller
-interface DatabaseController {
+// interface for our database controller
+export interface DatabaseController {
     db: Database;
     initialize: () => void;
     reset: () => void;
@@ -67,7 +65,7 @@ const insertTiers = (db: Database): void => {
                 tierName,
                 JSON.stringify(tierConfig),
                 JSON.stringify(config.apis.openai.thresholds),
-                tierConfig.price
+                config.apis.openai.tiers.price
             );
         } catch (error) {
             console.error(`Error inserting tier ${tierName}:`, error);
@@ -75,7 +73,7 @@ const insertTiers = (db: Database): void => {
     }
 };
 
-// Function to initialize budget
+//   initialize budget
 const initializeBudget = (db: Database): void => {
     const insertBudget = db.prepare(`
     INSERT OR IGNORE INTO Budget (api_name, budget)
@@ -84,7 +82,18 @@ const initializeBudget = (db: Database): void => {
     insertBudget.run('openai', config.apis.openai.initialBudget);
 };
 
-// Function to create database controller
+function logDatabaseContent(db: Database): void {
+    const tables = ['Users', 'Budget', 'Tiers', 'Queries'];
+
+    tables.forEach(table => {
+        console.log(`\n--- ${table} Table Content ---`);
+        const rows = db.prepare(`SELECT * FROM ${table}`).all();
+        console.table(rows);
+    });
+}
+
+
+//  function to create database controller
 const createDatabaseController = (dbPath: string): DatabaseController => {
     const db: Database = new DatabaseConstructor(dbPath, {
         verbose: console.log,
@@ -97,6 +106,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
             createTables(db);
             insertTiers(db);
             initializeBudget(db);
+            logDatabaseContent(db);
         },
         reset: () => {
             const tables: string[] = ['Queries', 'Tiers', 'Budget', 'Users'];
@@ -106,6 +116,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
             createTables(db);
             insertTiers(db);
             initializeBudget(db);
+            logDatabaseContent(db);
         },
         close: () => {
             db.close();
@@ -113,7 +124,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
     };
 };
 
-// Function to initialize database from scratch
+// initialize database from scratch
 export const initializeDatabase = (): DatabaseController => {
     const dbPath = path.join(__dirname, config.database.filename);
     const controller = createDatabaseController(dbPath);
@@ -121,18 +132,18 @@ export const initializeDatabase = (): DatabaseController => {
     return controller;
 };
 
-// Function to connect to existing database
+//   connect to existing database
 export const connectDatabase = (): DatabaseController => {
     const dbPath = path.join(__dirname, config.database.filename);
     return createDatabaseController(dbPath);
 };
 
-// Function to reset database
+//  to reset database
 export const resetDatabase = (controller: DatabaseController): void => {
     controller.reset();
 };
 
-// Middleware to attach database to res.locals
+//  attach database to res.locals
 export const databaseMiddleware = (controller: DatabaseController) => (
     req: Request,
     res: Response,
@@ -144,7 +155,39 @@ export const databaseMiddleware = (controller: DatabaseController) => (
 
 // SQLite controller for common operations
 export const sqliteController = {
+    // Executes a query and returns all results
     query: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).all(params),
+
+    // Executes a query that modifies the database (INSERT, UPDATE, DELETE)
     run: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).run(params),
+
+    // Executes a query and returns a single result
     get: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).get(params),
+};
+
+//  examples:
+
+// 1 querying multiple rows
+const getAllUsers = (db: Database) => {
+    return sqliteController.query(db, 'SELECT * FROM Users');
+};
+
+// 2 inserting a new record
+const addNewUser = (db: Database, username: string, password: string, role: string) => {
+    return sqliteController.run(db, 'INSERT INTO Users (username, password, role) VALUES (?, ?, ?)', [username, password, role]);
+};
+
+// 3 updating a record
+const updateUserRole = (db: Database, userId: number, newRole: string) => {
+    return sqliteController.run(db, 'UPDATE Users SET role = ? WHERE id = ?', [newRole, userId]);
+};
+
+// 4 getting a single record
+const getUserById = (db: Database, userId: number) => {
+    return sqliteController.get(db, 'SELECT * FROM Users WHERE id = ?', [userId]);
+};
+
+// 5 deleting a record
+const deleteUser = (db: Database, userId: number) => {
+    return sqliteController.run(db, 'DELETE FROM Users WHERE id = ?', [userId]);
 };
