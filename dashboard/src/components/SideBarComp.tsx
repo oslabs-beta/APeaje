@@ -34,5 +34,10 @@ export const sideBarComp = [
         label: "Profile", 
         // icon: profileIcon,
         link: "/profile"
+    },
+    {
+        label: "Login", 
+        // icon: profileIcon,
+        link: "/login"
     }
 ]

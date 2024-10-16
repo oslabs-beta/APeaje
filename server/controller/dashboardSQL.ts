@@ -18,6 +18,7 @@ const query  = (sql : string, params  = []) => {
 dashboardSQL.barGraph = async (req: Request, res: Response, next: NextFunction ) => {
 try{
 
+
 // Query to get budget and queries
 const budgetData = await query(`SELECT DATE(Q.timestamp) AS date, SUM(B.total_spent) AS total_spent, COUNT(Q.id) AS number_of_requests FROM Queries Q JOIN Budget B ON Q.api_name = B.api_name GROUP BY DATE(Q.timestamp) ORDER BY DATE(Q.timestamp)`)
 
