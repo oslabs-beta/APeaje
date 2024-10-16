@@ -12,28 +12,28 @@ import Display from '../components/Display'
         const [tiers, setTiers] = useState('')
         const [threshold, setThreshold] = useState('')
 
-        const handleChange = (e):void => {
-            setInputBudget(e.target.value)
+        const handleChange = (e: React.SyntheticEvent):void => {
+            setInputBudget((e.target as HTMLInputElement).value)
         }
 
-        const handleStartTime= (e):void => {
-            setStartTime(e.target.value)
+        const handleStartTime= (e: React.SyntheticEvent):void => {
+            setStartTime((e.target as HTMLInputElement).value)
         }
 
-        const handleEndTime = (e):void => {
-            setEndTime(e.target.value)
+        const handleEndTime = (e: React.SyntheticEvent):void => {
+            setEndTime((e.target as HTMLInputElement).value)
         }
 
-        const handleTiers = (e):void => {
-            setTiers(e.target.value)
+        const handleTiers = (e: React.SyntheticEvent):void => {
+            setTiers((e.target as HTMLInputElement).value)
         }
 
-        const handleThreshold = (e):void => {
-            setThreshold(e.target.value)
+        const handleThreshold = (e: React.SyntheticEvent):void => {
+            setThreshold((e.target as HTMLInputElement).value)
         }
     
          // Handle form submission
-         const saveConfig = (e) => {
+         const saveConfig = (e: React.SyntheticEvent) => {
             e.preventDefault(); // Prevent the default form submission
     
             // Validation (optional)
