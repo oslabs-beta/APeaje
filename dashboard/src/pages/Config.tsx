@@ -5,6 +5,8 @@ import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
 import { DeleteFilled } from '@ant-design/icons';
+import { Input } from "antd";
+
 
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState('');
@@ -150,51 +152,50 @@ const Config = (): React.ReactNode => {
     return hours;
   };
 
-  const deleteTier = (tierId) => {
-    setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
-  };
+        const deleteTier = (tierId): void => {
+            setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
+        }
 
-  const columns: TableProps<configType>['columns'] = [
-    {
-      title: 'Tier',
-      dataIndex: 'id',
-      key: 'id',
-    },
-    {
-      title: 'Model',
-      dataIndex: 'model',
-      key: 'model',
-    },
-    {
-      title: 'Quality',
-      dataIndex: 'quality',
-      key: 'quality',
-    },
-    {
-      title: 'Size',
-      dataIndex: 'size',
-      key: 'size',
-    },
-    {
-      title: 'Price',
-      dataIndex: 'price',
-      key: 'price',
-    },
-    {
-      title: 'Delete',
-      key: 'delete',
-      render: (_, tierInfo) => {
-        return (
-          <Button
-            key={tierInfo.id + 'Button'}
-            onClick={() => deleteTier(tierInfo.id)}
-          >
-            {<DeleteFilled />}
-          </Button>
-        );
-      },
-    },
-  ];
+        const changeThreshold = (): void => {
+
+        }
+    
+        const columns: TableProps<configType>['columns'] = [
+            {
+                title: 'Tier',
+                dataIndex: 'id',
+                key:'id'
+            },
+            {
+                title: 'Model',
+                dataIndex: 'model',
+                key:'model'
+            },
+            {
+                title: 'Quality',
+                dataIndex: 'quality',
+                key:'quality'
+            },
+            {
+                title: 'Size',
+                dataIndex: 'size',
+                key:'size'
+            },
+            {
+                title: 'Price',
+                dataIndex: 'price',
+                key:'price'
+            },
+            {
+                title: 'Delete',
+                key: 'delete',
+                render: (_,tierInfo) => (
+                    <Button key={tierInfo.id + "Delete"} onClick={() => deleteTier(tierInfo.id)}>
+                        {<DeleteFilled />}
+                    </Button>
+                )
+            }
+        ];
 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const onSelectChange = (newSelectedRowKeys) => {
