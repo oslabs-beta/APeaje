@@ -7,7 +7,7 @@ import path from 'path';
 import dashboardSQL from './controller/dashboardSQL'
 import setupDatabase from './database/sqlite';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
-import configController from './controller/configController.ts';
+import configController from './controller/configController';
 
 
 import config from '../config';
