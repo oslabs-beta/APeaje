@@ -6,6 +6,8 @@ import HeaderComp from "../components/Header";
 import Config from "./Config";
 import Manage from "./Manage";
 import Profile from "./Profile";
+import Login from "../components/Login"
+import Register from "../components/Register"
 import { Route, Routes } from "react-router-dom";
 import { ConfigProvider, Layout } from "antd";
 
@@ -43,6 +45,8 @@ const App = () => (
               <Route path="/configuration" element={<Config />} />
               <Route path="/manage" element={<Manage />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
             </Routes>
           </Content>
           <Footer></Footer>
@@ -53,6 +57,7 @@ const App = () => (
 );
 
 export default App;
+
 
 {
   /* 

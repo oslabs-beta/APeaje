@@ -12,6 +12,7 @@
   "author": "Mobius Collective",
   "license": "MIT",
   "dependencies": {
+    "@ant-design/icons": "^5.5.1",
     "@supabase/supabase-js": "^2.45.2",
     "@types/bcrypt": "^5.0.2",
     "@types/better-sqlite3": "^7.6.11",

@@ -12,13 +12,13 @@ const query = (sql, params = []) => {
 }
 
 
-  const configController = () => {
-    const newBudget = async(req:Request, res:Response, next:NextFunction) => {
+const configController = () => {
+  const newBudget = async(req:Request, res:Response, next:NextFunction) => {
     const {data} = req.body
     console.log('data in config', data )
     try {
       if(!data) {
-       console.error('data not found from updateBudget')
+      console.error('data not found from updateBudget')
       }
 
       const updateBudget = await query(
@@ -36,11 +36,5 @@ const query = (sql, params = []) => {
     }
   }
 }
-  
 
-
-
-
-  module.exports = configController;
-
-*/
+export default configController;
