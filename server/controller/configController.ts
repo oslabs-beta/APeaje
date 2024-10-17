@@ -1,15 +1,9 @@
-/*import express, {Express, Request, Response, NextFunction } from 'express';
-import {db} from '../server';
+import { Request, Response, NextFunction } from 'express';
+import { Database } from 'better-sqlite3';
+import { sqliteController } from '../database/sqliteController';
+
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from '../apiUtils';
 
-// const setupDatabase = require('../database/sqlite.js');
-// const db = setupDatabase();
-
-//const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('../apiUtils.js');
-
-const query = (sql, params = []) => {
-    return db.prepare(sql).all(params)
-}
 
 
 const configController = () => {}
@@ -36,6 +30,6 @@ const configController = () => {}
         res.status(500).send('Error from updateBudget middleware')
     }
   }
-}
+
 
 export default configController;
