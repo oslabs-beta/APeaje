@@ -12,8 +12,9 @@ const query = (sql, params = []) => {
 }
 
 
-const configController = () => {
-  const newBudget = async(req:Request, res:Response, next:NextFunction) => {
+const configController = () => {}
+
+  configController.newBudget = async(req:Request, res:Response, next:NextFunction) => {
     const {data} = req.body
     console.log('data in config', data )
     try {

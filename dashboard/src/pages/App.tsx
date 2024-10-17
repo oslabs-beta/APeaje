@@ -4,6 +4,7 @@ import "../../public/style.css";
 import SideBar from "../components/SideBar";
 import HeaderComp from "../components/Header";
 import Config from "./Config";
+// import ConfigTest from "./ConfigTest";
 import Manage from "./Manage";
 import Profile from "./Profile";
 import Login from "../components/Login"

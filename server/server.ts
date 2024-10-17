@@ -84,8 +84,25 @@ interface User {
   role: string;
 }
 
-app.post('/configuration', (req:Request, res:Response) => {
-  res.status(200).send('budget has been updated')
+app.patch('/configuration', (req:Request, res:Response) => {
+  const {budget, timeRange, tiers, threshold } = req.body;
+  if (!budget || !timeRange) {
+    return res.status(400).send('All fields are required')
+
+  /*
+    updateBudget(db, budget);
+    updateConfiguration(db, { timeRange, tiers })
+  */
+  }
+
+  console.log('Received configuration:', {
+    budget, 
+    timeRange,
+    // tiers,
+    // threshold,
+  })
+
+  res.status(200).send('Budget has been updated')
 })
 
 app.post('/api/register', async (req: Request, res: Response) => {
