@@ -6,17 +6,31 @@ import path from 'path';
 //import dashboardController from './controller/dashboardController'
 import dashboardSQL from './controller/dashboardSQL'
 import setupDatabase from './database/sqlite';
+import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware } from './database/sqliteController';
+import { setupDummyDatabase } from './database/dummyDB';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
+import configController from './controller/configController';
+
 
 import config from '../config';
-
-const configController = require('./controller/configController.ts')
-
 require('dotenv').config();
 
 console.log(setupDatabase)
 
-export const db = setupDatabase();
+//export const db = setupDatabase();
+
+let dbController: DatabaseController;
+const isDummyDatabase = true; // set this to true to use the dummy database
+
+if (isDummyDatabase) {
+  dbController = setupDummyDatabase();
+} else {
+  dbController = initializeDatabase();
+}
+
+dbController.initialize();
+
+// attach database middleware
 
 const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
 
@@ -24,11 +38,11 @@ const app: Express = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(path.resolve(__dirname, '../dist')));
+// attach db to middleware 
+app.use(databaseMiddleware(dbController));
 
-// set up database
-const realDB = setupDatabase();
 
-const dummyDB = setupDatabase();
+
 
 // console.log('sqlite db in server.tx', db)
 
@@ -45,7 +59,7 @@ const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   });
 };
 
-app.get('/', (req:Request, res:Response) => {
+app.get('/', (req: Request, res: Response ) => {
   res.status(200).send('mainpage');
 });
 
@@ -53,25 +67,26 @@ app.get('/', (req:Request, res:Response) => {
 //   res.status(200).send(res.locals.data)
 // } )
 
-app.get('/dashboard/chart', dashboardSQL.barGraph, (req:Request, res:Response) =>{
+app.get('/dashboard/chart', dashboardSQL.barGraph, (req: Request, res: Response) =>{
   res.status(200).send(res.locals.bargraph)
 } )
-app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req:Request, res:Response) => {
+app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req: Request, res: Response) => {
   res.status(200).send(res.locals.initialAmount)
 })
-app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req:Request, res:Response) => {
+app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req: Request, res: Response) => {
   res.status(200).send(res.locals.remainingBalance)
 })
 
-app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req:Request, res:Response) => {
+app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req: Request, res: Response) => {
   res.status(200).send(res.locals.tierInfo)
 })
 
-app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req:Request, res:Response) => {
+app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req: Request, res: Response) => {
   res.status(200).send(res.locals.totalRequests)
 })
 
-app.get('/dashboard', (req:Request, res:Response) => {
+
+app.get('/dashboard', (req: Request, res: Response) => {
   res
     .status(200)
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
@@ -84,7 +99,6 @@ interface User {
   role: string;
 }
 
-
 app.post('/configuration', (req:Request, res:Response) => {
   res.status(200).send('budget has been updated')
 })
@@ -93,7 +107,7 @@ app.post('/api/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const insertUser = db.prepare('INSERT INTO Users (username, password, role) VALUES (?, ?, ?)');
+    const insertUser = res.locals.db.prepare('INSERT INTO Users (username, password, role) VALUES (?, ?, ?)');
     const result = insertUser.run(username, hashedPassword, role);
     res.json({ userId: result.lastInsertRowid, message: 'User registered successfully' });
   } catch (error) {
@@ -105,7 +119,7 @@ app.post('/api/register', async (req: Request, res: Response) => {
   app.post('/api/login', async (req: Request, res: Response) => {
     const { username, password } = req.body;
     try {
-      const getUser = db.prepare('SELECT * FROM Users WHERE username = ?');
+      const getUser = res.locals.db.prepare('SELECT * FROM Users WHERE username = ?');
       const user = getUser.get(username) as User | undefined;
 
       if (user) {
@@ -138,7 +152,8 @@ app.post('/generate-image', async (req: Request, res: Response) => {
   const { prompt, useTimeBasedTier } = req.body;
 
   try {
-    const selectedTierConfig = useTimeBasedTier ? selectTierBasedOnTime(db, 'openai')  : selectTierBasedOnBudget(db, 'openai');
+    const selectedTierConfig = useTimeBasedTier ? selectTierBasedOnTime(res.locals.db, 'openai')
+      : selectTierBasedOnBudget(res.locals.db, 'openai');
 
     console.log('Selected tier config:', selectedTierConfig);
 
@@ -167,9 +182,9 @@ app.post('/generate-image', async (req: Request, res: Response) => {
 
     console.log('OpenAI response:', JSON.stringify(openaiData));
 
-    updateBudget(db, 'openai', selectedTierConfig.price);
+    updateBudget(res.locals.db, 'openai', selectedTierConfig.price);
 
-    const insertQuery = db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
+    const insertQuery = res.locals.db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
 
     insertQuery.run('openai', prompt, selectedTierConfig.id);
 
