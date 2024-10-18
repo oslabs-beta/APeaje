@@ -98,14 +98,16 @@ const Config = (): React.ReactNode => {
     e.preventDefault(); // Prevent the default form submission
 
     // Validation (optional)
-  
+  // Get the selected tier
+    const selectedTier = selectedRowKeys[0]; // Use the first selected key
+
     type dataType = {
       budget: string;
       timeRange: {
         start: string;
         end: string;
       };
-      tiers: string;
+      tiers:string;
       // threshold: string;
     }
     // Create the data object to send to the backend data send to backend
@@ -115,7 +117,7 @@ const Config = (): React.ReactNode => {
         start: startTime,
         end: endTime,
       },
-      tiers: tiers,
+      tiers: selectedTier,
       // threshold: threshold,
     };
 
@@ -140,7 +142,7 @@ const Config = (): React.ReactNode => {
       setInputBudget('');
       setStartTime('');
       setEndTime('');
-      setTiers('');
+      setSelectedRowKeys([])
       // setThreshold('');
       
 
@@ -223,14 +225,7 @@ const Config = (): React.ReactNode => {
     selectedRowKeys,
     onChange: onSelectChange,
   };
-
-  //  const generateTiers2 = () => {
-  //      return Object.entries(config.apis.openai.tiers).map(([key, tier]) => (
-  //          <option key={key} value = {key}>
-  //              {tier.key} ({tier.quality}, {tier.size}) - ${tier.price}
-  //        </option>
-  //     ));
-
+  console.log('what is selectedRowKey', selectedRowKeys[0])
   const generateThresholds = () => {
     return config.apis.openai.thresholds.budget.map(({ threshold, tier }) => (
       <option key={tier} value={tier}>
