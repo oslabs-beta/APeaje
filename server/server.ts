@@ -99,24 +99,7 @@ interface User {
   role: string;
 }
 
-app.patch('/configuration', (req:Request, res:Response) => {
-  const {budget, timeRange, tiers, threshold } = req.body;
-  if (!budget || !timeRange) {
-    return res.status(400).send('All fields are required')
-
-  /*
-    updateBudget(db, budget);
-    updateConfiguration(db, { timeRange, tiers })
-  */
-  }
-
-  console.log('Received configuration:', {
-    budget, 
-    timeRange,
-    // tiers,
-    // threshold,
-  })
-
+app.patch('/configuration', configController.newBudget,  (req:Request, res:Response) => {
   res.status(200).send('Budget has been updated')
 })
 

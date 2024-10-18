@@ -6,24 +6,28 @@ import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from '..
 
 
 
-const configController = () => {}
+const configController : any = {}
 
   configController.newBudget = async(req:Request, res:Response, next:NextFunction) => {
-    const {data} = req.body
-    console.log('data in config', data )
     try {
-      if(!data) {
-      console.error('data not found from updateBudget')
-      }
-
-      const updateBudget = await query(
+    const {budget, timeRange, tiers, threshold } = req.body;
+    // if (!budget || !timeRange) {
+    if(!budget) {
+      return res.status(400).send('All fields are required')
+    }
+    console.log('Received configuration:', {
+      budget, 
+      // timeRange,
+      // tiers,
+      // threshold,
+    })
+  
+      const updateBudget = await sqliteController.run(res.locals.db,
       `UPDATE Budget
-      SET budget = ?
-      WHERE api_name = ?`)
+      SET budget = ?`, [budget]);
 
-      console.log()
-      // updateBudget.run(data.budget)
-
+      console.log('updateBudget', updateBudget)
+      res.locals.newBudget = updateBudget
       next()
     } catch(error) {
         console.error('Error updating Budget in the backend', error); 

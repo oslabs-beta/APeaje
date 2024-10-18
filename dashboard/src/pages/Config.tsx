@@ -105,7 +105,7 @@ const Config = (): React.ReactNode => {
         start: string;
         end: string;
       };
-      // tiers: string;
+      tiers: string;
       // threshold: string;
     }
     // Create the data object to send to the backend data send to backend
@@ -115,7 +115,7 @@ const Config = (): React.ReactNode => {
         start: startTime,
         end: endTime,
       },
-      // tiers: tiers,
+      tiers: tiers,
       // threshold: threshold,
     };
 
@@ -140,7 +140,7 @@ const Config = (): React.ReactNode => {
       setInputBudget('');
       setStartTime('');
       setEndTime('');
-      // setTiers('');
+      setTiers('');
       // setThreshold('');
       
 
@@ -276,7 +276,7 @@ const Config = (): React.ReactNode => {
           </select>
         </label>
 
-        {/* <label>
+         <label>
           Tiers:
           <Table
             className='tiersTable'
@@ -285,7 +285,7 @@ const Config = (): React.ReactNode => {
             dataSource={tierGroup}
             columns={columns}
           />
-        </label> */}
+        </label>
 
         {/* <label>
           Thresholds:
