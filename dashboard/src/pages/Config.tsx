@@ -11,7 +11,10 @@ const Config = (): React.ReactNode => {
   const [endTime, setEndTime] = useState('');
   const [tiers, setTiers] = useState('');
   const [threshold, setThreshold] = useState('');
-
+  console.log('what is the type of tiers', tiers)
+  console.log('what is inputBudget', inputBudget)
+  console.log('what is endTime', endTime)
+  
   // Tier selection for frontend
   type configType = {
     id: string;
@@ -88,30 +91,34 @@ const Config = (): React.ReactNode => {
   };
 
   // Handle form submission
-  const saveConfig = (e: React.SyntheticEvent) => {
+  const saveConfig = async (e: React.SyntheticEvent) => {
     e.preventDefault(); // Prevent the default form submission
 
     // Validation (optional)
-
-    interface dataType {
+  
+    type dataType = {
       budget: string;
       timeRange: {
         start: string;
         end: string;
       };
+      tiers: string;
+      // threshold: string;
     }
-    // data send to backend
+    // Create the data object to send to the backend data send to backend
     const data: dataType = {
       budget: inputBudget,
       timeRange: {
         start: startTime,
         end: endTime,
       },
+      tiers: tiers,
+      // threshold: threshold,
     };
 
     try {
-      const response: Promise<Response> = fetch('/configuration', {
-        method: 'POST',
+      const response=  await fetch('http://localhost:2024/configuration', {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -119,14 +126,21 @@ const Config = (): React.ReactNode => {
       });
 
       console.log('response', response);
-      // if (!response.ok) {
-      //     throw new Error('Network response was not ok')
+      if (!response.ok) {
+          throw new Error('Network response was not ok')
+      }
+
+      // const responseBody = await response; // or await response.json()
+      // console.log('response from Body', responseBody)
+      
       // }
       setInputBudget('');
       setStartTime('');
       setEndTime('');
       setTiers('');
-      setThreshold('');
+      // setThreshold('');
+      
+
       alert('Budget saved successfully');
     } catch (error) {
       console.error('error found from configuration', error);
@@ -149,10 +163,13 @@ const Config = (): React.ReactNode => {
     return hours;
   };
 
+
+  // deleteTier function
         const deleteTier = (tierId): void => {
             setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
         }
 
+  // change the threshold         
         const changeThreshold = (): void => {
 
         }
@@ -263,15 +280,8 @@ const Config = (): React.ReactNode => {
           </select>
         </label>
 
-        <label>
+         <label>
           Tiers:
-          <select className='tiers' value={tiers} onChange={handleTiers}>
-            <option value='' className='tier-table'>
-              Select Tiers
-            </option>
-            {/* {generateTiers2()} */}
-          </select>
-          {/* <table>{generateTiers()}</table> */}
           <Table
             className='tiersTable'
             pagination={false}
@@ -279,10 +289,9 @@ const Config = (): React.ReactNode => {
             dataSource={tierGroup}
             columns={columns}
           />
-          ;
         </label>
 
-        <label>
+        {/* <label>
           Thresholds:
           <select
             className='thresholds'
@@ -292,7 +301,7 @@ const Config = (): React.ReactNode => {
             <option value=''> Select Thresholds </option>
             {generateThresholds()}
           </select>
-        </label>
+        </label> */}
 
         <button type='submit' className='config-save'>
           Save

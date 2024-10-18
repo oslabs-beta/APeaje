@@ -1,42 +1,40 @@
-/*
-import express, {Express, Request, Response, NextFunction } from 'express';
-import {db} from '../server';
+import { Request, Response, NextFunction } from 'express';
+import { Database } from 'better-sqlite3';
+import { sqliteController } from '../database/sqliteController';
+
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from '../apiUtils';
 
-// const setupDatabase = require('../database/sqlite.js');
-// const db = setupDatabase();
-
-//const { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } = require('../apiUtils.js');
-
-const query = (sql, params = []) => {
-    return db.prepare(sql).all(params)
-}
 
 
-const configController = () => {
-  const newBudget = async(req:Request, res:Response, next:NextFunction) => {
-    const {data} = req.body
-    console.log('data in config', data )
+const configController : any = {}
+
+  configController.newBudget = async(req:Request, res:Response, next:NextFunction) => {
     try {
-      if(!data) {
-      console.error('data not found from updateBudget')
-      }
-
-      const updateBudget = await query(
+    const {budget, timeRange, tiers, threshold } = req.body;
+    // if (!budget || !timeRange) {
+    if(!budget) {
+      return res.status(400).send('All fields are required')
+    }
+    console.log('Received configuration:', {
+      budget, 
+      // timeRange,
+      // tiers,
+      // threshold,
+    })
+  
+      const updateBudget = await sqliteController.run(res.locals.db,
       `UPDATE Budget
-      SET budget = ?
-      WHERE api_name = ?`)
+      SET budget = ?`, [budget]);
 
-      console.log()
-      // updateBudget.run(data.budget)
-
+      console.log('updateBudget', updateBudget)
+      res.locals.newBudget = updateBudget
       next()
     } catch(error) {
         console.error('Error updating Budget in the backend', error); 
         res.status(500).send('Error from updateBudget middleware')
     }
   }
-}
+
 
 export default configController;
 */
