@@ -99,8 +99,8 @@ interface User {
   role: string;
 }
 
-app.post('/configuration', (req:Request, res:Response) => {
-  res.status(200).send('budget has been updated')
+app.patch('/configuration', configController.newBudget,  (req:Request, res:Response) => {
+  res.status(200).send('Budget has been updated')
 })
 
 app.post('/api/register', async (req: Request, res: Response) => {
