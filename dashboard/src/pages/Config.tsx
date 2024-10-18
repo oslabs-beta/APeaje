@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { GeneratedIdentifierFlags } from 'typescript';
-import { Button, Table } from 'antd';
+import { Button, Table, InputNumber  } from 'antd';
 import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
-import { DeleteFilled } from '@ant-design/icons';
-import { Input } from "antd";
-
+import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState('');
@@ -187,11 +184,18 @@ const Config = (): React.ReactNode => {
                 key:'price'
             },
             {
+                title: 'Threshold',
+                key: 'threshold',
+                render: (_,tierInfo) => (
+                    <InputNumber key={tierInfo.id + "-Threshold"} />
+                )
+            },
+            {
                 title: 'Delete',
                 key: 'delete',
                 render: (_,tierInfo) => (
-                    <Button key={tierInfo.id + "Delete"} onClick={() => deleteTier(tierInfo.id)}>
-                        {<DeleteFilled />}
+                    <Button key={tierInfo.id + "-Delete"} onClick={() => deleteTier(tierInfo.id)}>
+                        {<TrashcanIcon />}
                     </Button>
                 )
             }
@@ -270,8 +274,8 @@ const Config = (): React.ReactNode => {
           {/* <table>{generateTiers()}</table> */}
           <Table
             className='tiersTable'
-            rowSelection={{ type: 'radio', ...rowSelection }}
             pagination={false}
+            
             dataSource={tierGroup}
             columns={columns}
           />

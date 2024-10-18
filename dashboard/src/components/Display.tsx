@@ -15,7 +15,7 @@ const Display: React.FC = () => {
         remaining_balance: number;
     }
 
-// calling data for current threshold amount, remaining aount, total request
+    // calling data for current threshold amount, remaining aount, total request
     const [totalRequest, setTotalRequest] = useState<TotalRequest>({total_requests: 0})
     const [initialAmount, setInitialAmount] = useState<InitialAmount>({budget: 0})
     const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({remaining_balance: 0})

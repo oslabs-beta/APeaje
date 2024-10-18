@@ -15,7 +15,8 @@ const SideBar = () => {
         const item = sideBarComp[i];
         items.push({
             key: item.link,
-            label: (<div>{item.label}</div>)
+            label: (<div>{item.label}</div>),
+            icon: item.icon
         });
     }
 
