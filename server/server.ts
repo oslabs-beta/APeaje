@@ -9,6 +9,7 @@ import setupDatabase from './database/sqlite';
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
+import configController from './controller/configController';
 
 import config from '../config';
 require('dotenv').config();
