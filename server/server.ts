@@ -9,7 +9,7 @@ import setupDatabase from './database/sqlite';
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
-
+import configController from './controller/configController';
 import config from '../config';
 require('dotenv').config();
 
@@ -97,9 +97,12 @@ interface User {
   role: string;
 }
 
-app.patch('/configuration', configController.newBudget,  (req:Request, res:Response) => {
+app.patch('/configuration', configController.newBudget, configController.updateTiers,  (req:Request, res:Response) => {
   res.status(200).send('Budget has been updated')
 })
+
+
+
 
 app.post('/api/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;

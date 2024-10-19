@@ -3,8 +3,8 @@ import Dashboard from "./Dashboard";
 import "../../public/style.css";
 import SideBar from "../components/SideBar";
 import HeaderComp from "../components/Header";
-import Config from "./Config";
-// import ConfigTest from "./ConfigTest";
+// import Config from "./Config";
+import ConfigRevised from "./ConfigRevised";
 import Manage from "./Manage";
 import Profile from "./Profile";
 import Login from "../components/Login";
@@ -34,7 +34,7 @@ const App = () => {
             <Content style={{ padding: "0 24px", minHeight: 280 }}>
               <Routes>
                 <Route path="/dashboard" index element={<Dashboard />} />
-                <Route path="/configuration" element={<Config />} />
+                <Route path="/configuration" element={<ConfigRevised />} />
                 <Route path="/manage" element={<Manage />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/login" element={<Login />} />
