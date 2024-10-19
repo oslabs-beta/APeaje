@@ -10,6 +10,7 @@ import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController,
 import { setupDummyDatabase } from './database/dummyDB';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
 import configController from './controller/configController';
+
 import config from '../config';
 require('dotenv').config();
 
