@@ -8,7 +8,7 @@ import dashboardSQL from './controller/dashboardSQL'
 import setupDatabase from './database/sqlite';
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
-import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier } from './apiUtils';
 import configController from './controller/configController';
 
 import config from '../config';
@@ -17,6 +17,12 @@ require('dotenv').config();
 console.log(setupDatabase)
 
 //export const db = setupDatabase();
+interface User {
+  id: number;
+  username: string;
+  password: string;
+  role: string;
+}
 
 let dbController: DatabaseController;
 const isDummyDatabase = true; // set this to true to use the dummy database
@@ -91,12 +97,6 @@ app.get('/dashboard', (req: Request, res: Response) => {
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
 });
 
-interface User {
-  id: number;
-  username: string;
-  password: string;
-  role: string;
-}
 
 app.patch('/configuration', configController.newBudget, configController.updateTiers,  (req:Request, res:Response) => {
   res.status(200).send('Budget has been updated')
@@ -171,14 +171,45 @@ app.post('/api/register', async (req: Request, res: Response) => {
   });
 
 
-app.post('/generate-image', async (req: Request, res: Response) => {
-  
-  const { prompt, useTimeBasedTier } = req.body;
+// PUT request to update the `use_time_based_tier` setting
+app.put('/api-config/openai/settings', (req, res) => {
+  const { use_time_based_tier } = req.body;
+
+  // validate the request body is a boolean
+  if (typeof use_time_based_tier !== 'boolean') {
+    return res.status(400).json({ error: 'Invalid value for use_time_based_tier. Expected a boolean.' });
+  }
+
+  // prepare the SQL query to update the `use_time_based_tier` setting
+  const updateStmt = res.locals.db.prepare(`
+    UPDATE Api_settings
+    SET use_time_based_tier = ?, updated_at = ?
+    WHERE api_name = 'openai'
+  `);
 
   try {
-    const selectedTierConfig = useTimeBasedTier ? selectTierBasedOnTime(res.locals.db, 'openai')
-      : selectTierBasedOnBudget(res.locals.db, 'openai');
+    const now = new Date().toISOString();
+    const result = updateStmt.run(use_time_based_tier ? 1 : 0, now);
 
+    // check if the setting was updated successfully
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'API settings not found for OpenAI.' });
+    }
+
+    res.json({ message: 'Settings updated successfully.', use_time_based_tier, updated_at: now });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ error: 'An error occurred while updating the settings.' });
+  }
+});
+
+
+
+app.post('/generate-image', async (req: Request, res: Response) => {
+  const { prompt } = req.body;
+
+  try {
+    const selectedTierConfig = selectTier(res.locals.db, 'openai');
     console.log('Selected tier config:', selectedTierConfig);
 
     if (!selectedTierConfig) {
@@ -203,22 +234,21 @@ app.post('/generate-image', async (req: Request, res: Response) => {
     });
 
     const openaiData = await openaiResponse.json();
-
     console.log('OpenAI response:', JSON.stringify(openaiData));
 
     updateBudget(res.locals.db, 'openai', selectedTierConfig.price);
 
-    const insertQuery = res.locals.db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
+    const insertQuery = res.locals.db.prepare(
+      'INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)'
+    );
 
     insertQuery.run('openai', prompt, selectedTierConfig.id);
-
     console.log('Inserting query with tier_id:', selectedTierConfig.id);
 
     res.json({
       ...openaiData,
       tier: selectedTierConfig
     });
-    
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message || 'An error occurred while generating the image' });
