@@ -102,8 +102,30 @@ app.patch('/configuration', configController.newBudget, configController.updateT
   res.status(200).send('Budget has been updated')
 })
 
+// list all API configurations
+app.get('/api-config', configController.listApiConfigs, (req: Request, res: Response) => {
+  res.status(200).json(res.locals.apiConfigs);
+});
 
+// get single API configuration
+app.get('/api-config/:apiName', configController.getApiConfig, (req: Request, res: Response) => {
+  res.status(200).json(res.locals.apiConfig);
+});
 
+// create new API configuration
+app.post('/api-config', configController.createApiConfig, (req: Request, res: Response) => {
+  res.status(201).json(res.locals.newConfig);
+});
+
+// delete API configuration
+app.delete('/api-config/:apiName', configController.deleteApiConfig, (req: Request, res: Response) => {
+  res.status(200).json({ message: `API ${res.locals.deletedApi} successfully deleted` });
+});
+
+// update thresholds for an API
+app.put('/api-config/:apiName/thresholds', configController.updateThresholds, (req: Request, res: Response) => {
+  res.status(200).json(res.locals.updatedThresholds);
+});
 
 app.post('/api/register', async (req: Request, res: Response) => {
   const { username, password, role } = req.body;
