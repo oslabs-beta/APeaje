@@ -86,4 +86,21 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
+dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
+      SELECT tier_name, thresholds 
+      FROM Tiers 
+    `);
+    console.log('tier breakdown', thresholdsBreakdown);
+    res.locals.tierInfo = thresholdsBreakdown;
+    next();
+  } catch (error) {
+    console.error('Error fetching tier breakdown:', error);
+    res.status(500).send('Error from tierInfo middleware');
+  }
+};
+
+
+
 export default dashboardSQL;

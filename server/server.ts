@@ -79,6 +79,10 @@ app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req: Request, res: Response)
   res.status(200).send(res.locals.tierInfo)
 })
 
+app.get('/dashboard/thresholdsChart', (req: Request, res: Response) => {
+  res.status(200).send('working')
+})
+
 app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req: Request, res: Response) => {
   res.status(200).send(res.locals.totalRequests)
 })
@@ -97,8 +101,8 @@ interface User {
   role: string;
 }
 
-app.patch('/configuration', configController.newBudget, configController.updateTiers,  (req:Request, res:Response) => {
-  res.status(200).send('Budget has been updated')
+app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
+  res.status(200).send('Configuration updated successfully')
 })
 
 

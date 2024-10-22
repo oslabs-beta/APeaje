@@ -30,9 +30,9 @@ const Config = (): React.ReactNode => {
     price: number;
   };
 
-  type Thresholds = {
-    [key: string]: number; // key is the tier id, value is the threshold
-  }
+  // type Thresholds = {
+  //   [key: string]: number; // key is the tier id, value is the threshold
+  // }
 
   type DataType = {
     budget: string;
@@ -41,7 +41,7 @@ const Config = (): React.ReactNode => {
       end: string;
     };
     tiers: ConfigType[];
-    thresholds: Thresholds;
+    thresholds: {threshold: number ; tier : string}[];
   }
 
   type SelectedTierType = {
@@ -139,6 +139,14 @@ const Config = (): React.ReactNode => {
     // })); // Use the first selected key
 
 
+// Create the thresholds array for the backend 
+
+const thresholdsArray= Object.entries(thresholds).map(([tier,threshold]) => ({threshold,
+  tier
+}));
+
+
+
     // build the selected tiers array with all necessary properties. 
 
     const selectedTiers: ConfigType[] = selectedRowKeys.map((key) => {
@@ -157,7 +165,7 @@ const Config = (): React.ReactNode => {
         end: endTime,
       },
       tiers: selectedTiers,
-      thresholds: thresholds,
+      thresholds: thresholdsArray,
     };
 
     try {
@@ -245,7 +253,8 @@ const Config = (): React.ReactNode => {
                 render: (_,tierInfo) => (
                     <InputNumber min = {0} 
                     onChange = {(value)=> handleThresholdChange(tierInfo.id, value)}
-                    key={tierInfo.id + "-Threshold"} />
+                    key={tierInfo.id + "-Threshold"}
+                    value = {thresholds[tierInfo.id] || 0} />
                 )
             },
             {
