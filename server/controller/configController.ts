@@ -37,4 +37,3 @@ const configController : any = {}
 
 
 export default configController;
-*/
