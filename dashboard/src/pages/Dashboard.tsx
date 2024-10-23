@@ -3,6 +3,7 @@ import BarChart from '../components/BarChart';
 import LineChart from '../components/LineChart';
 import Display from '../components/Display';
 import PieChart from '../components/PieChart';
+import ThresholdsPieChart from '../components/ThresholdsPieChart'
 import { Row, Col } from 'antd';
 
 const Dashboard = () => {
@@ -20,6 +21,9 @@ return (
         </Col>
         <Col>
             <PieChart />
+        </Col>
+        <Col>
+            <ThresholdsPieChart />
         </Col>
     </Row>
     <Row>

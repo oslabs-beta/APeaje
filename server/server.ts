@@ -11,12 +11,24 @@ import dashboardSQL from './controller/dashboardSQL'
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
 import authController from './controller/authController';
-import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget } from './apiUtils';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier } from './apiUtils';
+import configController from './controller/configController';
 
 import config from '../config';
 
+
+console.log(setupDatabase)
+
+//export const db = setupDatabase();
+interface User {
+  id: number;
+  username: string;
+  password: string;
+  role: string;
+}
+
 let dbController: DatabaseController;
-const isDummyDatabase = true; // set this to true to use the dummy database
+const isDummyDatabase = false; // set this to true to use the dummy database
 
 if (isDummyDatabase) {
   dbController = setupDummyDatabase();
@@ -59,6 +71,10 @@ app.get('/', (req: Request, res: Response ) => {
     res.status(200).send(res.locals.tierInfo)
   })
   
+app.get('/dashboard/thresholdsChart', (req: Request, res: Response) => {
+  res.status(200).send('working')
+})
+
   app.get('/dashboard/totalRequests', authController.verify, dashboardSQL.totalRequests, (req: Request, res: Response) => {
     res.status(200).send(res.locals.totalRequests)
   })
@@ -68,30 +84,121 @@ app.get('/', (req: Request, res: Response ) => {
     res
     .status(200)
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
+});
+
+
+// app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
+//   res.status(200).send('Configuration updated successfully')
+// })
+
+// list all API configurations
+app.get('/api-config', configController.listApiConfigs, (req: Request, res: Response) => {
+  res.status(200).json(res.locals.apiConfigs);
+});
+
+// get single API configuration
+app.get('/api-config/:apiName', configController.getApiConfig, (req: Request, res: Response) => {
+  res.status(200).json(res.locals.apiConfig);
+});
+
+// create new API configuration
+app.post('/api-config', configController.createApiConfig, (req: Request, res: Response) => {
+  res.status(201).json(res.locals.newConfig);
+});
+
+// delete API configuration
+app.delete('/api-config/:apiName', configController.deleteApiConfig, (req: Request, res: Response) => {
+  res.status(200).json({ message: `API ${res.locals.deletedApi} successfully deleted` });
+});
+
+// update thresholds for an API
+app.patch('/api-config/:apiName/thresholds', configController.newBudget, configController.updateThresholds, (req: Request, res: Response) => {
+  res.status(200).json(res.locals.updatedThresholds);
+});
+
+app.post('/api/register', async (req: Request, res: Response) => {
+  const { username, password, role } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const insertUser = res.locals.db.prepare('INSERT INTO Users (username, password, role) VALUES (?, ?, ?)');
+    const result = insertUser.run(username, hashedPassword, role);
+    res.json({ userId: result.lastInsertRowid, message: 'User registered successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error registering user' });
+  }
+});
+
+
+  app.post('/api/login', async (req: Request, res: Response) => {
+    const { username, password } = req.body;
+    try {
+      const getUser = res.locals.db.prepare('SELECT * FROM Users WHERE username = ?');
+      const user = getUser.get(username) as User | undefined;
+
+      if (user) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (isPasswordValid) {
+          const token = jwt.sign(
+            { userId: user.id, username: user.username, role: user.role },
+            process.env.JWT_SECRET as string
+          );
+          res.json({
+            token,
+            userId: user.id,
+            role: user.role,
+            message: 'Login successful',
+          });
+        } else {
+          res.status(401).json({ error: 'Invalid credentials' });
+        }
+      } else {
+        res.status(401).json({ error: 'User not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ error: 'Error during login' });
+    }
   });
-  
-  app.patch('/configuration', configController.newBudget,  (req:Request, res:Response) => {
-    res.status(200).send('Budget has been updated')
-  })
-  
-  app.post('/api/register', authController.register,  (req: Request, res: Response) => {
-    res.json(res.locals.response)
-  });
-  
-  app.post('/api/login', authController.login, (req: Request, res: Response) => {
-    res.json(res.locals.response)
-  });
-  
-  //should be pulled from app's request
-  const openaiApiKey: (string | undefined) = process.env.OPENAI_API_KEY;
-  app.post('/generate-image', async (req: Request, res: Response) => {
-    
-    const { prompt, useTimeBasedTier } = req.body;
+
+
+// PUT request to update the `use_time_based_tier` setting
+app.put('/api-config/openai/settings', (req, res) => {
+  const { use_time_based_tier } = req.body;
+
+  // validate the request body is a boolean
+  if (typeof use_time_based_tier !== 'boolean') {
+    return res.status(400).json({ error: 'Invalid value for use_time_based_tier. Expected a boolean.' });
+  }
+
+  // prepare the SQL query to update the `use_time_based_tier` setting
+  const updateStmt = res.locals.db.prepare(`
+    UPDATE Api_settings
+    SET use_time_based_tier = ?, updated_at = ?
+    WHERE api_name = 'openai'
+  `);
 
   try {
-    const selectedTierConfig = useTimeBasedTier ? selectTierBasedOnTime(res.locals.db, 'openai')
-      : selectTierBasedOnBudget(res.locals.db, 'openai');
+    const now = new Date().toISOString();
+    const result = updateStmt.run(use_time_based_tier ? 1 : 0, now);
 
+    // check if the setting was updated successfully
+    if (result.changes === 0) {
+      return res.status(404).json({ error: 'API settings not found for OpenAI.' });
+    }
+
+    res.json({ message: 'Settings updated successfully.', use_time_based_tier, updated_at: now });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ error: 'An error occurred while updating the settings.' });
+  }
+});
+
+
+
+app.post('/generate-image', async (req: Request, res: Response) => {
+  const { prompt } = req.body;
+
+  try {
+    const selectedTierConfig = selectTier(res.locals.db, 'openai');
     console.log('Selected tier config:', selectedTierConfig);
 
     if (!selectedTierConfig) {
@@ -116,22 +223,21 @@ app.get('/', (req: Request, res: Response ) => {
     });
 
     const openaiData = await openaiResponse.json();
-
     console.log('OpenAI response:', JSON.stringify(openaiData));
 
     updateBudget(res.locals.db, 'openai', selectedTierConfig.price);
 
-    const insertQuery = res.locals.db.prepare('INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)');
+    const insertQuery = res.locals.db.prepare(
+      'INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)'
+    );
 
     insertQuery.run('openai', prompt, selectedTierConfig.id);
-
     console.log('Inserting query with tier_id:', selectedTierConfig.id);
 
     res.json({
       ...openaiData,
       tier: selectedTierConfig
     });
-    
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: error.message || 'An error occurred while generating the image' });
