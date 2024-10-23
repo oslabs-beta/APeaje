@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, InputNumber  } from 'antd';
+import { Button, Table, InputNumber } from 'antd';
 import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
@@ -11,10 +11,10 @@ const Config = (): React.ReactNode => {
   const [endTime, setEndTime] = useState('');
   const [tiers, setTiers] = useState('');
   const [threshold, setThreshold] = useState('');
-  console.log('what is the type of tiers', tiers)
-  console.log('what is inputBudget', inputBudget)
-  console.log('what is endTime', endTime)
-  
+  console.log('what is the type of tiers', tiers);
+  console.log('what is inputBudget', inputBudget);
+  console.log('what is endTime', endTime);
+
   // Tier selection for frontend
   type configType = {
     id: string;
@@ -95,7 +95,7 @@ const Config = (): React.ReactNode => {
     e.preventDefault(); // Prevent the default form submission
 
     // Validation (optional)
-  
+
     type dataType = {
       budget: string;
       timeRange: {
@@ -104,7 +104,7 @@ const Config = (): React.ReactNode => {
       };
       tiers: string;
       // threshold: string;
-    }
+    };
     // Create the data object to send to the backend data send to backend
     const data: dataType = {
       budget: inputBudget,
@@ -117,7 +117,7 @@ const Config = (): React.ReactNode => {
     };
 
     try {
-      const response=  await fetch('http://localhost:2024/configuration', {
+      const response = await fetch('http://localhost:2024/configuration', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -127,19 +127,18 @@ const Config = (): React.ReactNode => {
 
       console.log('response', response);
       if (!response.ok) {
-          throw new Error('Network response was not ok')
+        throw new Error('Network response was not ok');
       }
 
       // const responseBody = await response; // or await response.json()
       // console.log('response from Body', responseBody)
-      
+
       // }
       setInputBudget('');
       setStartTime('');
       setEndTime('');
       setTiers('');
       // setThreshold('');
-      
 
       alert('Budget saved successfully');
     } catch (error) {
@@ -163,60 +162,58 @@ const Config = (): React.ReactNode => {
     return hours;
   };
 
-
   // deleteTier function
-        const deleteTier = (tierId): void => {
-            setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
-        }
+  const deleteTier = (tierId): void => {
+    setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
+  };
 
-  // change the threshold         
-        const changeThreshold = (): void => {
+  // change the threshold
+  const changeThreshold = (): void => {};
 
-        }
-    
-        const columns: TableProps<configType>['columns'] = [
-            {
-                title: 'Tier',
-                dataIndex: 'id',
-                key:'id'
-            },
-            {
-                title: 'Model',
-                dataIndex: 'model',
-                key:'model'
-            },
-            {
-                title: 'Quality',
-                dataIndex: 'quality',
-                key:'quality'
-            },
-            {
-                title: 'Size',
-                dataIndex: 'size',
-                key:'size'
-            },
-            {
-                title: 'Price',
-                dataIndex: 'price',
-                key:'price'
-            },
-            {
-                title: 'Threshold',
-                key: 'threshold',
-                render: (_,tierInfo) => (
-                    <InputNumber key={tierInfo.id + "-Threshold"} />
-                )
-            },
-            {
-                title: 'Delete',
-                key: 'delete',
-                render: (_,tierInfo) => (
-                    <Button key={tierInfo.id + "-Delete"} onClick={() => deleteTier(tierInfo.id)}>
-                        {<TrashcanIcon />}
-                    </Button>
-                )
-            }
-        ];
+  const columns: TableProps<configType>['columns'] = [
+    {
+      title: 'Tier',
+      dataIndex: 'id',
+      key: 'id',
+    },
+    {
+      title: 'Model',
+      dataIndex: 'model',
+      key: 'model',
+    },
+    {
+      title: 'Quality',
+      dataIndex: 'quality',
+      key: 'quality',
+    },
+    {
+      title: 'Size',
+      dataIndex: 'size',
+      key: 'size',
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+    },
+    {
+      title: 'Threshold',
+      key: 'threshold',
+      render: (_, tierInfo) => <InputNumber key={tierInfo.id + '-Threshold'} />,
+    },
+    {
+      title: 'Delete',
+      key: 'delete',
+      render: (_, tierInfo) => (
+        <Button
+          key={tierInfo.id + '-Delete'}
+          onClick={() => deleteTier(tierInfo.id)}
+        >
+          {<TrashcanIcon />}
+        </Button>
+      ),
+    },
+  ];
 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const onSelectChange = (newSelectedRowKeys) => {
@@ -280,12 +277,11 @@ const Config = (): React.ReactNode => {
           </select>
         </label>
 
-         <label>
+        <label>
           Tiers:
           <Table
             className='tiersTable'
             pagination={false}
-            
             dataSource={tierGroup}
             columns={columns}
           />
