@@ -3,7 +3,6 @@ import path from 'path';
 import config from '../../config';
 import { Request, Response, NextFunction } from 'express';
 
-// interface for our database controller
 export interface DatabaseController {
     db: Database;
     initialize: () => void;
@@ -11,38 +10,42 @@ export interface DatabaseController {
     close: () => void;
 }
 
-// Function to create tables
 const createTables = (db: Database): void => {
     const tables: string[] = [
         `CREATE TABLE IF NOT EXISTS Users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL
-    )`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT NOT NULL
+        )`,
         `CREATE TABLE IF NOT EXISTS Budget (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      api_name TEXT UNIQUE NOT NULL,
-      budget REAL NOT NULL,
-      spent REAL NOT NULL DEFAULT 0,
-      total_spent REAL NOT NULL DEFAULT 0
-    )`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_name TEXT UNIQUE NOT NULL,
+            budget REAL NOT NULL,
+            spent REAL NOT NULL DEFAULT 0,
+            total_spent REAL NOT NULL DEFAULT 0
+        )`,
         `CREATE TABLE IF NOT EXISTS Tiers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      api_name TEXT NOT NULL,
-      tier_name TEXT NOT NULL,
-      tier_config TEXT NOT NULL,
-      thresholds TEXT,
-      cost REAL,
-      UNIQUE(api_name, tier_name)
-    )`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_name TEXT NOT NULL,
+            tier_name TEXT NOT NULL,
+            tier_config TEXT NOT NULL,
+            thresholds TEXT,
+            cost REAL,
+            UNIQUE(api_name, tier_name)
+        )`,
         `CREATE TABLE IF NOT EXISTS Queries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      api_name TEXT NOT NULL,
-      prompt TEXT NOT NULL,
-      tier_id INTEGER,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            api_name TEXT NOT NULL,
+            prompt TEXT NOT NULL,
+            tier_id INTEGER,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`,
+        `CREATE TABLE IF NOT EXISTS Api_settings (
+            api_name TEXT PRIMARY KEY,
+            use_time_based_tier INTEGER DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
     ];
 
     for (const sql of tables) {
@@ -83,7 +86,7 @@ const initializeBudget = (db: Database): void => {
 };
 
 function logDatabaseContent(db: Database): void {
-    const tables = ['Users', 'Budget', 'Tiers', 'Queries'];
+    const tables = ['Users', 'Budget', 'Tiers', 'Queries', 'Api_settings'];
 
     tables.forEach(table => {
         console.log(`\n--- ${table} Table Content ---`);
@@ -109,7 +112,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
             logDatabaseContent(db);
         },
         reset: () => {
-            const tables: string[] = ['Queries', 'Tiers', 'Budget', 'Users'];
+            const tables: string[] = ['Queries', 'Tiers', 'Budget', 'Users', 'Api_settings'];
             for (const table of tables) {
                 db.prepare(`DROP TABLE IF EXISTS ${table}`).run();
             }

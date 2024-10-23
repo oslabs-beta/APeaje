@@ -23,6 +23,16 @@ interface BudgetRow {
   total_spent: number;
 }
 
+interface ThresholdConfig {
+  [tier: string]: {
+    budget?: number;
+    time?: {
+      start: string;  // HH:mm format
+      end: string;    // HH:mm format
+    };
+  };
+}
+
 interface TierRow {
   api_name: string;
   tier_name: string;
@@ -109,6 +119,11 @@ const configController: ConfigControllerInterface = {
   // updates thresholds for existing tiers
   updateThresholds: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      const { apiName } = req.params;
+      const { thresholds } = req.body as { thresholds: ThresholdConfig };
+
+      if (!apiName || !thresholds) {
+        res.status(400).json({ error: 'api name and thresholds required' });
       const { api_name, thresholds } = req.body;
       console.log('checking request body', api_name, thresholds)
       if (!api_name || !thresholds) {
@@ -117,30 +132,69 @@ const configController: ConfigControllerInterface = {
       }
 
       const db = res.locals.db as Database;
-      const tiersStmt = db.prepare('select tier_name from tiers where api_name = ?');
-      const tiers = tiersStmt.all(api_name) as { tier_name: string }[];
 
-      if (!tiers.length) {
-        res.status(404).send('api configuration not found');
+      // verify API exists and get its tiers
+      const tiersStmt = db.prepare('select tier_name from tiers where api_name = ?');
+      const existingTiers = tiersStmt.all(apiName) as { tier_name: string }[];
+
+      if (!existingTiers.length) {
+        res.status(404).json({ error: 'api configuration not found' });
+        return;
+      }
+
+      // validate provided tiers exist
+      const providedTiers = Object.keys(thresholds);
+      const validTiers = existingTiers.map(t => t.tier_name);
+      const invalidTiers = providedTiers.filter(t => !validTiers.includes(t));
+
+      if (invalidTiers.length > 0) {
+        res.status(400).json({
+          error: 'invalid tiers provided',
+          invalidTiers
+        });
         return;
       }
 
       const updateThresholdStmt = db.prepare(`
-        update tiers
-        set thresholds = ?
-        where api_name = ? and tier_name = ?
-      `);
+            update tiers
+            set thresholds = ?
+            where api_name = ? and tier_name = ?
+        `);
+
+      // validate time format if provided
+      const timeFormatRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      for (const [tier, config] of Object.entries(thresholds)) {
+        if (config.time) {
+          if (!timeFormatRegex.test(config.time.start) || !timeFormatRegex.test(config.time.end)) {
+            res.status(400).json({
+              error: 'invalid time format',
+              message: 'Time must be in HH:mm format',
+              tier
+            });
+            return;
+          }
+        }
+        if (config.budget !== undefined && (config.budget < 0 || config.budget > 100)) {
+          res.status(400).json({
+            error: 'invalid budget threshold',
+            message: 'Budget threshold must be between 0 and 100',
+            tier
+          });
+          return;
+        }
+      }
 
       const transaction = db.transaction(() => {
-        for (const tier of tiers) {
-          const tierThresholds = {
-            budget: thresholds.budget?.find(t => t.tier === tier.tier_name) || null,
-            time: thresholds.time?.find(t => t.tier === tier.tier_name) || null
+        for (const [tier, config] of Object.entries(thresholds)) {
+          const thresholdConfig = {
+            budget: config.budget ?? null,
+            time: config.time ?? null
           };
+
           updateThresholdStmt.run(
-            JSON.stringify(tierThresholds),
-            api_name,
-            tier.tier_name
+            JSON.stringify(thresholdConfig),
+            apiName,
+            tier
           );
         }
       });
@@ -151,7 +205,7 @@ const configController: ConfigControllerInterface = {
       next();
     } catch (error) {
       console.error('error updating thresholds:', error);
-      res.status(500).send('error updating thresholds');
+      res.status(500).json({ error: 'error updating thresholds' });
     }
   },
 
@@ -326,6 +380,7 @@ const configController: ConfigControllerInterface = {
     return { isValid: errors.length === 0, errors };
   }
 };
+}
 
 export default configController;
 
@@ -374,12 +429,71 @@ frontend usage guide:
      }]
    }
 
-7. update thresholds:
-   endpoint: PUT /api-config/:apiName/thresholds
-   body: {
-     thresholds: {
-       budget: [{ tier: "tier1", threshold: 95 }],
-       time: [{ tier: "tier1", start: 8, end: 18 }]
-     }
-   }
+// Example function to update thresholds
+const updateThresholds = async (apiName: string, thresholds: ThresholdConfig) => {
+    try {
+        const response = await fetch(`/api-config/${apiName}/thresholds`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ thresholds })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update thresholds');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating thresholds:', error);
+        throw error;
+    }
+};
+
+
+const updateThresholds = async (apiName: string, thresholds: ThresholdConfig) => {
+    try {
+        const response = await fetch(`/api-config/${apiName}/thresholds`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ thresholds })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update thresholds');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating thresholds:', error);
+        throw error;
+    }
+};
+
+ example:
+const thresholds = {
+    "A": { 
+        budget: 80,
+        time: { start: "09:00", end: "17:00" }
+    },
+    "B": { 
+        budget: 60,
+        time: { start: "17:00", end: "23:00" }
+    },
+    "C": { budget: 40 }, // time is optional
+    "D": { budget: 20 },
+    "E": { budget: 10 },
+    "F": { budget: 0 }
+};
+
+ Update thresholds for OpenAI
+await updateThresholds('openai', thresholds);
+
+
+await updateThresholds('azure', azureThresholds);
 */

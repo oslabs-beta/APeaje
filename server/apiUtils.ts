@@ -15,6 +15,16 @@ interface TierData {
   tier_config: string;
   id: number;
   cost: number;
+  model: string;
+  size: number;
+  price: number;
+  quality: string;
+}
+
+interface APISettings {
+  api_name: string;
+  use_time_based_tier: number;
+  updated_at: string;
 }
 
 function loadAPIConfigs(db: Database) {
@@ -91,10 +101,83 @@ function selectTierBasedOnTime(db: Database, apiName: string) {
   return selectTierBasedOnThreshold(apiName, 'time', currentHour);
 }
 
+function getAPISettings(db: Database, api_name: string): APISettings | null {
+  const settings = db.prepare(`
+    SELECT api_name, use_time_based_tier, updated_at 
+    FROM Api_settings 
+    WHERE api_name = ?
+  `).get(api_name) as APISettings | undefined;
+
+  if (!settings) {
+    // if no settings exist, create default settings
+    const insertStmt = db.prepare(`
+      INSERT INTO Api_settings (api_name, use_time_based_tier) 
+      VALUES (?, 0)
+    `);
+
+    try {
+      insertStmt.run(api_name);
+      return {
+        api_name,
+        use_time_based_tier: 0,
+        updated_at: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error creating default settings:', error);
+      return null;
+    }
+  }
+
+  return settings;
+}
+
+function selectTier(db: Database, apiName: string): TierData {
+  try {
+    const settings = getAPISettings(db, apiName);
+
+    if (!settings) {
+      // if no settings, default to budget-based selection
+      console.log('No settings found, defaulting to budget-based selection');
+      return selectTierBasedOnBudget(db, apiName);
+    }
+
+    // convert to boolean and select appropriate tier
+    const useTimeBased = Boolean(settings.use_time_based_tier);
+    console.log(`Using ${useTimeBased ? 'time' : 'budget'}-based tier selection for ${apiName}`);
+
+    return useTimeBased ?
+      selectTierBasedOnTime(db, apiName) :
+      selectTierBasedOnBudget(db, apiName);
+
+  } catch (error) {
+    console.error('Error in tier selection:', error);
+    // any error occurs, default to budget-based selection
+    return selectTierBasedOnBudget(db, apiName);
+  }
+}
+
 export {
   loadAPIConfigs,
   checkBudget,
   updateBudget,
   selectTierBasedOnBudget,
-  selectTierBasedOnTime
+  selectTierBasedOnTime,
+  selectTier
 };
+
+
+/*
+// Switch to time-based
+await fetch('http://localhost:2024/api-config/openai/settings', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ use_time_based_tier: true })
+});
+
+// Switch to budget-based
+await fetch('http://localhost:2024/api-config/openai/settings', {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ use_time_based_tier: false })
+});
+*/ 
