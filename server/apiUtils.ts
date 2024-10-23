@@ -1,6 +1,7 @@
 import config from '../config';
 import { Database } from 'better-sqlite3';
 
+// Type definitions for data structures
 interface BudgetInfo {
   id: number;
   api_name: string;
@@ -27,6 +28,29 @@ interface APISettings {
   updated_at: string;
 }
 
+interface TierConfig {
+  model: string;
+  quality: string;
+  size: string;
+}
+
+interface ThresholdConfig {
+  budget: number | null;
+  time: {
+    start: string;
+    end: string;
+  } | null;
+}
+
+interface ProcessedTier {
+  model: string;
+  quality: string;
+  size: string;
+  id: string;
+  price: number;
+}
+
+
 function loadAPIConfigs(db: Database) {
   const tiers = db.prepare('SELECT * FROM Tiers').all() as TierData[];
   const apiConfigs: { [key: string]: { [key: string]: any } } = {};
@@ -44,6 +68,7 @@ function loadAPIConfigs(db: Database) {
   return apiConfigs;
 }
 
+
 function updateBudget(db: Database, api_name: string, cost: number): void {
   const updateBudget = db.prepare(`
     UPDATE Budget
@@ -52,53 +77,103 @@ function updateBudget(db: Database, api_name: string, cost: number): void {
   `);
   const result = updateBudget.run(cost, api_name);
 
-  // Log the update
   console.log(`Budget updated for ${api_name}: Cost: ${cost}, Rows affected: ${result.changes}`);
 
-  // Fetch and log the updated budget
   const updatedBudget = checkBudget(db, api_name);
   console.log(`Updated budget for ${api_name}:`, updatedBudget);
 }
+
 
 function checkBudget(db: Database, api_name: string): BudgetInfo {
   const budget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get(api_name) as BudgetInfo;
   return budget;
 }
 
-function selectTierBasedOnThreshold(apiName: string, thresholdType: 'budget' | 'time', value: number) {
-  const thresholds = config.apis[apiName].thresholds[thresholdType];
-  // iterate through thresholds
-  for (const threshold of thresholds) {
-    // if budget threshold and value is above or equal to threshold
-    if (thresholdType === 'budget' && value >= threshold.threshold) {
-      const selectedTier = config.apis[apiName].tiers[threshold.tier];
-      selectedTier.id = threshold.tier;
-      return selectedTier;
-      // if time threshold and value is within the time range
-    } else if (thresholdType === 'time' && value >= threshold.start && value < threshold.end) {
-      const selectedTier = config.apis[apiName].tiers[threshold.tier];
-      selectedTier.id = threshold.tier;
-      return selectedTier;
+/**
+  core logic for selecting a tier based on either budget or time thresholds
+      Convert current time and tier times to minutes
+      Check if current time falls within any tier's time range
+      Handle midnight-spanning ranges (e.g., 22:00-06:00)
+  fall back to lowest cost tier if no matches
+ */
+function parseTimeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function isTimeInRange(current: number, start: number, end: number): boolean {
+  if (start <= end) {
+    return current >= start && current < end;
+  } else {
+    // handle ranges spanning midnight (e.g., 22:00-06:00)
+    return current >= start || current < end;
+  }
+}
+
+function selectTierBasedOnThreshold(db: Database, apiName: string, thresholdType: 'budget' | 'time', value: number): ProcessedTier {
+  // get tiers ordered by cost (highest first)
+  const tiers = db.prepare(`
+    SELECT tier_name, tier_config, thresholds, cost
+    FROM Tiers 
+    WHERE api_name = ?
+    ORDER BY cost DESC
+  `).all(apiName) as Array<{
+    tier_name: string;
+    tier_config: string;
+    thresholds: string;
+    cost: number;
+  }>;
+
+  for (const tier of tiers) {
+    const tierConfig = JSON.parse(tier.tier_config) as TierConfig;
+    const thresholds = JSON.parse(tier.thresholds) as ThresholdConfig;
+
+    if (thresholdType === 'budget') {
+      // check if remaining budget percentage meets threshold
+      if (thresholds.budget !== null && value >= thresholds.budget) {
+        return {
+          ...tierConfig,
+          id: tier.tier_name,
+          price: tier.cost
+        };
+      }
+    } else if (thresholdType === 'time') {
+      // check if current hour falls within time range
+      if (thresholds.time) {
+        const currentMinutes = value * 60;
+        const startMinutes = parseTimeToMinutes(thresholds.time.start);
+        const endMinutes = parseTimeToMinutes(thresholds.time.end);
+
+        if (isTimeInRange(currentMinutes, startMinutes, endMinutes)) {
+          return {
+            ...tierConfig,
+            id: tier.tier_name,
+            price: tier.cost
+          };
+        }
+      }
     }
   }
-  const lowestTier = config.apis[apiName].tiers['F'];
-  lowestTier.id = 'F';
-  return lowestTier;
+
+  // fall back to lowest cost tier if no thresholds met
+  const lowestTier = tiers[tiers.length - 1];
+  return {
+    ...JSON.parse(lowestTier.tier_config),
+    id: lowestTier.tier_name,
+    price: lowestTier.cost
+  };
 }
 
-function selectTierBasedOnBudget(db: Database, apiName: string) {
-  // get current budget
+
+function selectTierBasedOnBudget(db: Database, apiName: string): ProcessedTier {
   const budgetInfo = checkBudget(db, apiName);
-  // percentage
   const remainingBudgetPercentage = ((budgetInfo.budget - budgetInfo.spent) / budgetInfo.budget) * 100;
-  // select tier based on budget threshold
-  return selectTierBasedOnThreshold(apiName, 'budget', remainingBudgetPercentage);
+  return selectTierBasedOnThreshold(db, apiName, 'budget', remainingBudgetPercentage);
 }
 
-function selectTierBasedOnTime(db: Database, apiName: string) {
+function selectTierBasedOnTime(db: Database, apiName: string): ProcessedTier {
   const currentHour = new Date().getHours();
-  // select tier based on time threshold
-  return selectTierBasedOnThreshold(apiName, 'time', currentHour);
+  return selectTierBasedOnThreshold(db, apiName, 'time', currentHour);
 }
 
 function getAPISettings(db: Database, api_name: string): APISettings | null {
@@ -109,7 +184,6 @@ function getAPISettings(db: Database, api_name: string): APISettings | null {
   `).get(api_name) as APISettings | undefined;
 
   if (!settings) {
-    // if no settings exist, create default settings
     const insertStmt = db.prepare(`
       INSERT INTO Api_settings (api_name, use_time_based_tier) 
       VALUES (?, 0)
@@ -131,17 +205,16 @@ function getAPISettings(db: Database, api_name: string): APISettings | null {
   return settings;
 }
 
-function selectTier(db: Database, apiName: string): TierData {
+
+function selectTier(db: Database, apiName: string): ProcessedTier {
   try {
     const settings = getAPISettings(db, apiName);
 
     if (!settings) {
-      // if no settings, default to budget-based selection
       console.log('No settings found, defaulting to budget-based selection');
       return selectTierBasedOnBudget(db, apiName);
     }
 
-    // convert to boolean and select appropriate tier
     const useTimeBased = Boolean(settings.use_time_based_tier);
     console.log(`Using ${useTimeBased ? 'time' : 'budget'}-based tier selection for ${apiName}`);
 
@@ -151,7 +224,6 @@ function selectTier(db: Database, apiName: string): TierData {
 
   } catch (error) {
     console.error('Error in tier selection:', error);
-    // any error occurs, default to budget-based selection
     return selectTierBasedOnBudget(db, apiName);
   }
 }
@@ -164,20 +236,3 @@ export {
   selectTierBasedOnTime,
   selectTier
 };
-
-
-/*
-// Switch to time-based
-await fetch('http://localhost:2024/api-config/openai/settings', {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ use_time_based_tier: true })
-});
-
-// Switch to budget-based
-await fetch('http://localhost:2024/api-config/openai/settings', {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ use_time_based_tier: false })
-});
-*/ 
