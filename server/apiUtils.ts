@@ -37,11 +37,10 @@ function loadAPIConfigs(db: Database) {
 function updateBudget(db: Database, api_name: string, cost: number): void {
   const updateBudget = db.prepare(`
     UPDATE Budget
-    SET spent = spent + ?,
-        total_spent = total_spent + ?
+    SET budget = ?
     WHERE api_name = ?
   `);
-  const result = updateBudget.run(cost, cost, api_name);
+  const result = updateBudget.run(cost, api_name);
 
   // Log the update
   console.log(`Budget updated for ${api_name}: Cost: ${cost}, Rows affected: ${result.changes}`);

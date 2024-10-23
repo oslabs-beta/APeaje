@@ -17,7 +17,7 @@ const config : any = {
       },
       initialBudget: 0.2,
       thresholds: {
-        budget: [
+        budget: [  
           { threshold: 80, tier: 'A' },
           { threshold: 50, tier: 'B' },
           { threshold: 30, tier: 'C' },

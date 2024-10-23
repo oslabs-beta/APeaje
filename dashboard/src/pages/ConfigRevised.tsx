@@ -3,22 +3,46 @@ import { Button, Table, InputNumber, Select  } from 'antd';
 import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
-import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
+import { OpenAIFilled, DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 
 const {Option}  = Select;
+
+/*
+
+Expected 
+
+{
+  "apiName": "openai",
+  "thresholds": {
+    "budget": [
+      { "tier": "A", "threshold": 80 },
+      { "tier": "B", "threshold": 50 },
+    ],
+    "time": [
+      { "tier": "A", "start": 22, "end": 24 },
+      { "tier": "C", "start": 6, "end": 22 },
+    ]
+  }
+}
+
+*/
+
+
+
 
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   // const [tiers, setTiers] = useState('');
-  const [thresholds, setThreshold] = useState<Record<string, number>>({});
+  const [thresholds, setThreshold] = useState({});
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]); 
-  
+ 
 
   console.log('what is inputBudget', inputBudget)
   console.log('what is endTime', endTime)
   console.log('what is selectedRowKeys', selectedRowKeys[0])
+  console.log('original thresholds', thresholds)
   
   // Tier selection for frontend
   type ConfigType = {
@@ -30,18 +54,29 @@ const Config = (): React.ReactNode => {
     price: number;
   };
 
-  // type Thresholds = {
-  //   [key: string]: number; // key is the tier id, value is the threshold
-  // }
 
   type DataType = {
     budget: string;
+    api_name: string;
     timeRange: {
       start: string;
       end: string;
     };
     tiers: ConfigType[];
-    thresholds: {threshold: number ; tier : string}[];
+    thresholds: {};
+  }
+
+  type Type = {
+    Budget: {
+    threshold:number,
+    tier: string
+    },
+    
+    time: {
+      tier: string,
+      start: number,
+      end: number,
+    }
   }
 
   type SelectedTierType = {
@@ -127,6 +162,8 @@ const Config = (): React.ReactNode => {
     setThreshold((prev) => ({...prev, [tierId]: value || 0 }));
   }
 
+
+
   // Handle form submission
   const saveConfig = async (e: React.FormEvent<HTMLFormElement>) : Promise<void> => {
     e.preventDefault(); // Prevent the default form submission
@@ -141,11 +178,16 @@ const Config = (): React.ReactNode => {
 
 // Create the thresholds array for the backend 
 
-const thresholdsArray= Object.entries(thresholds).map(([tier,threshold]) => ({threshold,
-  tier
-}));
+const budgetThresholds= Object.entries(thresholds).map(([tier, threshold]) => ({ 
+  tier,
+  threshold,
+}))
 
-
+const timeThresholds= selectedRowKeys.map((timerId)=> ({
+  tier: timerId,
+  start: parseInt(startTime, 10), // Ensure the start time is a number
+  end: parseInt(endTime, 10), 
+}))
 
     // build the selected tiers array with all necessary properties. 
 
@@ -160,16 +202,21 @@ const thresholdsArray= Object.entries(thresholds).map(([tier,threshold]) => ({th
     // Create the data object to send to the backend data send to backend
     const data: DataType = {
       budget: inputBudget,
+      api_name: 'openai',
       timeRange: {
         start: startTime,
         end: endTime,
       },
       tiers: selectedTiers,
-      thresholds: thresholdsArray,
+      thresholds: {
+        budget: budgetThresholds,
+        time: timeThresholds,
+      }
     };
 
     try {
-      const response=  await fetch('http://localhost:2024/configuration', {
+      const response=  await fetch('http://localhost:2024/api-config/openai/thresholds', {
+
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -190,7 +237,7 @@ const thresholdsArray= Object.entries(thresholds).map(([tier,threshold]) => ({th
       setStartTime('');
       setEndTime('');
       setSelectedRowKeys([])
-      setThreshold({});
+      setThreshold([]);
       
 
       alert('Budget saved successfully');
