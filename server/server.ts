@@ -25,7 +25,7 @@ interface User {
 }
 
 let dbController: DatabaseController;
-const isDummyDatabase = true; // set this to true to use the dummy database
+const isDummyDatabase = false; // set this to true to use the dummy database
 
 if (isDummyDatabase) {
   dbController = setupDummyDatabase();
