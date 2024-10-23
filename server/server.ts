@@ -2,6 +2,7 @@ import express, {Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import cookieParser from 'cookie-parser';
 import path from 'path';
 import 'dotenv/config'
 
@@ -31,6 +32,7 @@ dbController.initialize();
 const app: Express = express();
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 app.use(express.static(path.resolve(__dirname, '../dist')));
 // attach db to middleware 
 app.use(databaseMiddleware(dbController));
@@ -62,13 +64,13 @@ app.get('/', (req: Request, res: Response ) => {
   })
   
   
-  app.get('/dashboard', authController.verify, (req: Request, res: Response) => {
+  app.get('/dashboard',  (req: Request, res: Response) => {
     res
     .status(200)
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
   });
   
-  app.patch('/configuration', authController.verify, configController.newBudget,  (req:Request, res:Response) => {
+  app.patch('/configuration', configController.newBudget,  (req:Request, res:Response) => {
     res.status(200).send('Budget has been updated')
   })
   

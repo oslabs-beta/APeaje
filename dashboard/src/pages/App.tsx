@@ -10,6 +10,7 @@ import Profile from './Profile';
 import Login from './Login';
 import Register from './Register';
 import { Route, Routes } from 'react-router-dom';
+import ProtectedRoute from '../components/ProtectedRoute';
 import { ConfigProvider, Layout, theme } from 'antd';
 
 const { Header, Content, Sider, Footer } = Layout;
@@ -36,12 +37,16 @@ const App = () => {
             </Header>
             <Content style={{ padding: '0 24px', minHeight: 280 }}>
               <Routes>
-                <Route path='/dashboard' index element={<Dashboard />} />
-                <Route path='/configuration' element={<Config />} />
-                <Route path='/manage' element={<Manage />} />
-                <Route path='/profile' element={<Profile />} />
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />
+
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path='/dashboard' index element={<Dashboard />} />
+                  <Route path='/configuration' element={<Config />} />
+                  <Route path='/manage' element={<Manage />} />
+                  <Route path='/profile' element={<Profile />} />
+                </Route>
               </Routes>
             </Content>
             <Footer></Footer>

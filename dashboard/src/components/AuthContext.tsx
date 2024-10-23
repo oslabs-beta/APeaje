@@ -48,6 +48,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const login = (token: string) => {
+    Cookies.set('authToken', token)
     setUser(token);
   };
 
@@ -55,6 +56,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     Cookies.remove('authToken');
     setUser(null);
   };
+
+
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

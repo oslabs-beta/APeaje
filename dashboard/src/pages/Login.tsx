@@ -5,7 +5,7 @@ import { useNavigate, Link } from 'react-router-dom';
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -24,6 +24,10 @@ const Login: React.FC = () => {
     }
   };
 
+  const handleLogout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    logout();
+  };
   return (
     <div>
       <form onSubmit={handleLogin}>
@@ -41,6 +45,7 @@ const Login: React.FC = () => {
         />
         <button type='submit'>Login</button>
       </form>
+      <button onClick={handleLogout}>Logout</button>
       <p>
         Don't have an account? <Link to='/register'>Register here</Link>
       </p>

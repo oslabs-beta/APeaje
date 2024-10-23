@@ -48,15 +48,15 @@ const Display: React.FC = () => {
 <div className = "overview">
     <div className = "item budget">
         <p>Budget</p>
-        <h5>${initialAmount.budget}</h5>
+        <h5>${initialAmount ? initialAmount.budget : 'PLEASE LOG IN' }</h5>
     </div>
     <div className = "item remaining-amount">
         <p>Remaining Balance</p>
-        <h5>${remainingBalance.remaining_balance}</h5>
+        <h5>${remainingBalance ? remainingBalance.remaining_balance : 'PLEASE LOG IN'}</h5>
     </div>
     <div className = "item total-request">
         <p>Total Requests</p>
-        <h5>{totalRequest.total_requests}</h5>
+        <h5>{totalRequest ? totalRequest.total_requests : 'PLEASE LOG IN'}</h5>
     
     </div>
 </div>

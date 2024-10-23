@@ -113,6 +113,7 @@ interface DecodedJwt extends JwtPayload {
 
 authController.verify = async (req: Request, res: Response, next: NextFunction) => {
   let token: string;
+  console.log(req.cookies)
 
   if (req.cookies && req.cookies.authToken){
     token = req.cookies.authToken;
