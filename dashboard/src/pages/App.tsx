@@ -31,7 +31,7 @@ const App = () => {
             <Header>
               <HeaderComp setCurrentTheme={setCurrentTheme} currentTheme={currentTheme} lightTheme={lightTheme} darkTheme={darkTheme}/>
             </Header>
-            <Content style={{ padding: "0 24px", minHeight: 280 }}>
+            <Content style={{ padding: "0 24px", minHeight: "100vh" }}>
               <Routes>
                 <Route path="/dashboard" index element={<Dashboard />} />
                 <Route path="/configuration" element={<ConfigRevised />} />

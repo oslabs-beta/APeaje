@@ -1,3 +1,13 @@
 .ant-layout-header{
     background-color: inherit !important;
 }
+
+.outline {
+    display:flexbox;
+    
+}
+
+body{
+    background-color: black;
+    min-height:100vh;
+}

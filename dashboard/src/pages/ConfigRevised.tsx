@@ -378,6 +378,7 @@ Object.entries(thresholds).forEach(([tier, threshold]) => {
   return (
     <div className='dashboard'>
       <Display />
+      < ThresholdsPieChart />
       <form onSubmit={saveConfig}>
         <label>
           Budget:
