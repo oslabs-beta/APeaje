@@ -89,7 +89,7 @@ const ThresholdsPieChart = () => {
         .on("mouseover", (event, d) => {
           tooltip
             .style("visibility", "visible")
-            .text(`${d.data.tier}: $${d.data.thresholds}`);
+            .text(`${d.data.chart.tier}: $${d.data.chart.thresholds}`);
         })
         .on("mousemove", (event) => {
           tooltip
@@ -110,10 +110,8 @@ const ThresholdsPieChart = () => {
         .attr("dy", "0.50em")
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
-        .text(
-          (d) => ` $${d.data.thresholds}\n
-                ${d.data.requestNumber} request(s)`
-        );
+        .text((d) => d.data.tier)
+       ;
 
       // const legends = svg.append("g").attr("transform", "translate(500, 300)")
       //                     .selectAll(".legends").data(data)
@@ -121,7 +119,7 @@ const ThresholdsPieChart = () => {
       // legend.append("rect").attr("width", 20).attr("hegith",20).attr("fill",function(d){return color(d.data.thresholds)})
       // legend.append("text").text(function(d){return color(d.data.tier)})
 
-      const legend = svg.append("g").attr("transform", "translate(600, 50)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
@@ -143,7 +141,7 @@ const ThresholdsPieChart = () => {
         .attr("x", 25)
         .attr("y", 9)
         .attr("dy", "0.35em") // Center text vertically
-        .text((d) => d.tier);
+        .text((d) =>`$${d.thresholds} (${d.requestNumber} request(s))`);
     }
   }, [data]);
 
