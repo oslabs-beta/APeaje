@@ -10,7 +10,7 @@ const Register: React.FC = () => {
   const handleRegister = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     const response: Response = await fetch(
-      'http://localhost:2024/api/register',
+      '/api/register',
       {
         method: 'POST',
         headers: {
@@ -21,8 +21,9 @@ const Register: React.FC = () => {
     );
 
     const data = await response.json();
+    console.log(data.message);
     if (data.message === 'User registered successfully') {
-      navigate('/App');
+      navigate('/dashboard');
     } else {
       alert('Error registering user');
     }
