@@ -63,7 +63,7 @@ module.exports = {
   },
   devServer: {
     headers: {"Access-Control-Allow-Origin": "*"},
-    historyApiFallback: false,
+    historyApiFallback: true,
     static: {
       //   publicPath: '/dist',
       // directory: path.resolve(__dirname, 'dist'),

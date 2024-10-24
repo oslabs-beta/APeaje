@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, InputNumber  } from 'antd';
+import { Button, Table, InputNumber, Select, Card, TimePicker } from 'antd';
+import type { Dayjs } from 'dayjs';
 import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
+import ConfigurationTableSettings from '../components/ConfigurationTableSettings';
+
 import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 
 const Config = (): React.ReactNode => {
@@ -11,6 +14,58 @@ const Config = (): React.ReactNode => {
   const [endTime, setEndTime] = useState('');
   const [tiers, setTiers] = useState('');
   const [threshold, setThreshold] = useState('');
+  const [initialAmount, setInitialAmount] = useState({ budget: 0 });
+
+  const [tierGroup, setTierGroup] = useState([
+    {
+      id: 'A',
+      model: 'dall-e-3',
+      quality: 'hd',
+      size: '1024x1792',
+      price: 0.12,
+      percentThreshold: 0,
+    },
+    {
+      id: 'B',
+      model: 'dall-e-3',
+      quality: 'hd',
+      size: '1024x1024',
+      price: 0.08,
+      percentThreshold: 0,
+    },
+    {
+      id: 'C',
+      model: 'dall-e-3',
+      quality: 'standard',
+      size: '1024x1792',
+      price: 0.08,
+      percentThreshold: 0,
+    },
+    {
+      id: 'D',
+      model: 'dall-e-3',
+      quality: 'standard',
+      size: '1024x1024',
+      price: 0.04,
+      percentThreshold: 0,
+    },
+    {
+      id: 'E',
+      model: 'dall-e-3',
+      quality: 'standard',
+      size: '512x512',
+      price: 0.018,
+      percentThreshold: 0,
+    },
+    {
+      id: 'F',
+      model: 'dall-e-3',
+      quality: 'standard',
+      size: '256x256',
+      price: 0.016,
+      percentThreshold: 0,
+    },
+  ]);
 
   // Tier selection for frontend
   type configType = {
@@ -19,56 +74,127 @@ const Config = (): React.ReactNode => {
     quality: string;
     size: string;
     price: number;
+    percentThreshold: number;
   };
 
-  // const tierGroup: configType[] =
-  const [tierGroup, setTierGroup] = useState([
+  const columns: TableProps<configType>['columns'] = [
     {
-      id: 'A',
-      model: 'dall-e-3',
-      quality: 'hd',
-      size: '1024x1792',
-      price: 0.12,
+      title: 'Tier',
+      dataIndex: 'id',
+      key: 'id',
     },
     {
-      id: 'B',
-      model: 'dall-e-3',
-      quality: 'hd',
-      size: '1024x1024',
-      price: 0.08,
+      title: 'Model',
+      dataIndex: 'model',
+      key: 'model',
     },
     {
-      id: 'C',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '1024x1792',
-      price: 0.08,
+      title: 'Quality',
+      dataIndex: 'quality',
+      key: 'quality',
     },
     {
-      id: 'D',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '1024x1024',
-      price: 0.04,
+      title: 'Size',
+      dataIndex: 'size',
+      key: 'size',
     },
     {
-      id: 'E',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '512x512',
-      price: 0.018,
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
     },
     {
-      id: 'F',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '256x256',
-      price: 0.016,
+      title: 'Percent dedicated',
+      key: 'percentThreshold',
+      render: (_, tierInfo, index) => (
+        <InputNumber
+          min={0}
+          max={100}
+          key={tierInfo.id + '-Threshold'}
+          onChange={(val) => updatePercentThreshold(val, index)}
+        />
+      ),
     },
-  ]);
+    {
+      title: 'Money Budgeted',
+      key: 'budgeted',
+      render: (_, tierInfo) => {
+        console.log('initialAmount :', initialAmount);
+        console.log('tierInfo.percentThreshold :', tierInfo.percentThreshold);
+        const budget = Math.round(initialAmount.budget / tierInfo.percentThreshold * 100) / 100;
+        return budget === Infinity || Number.isNaN(budget)? 0 : budget;
+      },
+    },
+    {
+      title: 'Amount Spent',
+      key: 'spent',
+      dataIndex: 'spent',
+    },
+    {
+      title: 'Amount Left',
+      key: 'amountLeft',
+      dataIndex: 'amountLeft',
+    },
+    {
+      title: 'Delete',
+      key: 'delete',
+      render: (_, tierInfo) => (
+        <Button
+          key={tierInfo.id + '-Delete'}
+          onClick={() => deleteTier(tierInfo.id)}
+        >
+          {<TrashcanIcon />}
+        </Button>
+      ),
+    },
+  ];
+  const [tableColumns, setTableColumns] = useState(columns);
 
-  const handleChange = (e: React.SyntheticEvent): void => {
-    setInputBudget((e.target as HTMLInputElement).value);
+  interface RemainingBalance {
+    remaining_balance: number;
+  }
+
+  const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({
+    remaining_balance: 0,
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        interface InitialAmount {
+          budget: number;
+        }
+
+        const initialValueResponse = await fetch('/dashboard/initialAmount');
+        const initialValue: InitialAmount[] = await initialValueResponse.json();
+        setInitialAmount(initialValue[0]); // {budget: 0}
+        console.log('initialAmount :', initialAmount);
+
+        const remainingBalanceResponse = await fetch(
+          '/dashboard/remaining_balance'
+        );
+        const remainingBalance: RemainingBalance[] =
+          await remainingBalanceResponse.json();
+        setRemainingBalance(remainingBalance[0]);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const updatePercentThreshold = (val, index: number) => {
+    setTierGroup((prev) =>
+      prev.map((elem) =>
+        elem.id === tierGroup[index].id
+          ? { ...elem, percentThreshold: val }
+          : elem
+      )
+    );
+  };
+
+  const changePercentDedicated = (e): void => {
+    console.log('e', e);
   };
 
   const handleStartTime = (e: React.SyntheticEvent): void => {
@@ -149,62 +275,67 @@ const Config = (): React.ReactNode => {
     return hours;
   };
 
-        const deleteTier = (tierId): void => {
-            setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
-        }
+  const deleteTier = (tierId): void => {
+    setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
+  };
 
-        const changeThreshold = (): void => {
-
-        }
-    
-        const columns: TableProps<configType>['columns'] = [
-            {
-                title: 'Tier',
-                dataIndex: 'id',
-                key:'id'
-            },
-            {
-                title: 'Model',
-                dataIndex: 'model',
-                key:'model'
-            },
-            {
-                title: 'Quality',
-                dataIndex: 'quality',
-                key:'quality'
-            },
-            {
-                title: 'Size',
-                dataIndex: 'size',
-                key:'size'
-            },
-            {
-                title: 'Price',
-                dataIndex: 'price',
-                key:'price'
-            },
-            {
-                title: 'Threshold',
-                key: 'threshold',
-                render: (_,tierInfo) => (
-                    <InputNumber key={tierInfo.id + "-Threshold"} />
-                )
-            },
-            {
-                title: 'Delete',
-                key: 'delete',
-                render: (_,tierInfo) => (
-                    <Button key={tierInfo.id + "-Delete"} onClick={() => deleteTier(tierInfo.id)}>
-                        {<TrashcanIcon />}
-                    </Button>
-                )
-            }
-        ];
+  const changeThreshold = (threshold): void => {
+    if (threshold === 'budget') setTableColumns(columns);
+    else {
+      setTableColumns([
+        {
+          title: 'Tier',
+          dataIndex: 'id',
+          key: 'id',
+        },
+        {
+          title: 'Model',
+          dataIndex: 'model',
+          key: 'model',
+        },
+        {
+          title: 'Quality',
+          dataIndex: 'quality',
+          key: 'quality',
+        },
+        {
+          title: 'Size',
+          dataIndex: 'size',
+          key: 'size',
+        },
+        {
+          title: 'Price',
+          dataIndex: 'price',
+          key: 'price',
+        },
+        {
+          title: 'Start Time',
+          key: 'startTime',
+          render: (_) => <TimePicker format={'HH:mm'} />,
+        },
+        {
+          title: 'Delete',
+          key: 'delete',
+          render: (_, tierInfo) => (
+            <Button
+              key={tierInfo.id + '-Delete'}
+              onClick={() => deleteTier(tierInfo.id)}
+            >
+              {<TrashcanIcon />}
+            </Button>
+          ),
+        },
+      ]);
+    }
+  };
 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const onSelectChange = (newSelectedRowKeys) => {
-    console.log('selectedRowKeys changed: ', newSelectedRowKeys);
-    setSelectedRowKeys(newSelectedRowKeys);
+  const onSelectChange = (selectedRowKeys, selectedRows, { type }) => {
+    console.log('type :', type);
+    console.log('selectedRows :', selectedRows);
+    console.log('selectedRowKeys :', selectedRowKeys);
+
+    setSelectedRowKeys(selectedRowKeys);
   };
   const rowSelection = {
     selectedRowKeys,
@@ -218,85 +349,49 @@ const Config = (): React.ReactNode => {
   //        </option>
   //     ));
 
-  const generateThresholds = () => {
-    return config.apis.openai.thresholds.budget.map(({ threshold, tier }) => (
-      <option key={tier} value={tier}>
-        ${threshold} (Tier {tier})
-      </option>
-    ));
+  type thresholdType = {
+    value: string;
+    label: string;
+  };
+
+  const createThresholdObject = (): thresholdType[] => {
+    const thresholds: string[] = Object.keys(config.apis.openai.thresholds);
+    const optionsForSelect: thresholdType[] = [
+      { value: '', label: 'Select a Threshold' },
+    ];
+    thresholds.forEach((threshold) => {
+      const thresholdKey = threshold.replace(/^[0-9a-zA-Z]/g, '');
+      const thresholdLabel = threshold[0].toUpperCase() + threshold.slice(1);
+      optionsForSelect.push({ value: thresholdKey, label: thresholdLabel });
+    });
+
+    return optionsForSelect;
+  };
+
+  const changeThresholdSelect = (target) => {
+    console.log(target);
   };
 
   return (
     <div className='dashboard'>
       <Display />
       <form onSubmit={saveConfig}>
-        <label>
-          Budget:
-          <input
-            className='inputBudget'
-            type='text'
-            value={inputBudget}
-            onChange={handleChange}
-            placeholder='Enter budget'
-          />
-        </label>
-        <label>
-          Start Time:
-          <select
-            className='timeRange'
-            value={startTime}
-            onChange={handleStartTime}
-          >
-            <option value=''>Select Start Time</option>
-            {generateHours()}
-          </select>
-        </label>
-        <label>
-          End Time:
-          <select
-            className='timeRange'
-            value={endTime}
-            onChange={handleEndTime}
-          >
-            <option value=''> Select End Time</option>
-            {generateHours()}
-          </select>
-        </label>
-
-        <label>
-          Tiers:
-          <select className='tiers' value={tiers} onChange={handleTiers}>
-            <option value='' className='tier-table'>
-              Select Tiers
-            </option>
-            {/* {generateTiers2()} */}
-          </select>
-          {/* <table>{generateTiers()}</table> */}
-          <Table
-            className='tiersTable'
-            pagination={false}
-            
-            dataSource={tierGroup}
-            columns={columns}
-          />
-          ;
-        </label>
-
-        <label>
-          Thresholds:
-          <select
-            className='thresholds'
-            value={threshold}
-            onChange={handleThreshold}
-          >
-            <option value=''> Select Thresholds </option>
-            {generateThresholds()}
-          </select>
-        </label>
-
-        <button type='submit' className='config-save'>
-          Save
-        </button>
+        <Table
+          className='tiersTable'
+          pagination={false}
+          rowSelection={{ type: 'radio', ...rowSelection }}
+          dataSource={tierGroup}
+          columns={tableColumns}
+          title={() => (
+            <ConfigurationTableSettings
+              initialAmount={initialAmount}
+              setInitialAmount={setInitialAmount}
+              remainingBalance={remainingBalance}
+              changeThreshold={changeThreshold}
+            />
+          )}
+          rowKey={(record) => record.id}
+        />
       </form>
     </div>
   );
