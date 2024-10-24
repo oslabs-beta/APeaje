@@ -4,28 +4,50 @@ import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
 import { OpenAIFilled, DeleteFilled as TrashcanIcon } from '@ant-design/icons';
-
-const {Option}  = Select;
+import { Type } from 'typescript';
+import { stringify } from 'querystring';
+import ThresholdsPieChart from '../components/ThresholdsPieChart';
 
 /*
 
-Expected 
-
-{
-  "apiName": "openai",
-  "thresholds": {
-    "budget": [
-      { "tier": "A", "threshold": 80 },
-      { "tier": "B", "threshold": 50 },
-    ],
-    "time": [
-      { "tier": "A", "start": 22, "end": 24 },
-      { "tier": "C", "start": 6, "end": 22 },
-    ]
+const apiName = 'my-api';
+const thresholds = {
+  'tier1': {
+    budget: 40,
+    time: {
+      start: '09:00',
+      end: '17:00'
+    }
+  },
+  'tier2': {
+    budget: 60,
+    time: {
+      start: '00:00',
+      end: '24:00'
+    }
   }
-}
+};
 
+const body = {
+  thresholds
+};
+
+fetch(`/api/updateThresholds/${apiName}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify(body)
+})
+.then(response => response.json())
+.then(data => {
+  console.log(data);
+})
+.catch(error => {
+  console.error('Error updating thresholds:', error);
+});
 */
+
 
 
 
@@ -41,8 +63,8 @@ const Config = (): React.ReactNode => {
 
   console.log('what is inputBudget', inputBudget)
   console.log('what is endTime', endTime)
-  console.log('what is selectedRowKeys', selectedRowKeys[0])
-  console.log('original thresholds', thresholds)
+  console.log('what is selectedRowKeys', selectedRowKeys)
+  console.log('original thresholds', thresholds) // {A: 20, B: 10, C: 20}
   
   // Tier selection for frontend
   type ConfigType = {
@@ -53,31 +75,6 @@ const Config = (): React.ReactNode => {
     size: string;
     price: number;
   };
-
-
-  type DataType = {
-    budget: string;
-    api_name: string;
-    timeRange: {
-      start: string;
-      end: string;
-    };
-    tiers: ConfigType[];
-    thresholds: {};
-  }
-
-  type Type = {
-    Budget: {
-    threshold:number,
-    tier: string
-    },
-    
-    time: {
-      tier: string,
-      start: number,
-      end: number,
-    }
-  }
 
   type SelectedTierType = {
     id: string;
@@ -169,81 +166,123 @@ const Config = (): React.ReactNode => {
     e.preventDefault(); // Prevent the default form submission
 
     // Validation (optional)
-  // Get the selected tier
+    // Get the selected tier
     // const selectedTier = selectedRowKeys.map((key) => ({
     //   id: key,
     //   threshold: thresholds[key] || 0,
     // })); // Use the first selected key
 
+    // Create the thresholds array for the backend
 
-// Create the thresholds array for the backend 
+    // const budgetThresholds= Object.entries(thresholds).map(([tier, threshold]) => ({
+    //   tier,
+    //   threshold,
+    // }))
 
-const budgetThresholds= Object.entries(thresholds).map(([tier, threshold]) => ({ 
-  tier,
-  threshold,
-}))
+    // selecting time from the Table 
+    // const timeThresholds = selectedRowKeys.map((timerId) => ({
+    //   tier: timerId,
+    //   start: parseInt(startTime, 10), // Ensure the start time is a number
+    //   end: parseInt(endTime, 10),
+    // }));
 
-const timeThresholds= selectedRowKeys.map((timerId)=> ({
-  tier: timerId,
-  start: parseInt(startTime, 10), // Ensure the start time is a number
-  end: parseInt(endTime, 10), 
-}))
+    // build the selected tiers array with all necessary properties.
 
-    // build the selected tiers array with all necessary properties. 
 
-    const selectedTiers: ConfigType[] = selectedRowKeys.map((key) => {
-      console.log('checking selectedRowKeys', selectedRowKeys)
-      const tierInfo = tierGroup.find((tier) => tier.id === key);
-      console.log('tierInfo', tierInfo)
-     return tierInfo ? {...tierInfo} : null;
-    }).filter(tier => tier !== null) as ConfigType[];
 
+
+    // const selectedTiers: ConfigType[] = selectedRowKeys
+    //   .map((key) => {
+    //     console.log("checking selectedRowKeys", selectedRowKeys);
+    //     const tierInfo = tierGroup.find((tier) => tier.id === key);
+    //     console.log("tierInfo", tierInfo);
+    //     return tierInfo ? { ...tierInfo } : null;
+    //   })
+    //   .filter((tier) => tier !== null) as ConfigType[];
 
     // Create the data object to send to the backend data send to backend
-    const data: DataType = {
+    // const data: DataType = {
+    //   budget: inputBudget,
+    //   api_name: 'openai',
+    //   timeRange: {
+    //     start: startTime,
+    //     end: endTime,
+    //   },
+    //   tiers: selectedTiers,
+    //   thresholds: {
+    //     budget: budgetThresholds,
+    //     time: timeThresholds,
+    //   }
+    // };
+
+      // the table needs to be contain the time range. 
+    //   const budgetThresholds = selectedRowKeys.reduce((acc, tierId) => {
+    //     const tierInfo = tierGroup.find(tier => tier.id === tierId); // Find the tier info based on id
+    //     if (tierInfo) {
+    //       console.log('tier name', acc[tierInfo.id])
+    //         acc[tierInfo.id] = {
+    //             budget: thresholds[tierId] || 0,
+    //             time: {
+    //                 start: startTime || undefined,
+    //                 end: endTime || undefined,
+    //             }
+    //         };
+    //     }
+    //     console.log('acc', acc)
+    //     return acc;
+    // }, {} as Record<string, { budget: number; time?: { start?: string; end?: string } }>);
+
+// Create the thresholds object 
+const thresholdsObject = {};
+
+// Populate budget thresholds
+Object.entries(thresholds).forEach(([tier, threshold]) => {
+  thresholdsObject[tier] = {
+    budget: threshold,
+    time: selectedRowKeys.includes(tier) 
+          ? { start: parseInt(startTime, 10), end: parseInt(endTime, 10)}
+          : undefined, // Optional time
+  }
+  });
+
+  
+    const data = {
       budget: inputBudget,
       api_name: 'openai',
-      timeRange: {
-        start: startTime,
-        end: endTime,
-      },
-      tiers: selectedTiers,
-      thresholds: {
-        budget: budgetThresholds,
-        time: timeThresholds,
-      }
+      thresholds: thresholdsObject, 
     };
 
     try {
-      const response=  await fetch('http://localhost:2024/api-config/openai/thresholds', {
+      const response = await fetch(
+        "http://localhost:2024/api-config/openai/thresholds",
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
 
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      console.log('response', response);
+      console.log("response", response);
       if (!response.ok) {
-          throw new Error('Network response was not ok')
+        throw new Error("Network response was not ok");
       }
 
       // const responseBody = await response; // or await response.json()
       // console.log('response from Body', responseBody)
-      
-      // }
-      setInputBudget('');
-      setStartTime('');
-      setEndTime('');
-      setSelectedRowKeys([])
-      setThreshold([]);
-      
 
-      alert('Budget saved successfully');
+      // }
+      setInputBudget("");
+      setStartTime("");
+      setEndTime("");
+      setSelectedRowKeys([]);
+      setThreshold([]);
+
+      alert("Budget saved successfully");
     } catch (error) {
-      console.error('error found from configuration', error);
-      alert('Failed to save configuration. Please try again.');
+      console.error("error found from configuration", error);
+      alert("Failed to save configuration. Please try again.");
     }
   };
 

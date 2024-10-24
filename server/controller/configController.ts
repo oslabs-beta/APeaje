@@ -61,8 +61,7 @@ const configController: ConfigControllerInterface = {
   // updates or creates new budget
   newBudget: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      console.log('what is in req.body', req.body)
-      const {budget, api_name} = req.body;
+      const { budget, api_name } = req.body;
       if (!budget || !api_name) {
         res.status(400).send('budget and api name are required');
         return;
@@ -126,10 +125,6 @@ const configController: ConfigControllerInterface = {
       // if no API name or thresholds object provided, return 400 error
       if (!api_name || !thresholds) {
         res.status(400).json({ error: 'api name and thresholds required' });
-      const { api_name, thresholds } = req.body;
-      console.log('checking request body', api_name, thresholds)
-      if (!api_name || !thresholds) {
-        res.status(400).send('api name and thresholds required');
         return;
       }
 
@@ -232,7 +227,7 @@ const configController: ConfigControllerInterface = {
           // execute update for this tier
           updateThresholdStmt.run(
             JSON.stringify(thresholdConfig),
-            apiName,
+            api_name,
             tier
           );
         }
@@ -423,7 +418,6 @@ const configController: ConfigControllerInterface = {
     return { isValid: errors.length === 0, errors };
   }
 };
-}
 
 export default configController;
 

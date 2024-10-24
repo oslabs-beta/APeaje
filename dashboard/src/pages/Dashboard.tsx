@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import BarChart from '../components/BarChart';
 import LineChart from '../components/LineChart';
 import Display from '../components/Display';
-import PieChart from '../components/PieChart';
+// import PieChart from '../components/PieChart';
 import ThresholdsPieChart from '../components/ThresholdsPieChart'
 import { Row, Col } from 'antd';
 
@@ -19,9 +19,9 @@ return (
         <Col>
             <LineChart />
         </Col>
-        <Col>
+        {/* <Col>
             <PieChart />
-        </Col>
+        </Col> */}
         <Col>
             <ThresholdsPieChart />
         </Col>

@@ -86,8 +86,12 @@ app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req: Request, res: Response)
   res.status(200).send(res.locals.tierInfo)
 })
 
-app.get('/dashboard/thresholdsChart', (req: Request, res: Response) => {
-  res.status(200).send('working')
+// app.get('/dashboard/thresholds', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
+//   res.status(200).send(res.locals.thresholdInfo)
+// })
+
+app.get('/dashboard/thresholdsChart', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.thresholdInfo)
 })
 
 app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req: Request, res: Response) => {
@@ -127,7 +131,7 @@ app.delete('/api-config/:apiName', configController.deleteApiConfig, (req: Reque
 });
 
 // update thresholds for an API
-app.patch('/api-config/:apiName/thresholds', configController.newBudget, configController.updateThresholds, (req: Request, res: Response) => {
+app.put('/api-config/:apiName/thresholds', configController.newBudget, configController.updateThresholds, (req: Request, res: Response) => {
   res.status(200).json(res.locals.updatedThresholds);
 });
 

@@ -31,7 +31,7 @@ dashboardSQL.remainingBalance = async (req: Request, res: Response, next: NextFu
       SELECT budget - total_spent AS remaining_balance 
       FROM Budget
     `);
-    console.log('remaining balance from backend', remainingBalance);
+    // console.log('remaining balance from backend', remainingBalance);
     res.locals.remainingBalance = remainingBalance;
     next();
   } catch (error) {
@@ -46,7 +46,7 @@ dashboardSQL.initialAmount = async (req: Request, res: Response, next: NextFunct
       SELECT budget 
       FROM Budget
     `);
-    console.log('initialAmount from backend', initialAmount);
+    // console.log('initialAmount from backend', initialAmount);
     res.locals.initialAmount = initialAmount;
     next();
   } catch (error) {
@@ -61,7 +61,7 @@ dashboardSQL.totalRequests = async (req: Request, res: Response, next: NextFunct
       SELECT COUNT(id) AS total_requests 
       FROM Queries
     `);
-    console.log('total request', totalRequests);
+    // console.log('total request', totalRequests);
     res.locals.totalRequests = totalRequests;
     next();
   } catch (error) {
@@ -77,7 +77,7 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
       FROM Tiers 
       GROUP BY tier_name
     `);
-    console.log('tier breakdown', tierBreakdown);
+    // console.log('tier breakdown', tierBreakdown);
     res.locals.tierInfo = tierBreakdown;
     next();
   } catch (error) {
@@ -89,11 +89,12 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
 dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
-      SELECT tier_name, thresholds 
-      FROM Tiers 
+      SELECT tier_name, thresholds
+      FROM Tiers
     `);
-    console.log('tier breakdown', thresholdsBreakdown);
-    res.locals.tierInfo = thresholdsBreakdown;
+    console.log('thresholds breakdown', thresholdsBreakdown);
+
+    res.locals.thresholdInfo = thresholdsBreakdown;
     next();
   } catch (error) {
     console.error('Error fetching tier breakdown:', error);
