@@ -63,7 +63,7 @@ module.exports = {
   },
   devServer: {
     headers: {"Access-Control-Allow-Origin": "*"},
-    historyApiFallback: false,
+    historyApiFallback: true,
     static: {
       //   publicPath: '/dist',
       // directory: path.resolve(__dirname, 'dist'),
@@ -71,7 +71,7 @@ module.exports = {
     },
     proxy: [
       {
-        context: ['/api', '/route', '/dashboard'],
+        context: ['/api', '/route', '/dashboard', '/api-config'],
         target: 'http://localhost:2024',
         logLevel:   'info',
       },

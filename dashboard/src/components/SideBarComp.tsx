@@ -1,43 +1,39 @@
-import React from 'react';
-// import homeIcon from '../../public/assets/home.png';
-// import profileIcon from '../../public/assets/profile.png';
-// import configIcon from '../../public/assets/setting.png';
-// import teamicon from '../../public/assets/team.png';
+import React, { ReactElement } from 'react';
+import { HomeOutlined, LoginOutlined, ProfileOutlined, SettingOutlined, TeamOutlined } from '@ant-design/icons';
 
 // export the array of objects to the SideBar for each tab.
 // Define a TypeScript interface for the sidebar items
-// interface SidebarItem {
-//     label: string;
-//     // icon: string;
-//     link: string;
-// }
+interface SidebarItem {
+    label: string;
+    icon: ReactElement;
+    link: string;
+}
 
 
-export const sideBarComp = [
-
+export const sideBarComp:SidebarItem[] = [
     {
         label: "Dashboard", 
-        // icon: homeIcon,
+        icon: <HomeOutlined />,
         link: "/dashboard"
     },
     {
         label: "Configuration", 
-        // icon: configIcon,
+        icon: <SettingOutlined />,
         link: "/configuration"
     },
     {
         label: "Manage Team", 
-        // icon: teamicon,
+        icon: <TeamOutlined />,
         link: "/manage"
     },
     {
         label: "Profile", 
-        // icon: profileIcon,
+        icon: <ProfileOutlined />,
         link: "/profile"
     },
     {
         label: "Login", 
-        // icon: profileIcon,
+        icon: <LoginOutlined />,
         link: "/login"
     }
 ]

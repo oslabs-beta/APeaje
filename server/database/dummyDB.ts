@@ -35,6 +35,11 @@ export function setupDummyDatabase(): DatabaseController {
         tier_id INTEGER,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
       )`,
+            `CREATE TABLE IF NOT EXISTS Api_settings (
+        api_name TEXT PRIMARY KEY,
+        use_time_based_tier INTEGER DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
         ];
 
         for (const sql of tables) {
@@ -46,7 +51,7 @@ export function setupDummyDatabase(): DatabaseController {
     }
 
     function reset(): void {
-        const tables: string[] = ['Queries', 'Tiers', 'Budget', 'Users'];
+        const tables: string[] = ['Queries', 'Tiers', 'Budget', 'Users', 'Api_settings' ];
         for (const table of tables) {
             db.prepare(`DROP TABLE IF EXISTS ${table}`).run();
         }
@@ -61,7 +66,7 @@ export function setupDummyDatabase(): DatabaseController {
 }
 
 function logDatabaseContent(db: Database): void {
-    const tables = ['Users', 'Budget', 'Tiers', 'Queries'];
+    const tables = ['Users', 'Budget', 'Tiers', 'Queries', 'Api_settings'];
 
     tables.forEach(table => {
         console.log(`\n--- ${table} Table Content ---`);
@@ -84,6 +89,22 @@ export function insertDummyData(db: Database): void {
     for (const user of users) {
         insertUser.run(user.username, user.password, user.role);
     }
+
+    const settings = [
+        { api_name: 'openai', use_time_based_tier: 1 },
+        { api_name: 'google', use_time_based_tier: 1 },
+        { api_name: 'azure', use_time_based_tier: 1 }
+    ];
+
+    const insertSettings = db.prepare(
+        'INSERT INTO Api_settings (api_name, use_time_based_tier) VALUES (?, ?)'
+    );
+
+    for (const setting of settings) {
+        insertSettings.run(setting.api_name, setting.use_time_based_tier);
+    }
+
+    
 
     // Budget (using hardcoded values)
     const budgets = [

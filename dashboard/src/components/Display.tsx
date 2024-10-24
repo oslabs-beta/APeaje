@@ -15,7 +15,7 @@ const Display: React.FC = () => {
         remaining_balance: number;
     }
 
-// calling data for current threshold amount, remaining aount, total request
+    // calling data for current threshold amount, remaining aount, total request
     const [totalRequest, setTotalRequest] = useState<TotalRequest>({total_requests: 0})
     const [initialAmount, setInitialAmount] = useState<InitialAmount>({budget: 0})
     const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({remaining_balance: 0})
@@ -48,15 +48,15 @@ const Display: React.FC = () => {
 <div className = "overview">
     <div className = "item budget">
         <p>Budget</p>
-        <h5>${initialAmount.budget}</h5>
+        <h5>${initialAmount ? initialAmount.budget : 'PLEASE LOG IN' }</h5>
     </div>
     <div className = "item remaining-amount">
         <p>Remaining Balance</p>
-        <h5>${remainingBalance.remaining_balance}</h5>
+        <h5>${remainingBalance ? remainingBalance.remaining_balance : 'PLEASE LOG IN'}</h5>
     </div>
     <div className = "item total-request">
         <p>Total Requests</p>
-        <h5>{totalRequest.total_requests}</h5>
+        <h5>{totalRequest ? totalRequest.total_requests : 'PLEASE LOG IN'}</h5>
     
     </div>
 </div>

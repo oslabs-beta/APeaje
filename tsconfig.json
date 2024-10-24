@@ -6,9 +6,6 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "jsx": "react",
-    "noImplicitAny": false,
-    "jsx": "react",
-
   },
   "include": ["/**/*.ts", "/**/*.tsx", "server/apiUtils.ts"],
   "exclude": ["node_modules"]
