@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Table, InputNumber, Select  } from 'antd';
+import { Button, Table, InputNumber, Select } from 'antd';
 import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
@@ -48,24 +48,19 @@ fetch(`/api/updateThresholds/${apiName}`, {
 });
 */
 
-
-
-
-
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   // const [tiers, setTiers] = useState('');
   const [thresholds, setThreshold] = useState({});
-  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]); 
- 
+  const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
 
-  console.log('what is inputBudget', inputBudget)
-  console.log('what is endTime', endTime)
-  console.log('what is selectedRowKeys', selectedRowKeys)
-  console.log('original thresholds', thresholds) // {A: 20, B: 10, C: 20}
-  
+  console.log('what is inputBudget', inputBudget);
+  console.log('what is endTime', endTime);
+  console.log('what is selectedRowKeys', selectedRowKeys);
+  console.log('original thresholds', thresholds); // {A: 20, B: 10, C: 20}
+
   // Tier selection for frontend
   type ConfigType = {
     key: number;
@@ -82,7 +77,7 @@ const Config = (): React.ReactNode => {
     quality: string;
     size: string;
     price: number;
-  }
+  };
 
   const [tierGroup, setTierGroup] = useState<ConfigType[]>([
     {
@@ -118,7 +113,7 @@ const Config = (): React.ReactNode => {
       price: 0.04,
     },
     {
-      key:5,
+      key: 5,
       id: 'E',
       model: 'dall-e-3',
       quality: 'standard',
@@ -126,7 +121,7 @@ const Config = (): React.ReactNode => {
       price: 0.018,
     },
     {
-      key:6,
+      key: 6,
       id: 'F',
       model: 'dall-e-3',
       quality: 'standard',
@@ -155,14 +150,17 @@ const Config = (): React.ReactNode => {
   //   setThreshold((e.target as HTMLInputElement).value);
   // };
 
-  const handleThresholdChange = (tierId: string, value: number | undefined): void => {
-    setThreshold((prev) => ({...prev, [tierId]: value || 0 }));
-  }
-
-
+  const handleThresholdChange = (
+    tierId: string,
+    value: number | undefined
+  ): void => {
+    setThreshold((prev) => ({ ...prev, [tierId]: value || 0 }));
+  };
 
   // Handle form submission
-  const saveConfig = async (e: React.FormEvent<HTMLFormElement>) : Promise<void> => {
+  const saveConfig = async (
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     e.preventDefault(); // Prevent the default form submission
 
     // Validation (optional)
@@ -179,7 +177,7 @@ const Config = (): React.ReactNode => {
     //   threshold,
     // }))
 
-    // selecting time from the Table 
+    // selecting time from the Table
     // const timeThresholds = selectedRowKeys.map((timerId) => ({
     //   tier: timerId,
     //   start: parseInt(startTime, 10), // Ensure the start time is a number
@@ -187,9 +185,6 @@ const Config = (): React.ReactNode => {
     // }));
 
     // build the selected tiers array with all necessary properties.
-
-
-
 
     // const selectedTiers: ConfigType[] = selectedRowKeys
     //   .map((key) => {
@@ -215,7 +210,7 @@ const Config = (): React.ReactNode => {
     //   }
     // };
 
-      // the table needs to be contain the time range. 
+    // the table needs to be contain the time range.
     //   const budgetThresholds = selectedRowKeys.reduce((acc, tierId) => {
     //     const tierInfo = tierGroup.find(tier => tier.id === tierId); // Find the tier info based on id
     //     if (tierInfo) {
@@ -232,57 +227,56 @@ const Config = (): React.ReactNode => {
     //     return acc;
     // }, {} as Record<string, { budget: number; time?: { start?: string; end?: string } }>);
 
-// Create the thresholds object 
-const thresholdsObject = {};
+    // Create the thresholds object
+    const thresholdsObject = {};
 
-// Populate budget thresholds
-Object.entries(thresholds).forEach(([tier, threshold]) => {
-  thresholdsObject[tier] = {
-    budget: threshold,
-    time: selectedRowKeys.includes(tier) 
-          ? { start: parseInt(startTime, 10), end: parseInt(endTime, 10)}
+    // Populate budget thresholds
+    Object.entries(thresholds).forEach(([tier, threshold]) => {
+      thresholdsObject[tier] = {
+        budget: threshold,
+        time: selectedRowKeys.includes(tier)
+          ? { start: parseInt(startTime, 10), end: parseInt(endTime, 10) }
           : undefined, // Optional time
-  }
-  });
+      };
+    });
 
-  
     const data = {
       budget: inputBudget,
       api_name: 'openai',
-      thresholds: thresholdsObject, 
+      thresholds: thresholdsObject,
     };
 
     try {
       const response = await fetch(
-        "http://localhost:2024/api-config/openai/thresholds",
+        '/api-config/openai/thresholds',
         {
-          method: "PUT",
+          method: 'PUT',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify(data),
         }
       );
 
-      console.log("response", response);
+      console.log('response', response);
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        throw new Error('Network response was not ok');
       }
 
       // const responseBody = await response; // or await response.json()
       // console.log('response from Body', responseBody)
 
       // }
-      setInputBudget("");
-      setStartTime("");
-      setEndTime("");
+      setInputBudget('');
+      setStartTime('');
+      setEndTime('');
       setSelectedRowKeys([]);
       setThreshold([]);
 
-      alert("Budget saved successfully");
+      alert('Budget saved successfully');
     } catch (error) {
-      console.error("error found from configuration", error);
-      alert("Failed to save configuration. Please try again.");
+      console.error('error found from configuration', error);
+      alert('Failed to save configuration. Please try again.');
     }
   };
 
@@ -301,71 +295,75 @@ Object.entries(thresholds).forEach(([tier, threshold]) => {
     return hours;
   };
 
-
   // deleteTier function
-        const deleteTier = (tierId): void => {
-            setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
-        }
-    
-        const columns: TableProps<ConfigType>['columns'] = [
-            {
-                title: 'Tier',
-                dataIndex: 'id',
-                key:'id'
-            },
-            {
-                title: 'Model',
-                dataIndex: 'model',
-                key:'model'
-            },
-            {
-                title: 'Quality',
-                dataIndex: 'quality',
-                key:'quality'
-            },
-            {
-                title: 'Size',
-                dataIndex: 'size',
-                key:'size'
-            },
-            {
-                title: 'Price',
-                dataIndex: 'price',
-                key:'price'
-            },
-            {
-                title: 'Threshold',
-                key: 'threshold',
-                render: (_,tierInfo) => (
-                    <InputNumber min = {0} 
-                    onChange = {(value)=> handleThresholdChange(tierInfo.id, value)}
-                    key={tierInfo.id + "-Threshold"}
-                    value = {thresholds[tierInfo.id] || 0} />
-                )
-            },
-            {
-                title: 'Delete',
-                key: 'delete',
-                render: (_,tierInfo) => (
-                    <Button key={tierInfo.id + "-Delete"} onClick={() => deleteTier(tierInfo.id)}>
-                        {<TrashcanIcon />}
-                    </Button>
-                )
-            }
-        ];
+  const deleteTier = (tierId): void => {
+    setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
+  };
 
- /*  const [threshold, setThreshold] = useState({});
+  const columns: TableProps<ConfigType>['columns'] = [
+    {
+      title: 'Tier',
+      dataIndex: 'id',
+      key: 'id',
+    },
+    {
+      title: 'Model',
+      dataIndex: 'model',
+      key: 'model',
+    },
+    {
+      title: 'Quality',
+      dataIndex: 'quality',
+      key: 'quality',
+    },
+    {
+      title: 'Size',
+      dataIndex: 'size',
+      key: 'size',
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+    },
+    {
+      title: 'Threshold',
+      key: 'threshold',
+      render: (_, tierInfo) => (
+        <InputNumber
+          min={0}
+          onChange={(value) => handleThresholdChange(tierInfo.id, value)}
+          key={tierInfo.id + '-Threshold'}
+          value={thresholds[tierInfo.id] || 0}
+        />
+      ),
+    },
+    {
+      title: 'Delete',
+      key: 'delete',
+      render: (_, tierInfo) => (
+        <Button
+          key={tierInfo.id + '-Delete'}
+          onClick={() => deleteTier(tierInfo.id)}
+        >
+          {<TrashcanIcon />}
+        </Button>
+      ),
+    },
+  ];
+
+  /*  const [threshold, setThreshold] = useState({});
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);  */
 
-  const onSelectChange = (newSelectedRowKeys: []) : void => {
+  const onSelectChange = (newSelectedRowKeys: []): void => {
     console.log('selectedRowKeys changed: ', newSelectedRowKeys);
-    setSelectedRowKeys(newSelectedRowKeys)
-  }
+    setSelectedRowKeys(newSelectedRowKeys);
+  };
   const rowSelection = {
     selectedRowKeys,
-    onChange: onSelectChange, 
-    }
-  
+    onChange: onSelectChange,
+  };
+
   // console.log('what is selectedRowKey', selectedRowKeys[0])
   // const generateThresholds = () => {
   //   return config.apis.openai.thresholds.budget.map(({ threshold, tier }) => (
@@ -412,12 +410,12 @@ Object.entries(thresholds).forEach(([tier, threshold]) => {
           </select>
         </label>
 
-         <label>
+        <label>
           Tiers:
           <Table
             className='tiersTable'
             pagination={false}
-            rowSelection = {rowSelection}
+            rowSelection={rowSelection}
             dataSource={tierGroup}
             columns={columns}
           />
@@ -441,6 +439,6 @@ Object.entries(thresholds).forEach(([tier, threshold]) => {
       </form>
     </div>
   );
-}
+};
 
 export default Config;
