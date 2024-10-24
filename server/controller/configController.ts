@@ -50,11 +50,11 @@ interface ConfigControllerInterface {
   newBudget: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   updateTiers: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   updateThresholds: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  createApiConfig: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  deleteApiConfig: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  getApiConfig: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  listApiConfigs: (req: Request, res: Response, next: NextFunction) => Promise<void>;
-  validateApiConfig: (config: any) => { isValid: boolean; errors: string[] };
+  createApiConfig?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  deleteApiConfig?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  getApiConfig?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  listApiConfigs?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  validateApiConfig?: (config: any) => { isValid: boolean; errors: string[] };
 }
 
 const configController: ConfigControllerInterface = {
@@ -164,8 +164,8 @@ const configController: ConfigControllerInterface = {
       // check if budget thresholds sum to 100%
       // extract all tiers that have budget thresholds
       const budgetThresholds = Object.entries(thresholds)
-        .filter(([_, config]) => config.budget !== undefined)
-        .map(([tier, config]) => ({
+        .filter(([_, config]:any[]) => config.budget !== undefined)
+        .map(([tier, config]:any[]) => ({
           tier,
           budget: config.budget as number
         }));
@@ -188,7 +188,7 @@ const configController: ConfigControllerInterface = {
       // check individual threshold values
       // validate time format and budget range for each tier
       const timeFormatRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      for (const [tier, config] of Object.entries(thresholds)) {
+      for (const [tier, config] of Object.entries(thresholds) as any[]) {
         // if time thresholds provided, validate HH:mm format
         if (config.time) {
           if (!timeFormatRegex.test(config.time.start) || !timeFormatRegex.test(config.time.end)) {
@@ -223,7 +223,7 @@ const configController: ConfigControllerInterface = {
       // wrap all updates in a transaction for atomicity
       const transaction = db.transaction(() => {
         // update each tier's thresholds
-        for (const [tier, config] of Object.entries(thresholds)) {
+        for (const [tier, config] of Object.entries(thresholds) as any[]) {
           const thresholdConfig = {
             budget: config.budget ?? null,  // use null if budget not provided
             time: config.time ?? null       // use null if time not provided
@@ -232,7 +232,7 @@ const configController: ConfigControllerInterface = {
           // execute update for this tier
           updateThresholdStmt.run(
             JSON.stringify(thresholdConfig),
-            apiName,
+            api_name,
             tier
           );
         }

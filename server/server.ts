@@ -12,12 +12,9 @@ import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController,
 import { setupDummyDatabase } from './database/dummyDB';
 import authController from './controller/authController';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier } from './apiUtils';
-import configController from './controller/configController';
 
 import config from '../config';
 
-
-console.log(setupDatabase)
 
 //export const db = setupDatabase();
 interface User {
@@ -212,6 +209,8 @@ app.post('/generate-image', async (req: Request, res: Response) => {
       size: selectedTierConfig.size,
       quality: selectedTierConfig.quality
     };
+
+    const openaiApiKey = process.env.OPENAI_API_KEY
 
     const openaiResponse = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
