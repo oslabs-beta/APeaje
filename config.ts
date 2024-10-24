@@ -1,6 +1,4 @@
-
-
-const config : any = {
+const config: any = {
   database: {
     filename: 'test.db',
     verbose: console.log
@@ -17,21 +15,30 @@ const config : any = {
       },
       initialBudget: 0.2,
       thresholds: {
-        budget: [
-          { threshold: 80, tier: 'A' },
-          { threshold: 50, tier: 'B' },
-          { threshold: 30, tier: 'C' },
-          { threshold: 10, tier: 'D' },
-          { threshold: 5, tier: 'E' },
-          { threshold: 0, tier: 'F' }
-        ],
-        time: [
-            { start: 22, end: 24, tier: 'A' },
-            { start: 6, end: 22, tier: 'C' },
-            { start: 0, end: 6, tier: 'F' }
-        ]
+        "A": {
+          budget: 80,
+          time: { start: "22:00", end: "23:59" }
+        },
+        "B": {
+          budget: 50
+        },
+        "C": {
+          budget: 30,
+          time: { start: "06:00", end: "22:00" }
+        },
+        "D": {
+          budget: 10
+        },
+        "E": {
+          budget: 5
+        },
+        "F": {
+          budget: 0,
+          time: { start: "00:00", end: "06:00" }
+        }
       }
     }
   }
 };
+
 export default config;

@@ -71,7 +71,7 @@ module.exports = {
     },
     proxy: [
       {
-        context: ['/api', '/route', '/dashboard'],
+        context: ['/api', '/route', '/dashboard', '/api-config'],
         target: 'http://localhost:2024',
         logLevel:   'info',
       },

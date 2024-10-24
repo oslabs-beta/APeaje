@@ -14,6 +14,9 @@ const Config = (): React.ReactNode => {
   const [endTime, setEndTime] = useState('');
   const [tiers, setTiers] = useState('');
   const [threshold, setThreshold] = useState('');
+  console.log('what is the type of tiers', tiers);
+  console.log('what is inputBudget', inputBudget);
+  console.log('what is endTime', endTime);
   const [initialAmount, setInitialAmount] = useState({ budget: 0 });
 
   const [tierGroup, setTierGroup] = useState([
@@ -214,30 +217,36 @@ const Config = (): React.ReactNode => {
   };
 
   // Handle form submission
-  const saveConfig = (e: React.SyntheticEvent) => {
+  const saveConfig = async (e: React.SyntheticEvent) => {
     e.preventDefault(); // Prevent the default form submission
 
     // Validation (optional)
+  // Get the selected tier
+    const selectedTier = selectedRowKeys[0]; // Use the first selected key
 
-    interface dataType {
+    type dataType = {
       budget: string;
       timeRange: {
         start: string;
         end: string;
       };
-    }
-    // data send to backend
+      tiers:string;
+      // threshold: string;
+    };
+    // Create the data object to send to the backend data send to backend
     const data: dataType = {
       budget: inputBudget,
       timeRange: {
         start: startTime,
         end: endTime,
       },
+      tiers: selectedTier,
+      // threshold: threshold,
     };
 
     try {
-      const response: Promise<Response> = fetch('/configuration', {
-        method: 'POST',
+      const response = await fetch('http://localhost:2024/configuration', {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -245,14 +254,20 @@ const Config = (): React.ReactNode => {
       });
 
       console.log('response', response);
-      // if (!response.ok) {
-      //     throw new Error('Network response was not ok')
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      // const responseBody = await response; // or await response.json()
+      // console.log('response from Body', responseBody)
+
       // }
       setInputBudget('');
       setStartTime('');
       setEndTime('');
-      setTiers('');
-      setThreshold('');
+      setSelectedRowKeys([])
+      // setThreshold('');
+
       alert('Budget saved successfully');
     } catch (error) {
       console.error('error found from configuration', error);
@@ -341,14 +356,7 @@ const Config = (): React.ReactNode => {
     selectedRowKeys,
     onChange: onSelectChange,
   };
-
-  //  const generateTiers2 = () => {
-  //      return Object.entries(config.apis.openai.tiers).map(([key, tier]) => (
-  //          <option key={key} value = {key}>
-  //              {tier.key} ({tier.quality}, {tier.size}) - ${tier.price}
-  //        </option>
-  //     ));
-
+  console.log('what is selectedRowKey', selectedRowKeys[0])
   type thresholdType = {
     value: string;
     label: string;
