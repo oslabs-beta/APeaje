@@ -61,6 +61,7 @@ const configController: ConfigControllerInterface = {
   // updates or creates new budget
   newBudget: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
+      console.log('req body', req.body);
       const { budget, api_name } = req.body;
       if (!budget || !api_name) {
         res.status(400).send('budget and api name are required');
@@ -118,12 +119,15 @@ const configController: ConfigControllerInterface = {
   // updates thresholds for existing tiers
   updateThresholds: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { api_name } = req.params;
+      
+      const { apiName } = req.params;
       const { thresholds } = req.body as { thresholds: ThresholdConfig };
+
+      console.log('api_name', apiName);
 
       // check required inputs
       // if no API name or thresholds object provided, return 400 error
-      if (!api_name || !thresholds) {
+      if (!apiName || !thresholds) {
         res.status(400).json({ error: 'api name and thresholds required' });
         return;
       }
@@ -133,7 +137,7 @@ const configController: ConfigControllerInterface = {
       // check if API exists in database
       // query database to get all tier names for this API
       const tiersStmt = db.prepare('select tier_name from tiers where api_name = ?');
-      const existingTiers = tiersStmt.all(api_name) as { tier_name: string }[];
+      const existingTiers = tiersStmt.all(apiName) as { tier_name: string }[];
 
       // if no tiers found for this API, it doesn't exist
       if (!existingTiers.length) {
@@ -227,7 +231,7 @@ const configController: ConfigControllerInterface = {
           // execute update for this tier
           updateThresholdStmt.run(
             JSON.stringify(thresholdConfig),
-            api_name,
+            apiName,
             tier
           );
         }
