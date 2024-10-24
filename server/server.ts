@@ -51,6 +51,7 @@ app.get('/', (req: Request, res: Response ) => {
 });
 
 // app.get('/dashboard/chart', dashboardController.lineGraph, (req, res) =>{
+
   //   res.status(200).send(res.locals.data)
   // } )
   
@@ -70,6 +71,30 @@ app.get('/', (req: Request, res: Response ) => {
   
 app.get('/dashboard/thresholdsChart', (req: Request, res: Response) => {
   res.status(200).send('working')
+  //   res.status(200).send(res.locals.data)
+  } )
+  
+app.get('/dashboard/chart', dashboardSQL.barGraph, (req: Request, res: Response) =>{
+  res.status(200).send(res.locals.bargraph)
+} )
+app.get('/dashboard/initialAmount', dashboardSQL.initialAmount, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.initialAmount)
+})
+app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.remainingBalance)
+})
+
+app.get('/dashboard/tiers', dashboardSQL.tierInfo, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.tierInfo)
+})
+
+// app.get('/dashboard/thresholds', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
+//   res.status(200).send(res.locals.thresholdInfo)
+// })
+
+app.get('/dashboard/thresholdsChart', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.thresholdInfo)
+
 })
 
   app.get('/dashboard/totalRequests', authController.verify, dashboardSQL.totalRequests, (req: Request, res: Response) => {
@@ -109,7 +134,7 @@ app.delete('/api-config/:apiName', configController.deleteApiConfig, (req: Reque
 });
 
 // update thresholds for an API
-app.patch('/api-config/:apiName/thresholds', configController.newBudget, configController.updateThresholds, (req: Request, res: Response) => {
+app.put('/api-config/:apiName/thresholds', configController.newBudget, configController.updateThresholds, (req: Request, res: Response) => {
   res.status(200).json(res.locals.updatedThresholds);
 });
 

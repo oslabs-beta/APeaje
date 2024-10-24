@@ -7,27 +7,25 @@ const ThresholdsPieChart = () => {
     const svgRef = useRef(null);
 
     useEffect(()=> {
-        const fetchTiers = async() => {
+        const fetchThresholds = async() => {
             try{
                 const response = await fetch('/dashboard/thresholdsChart')
                 const thresholds = await response.json();
 
-                console.log('fetching tiers', thresholds)
+                console.log('fetching thresholds', thresholds)
                 
                 // data for tier_name type 
-                const chart = thresholds.map( thr => ({
-                    tier: thr.tier_name,
-                    threshold : Number(thr.count)
+                const chart = thresholds.map( row => ({
+                    tier: row.tier_name,
+                    thresholds : JSON.parse(row.thresholds).budget || 0, // Default to 0 if there is no budget
                 }));  
-                console.log('thresholds in the front-end:', thresholds, chart);
+                console.log('thresholds in the front-end:', thresholds, 'chart', chart);
                 setData(chart)
             } catch(error) {
-                console.log('error found from fetchData for tiers')
+                console.log('error found from fetchData for thresholds')
             }
         }
-
-        fetchTiers()
-
+        fetchThresholds()
     }, []);
 
 
@@ -36,8 +34,8 @@ const ThresholdsPieChart = () => {
     useEffect(() => {
         if (data.length > 0) {
             const svg = d3.select(svgRef.current);
-            const width = 400;
-            const height = 250;
+            const width = 500;
+            const height = 500;
             const radius = Math.min(width, height) / 2;
 
             svg.attr('width', width)
@@ -52,7 +50,7 @@ const ThresholdsPieChart = () => {
 
             // Create pie chart
             const pie = d3.pie()
-                          .value(d => d.count);
+                          .value(d => d.thresholds);
 
             const arc = d3.arc()
                           .innerRadius(0)
@@ -82,7 +80,7 @@ const ThresholdsPieChart = () => {
 
     return (
         <div className="pie-chart">
-            <h6>Tier Breakdown</h6>
+            <h6>Threshold Breakdown</h6>
             <svg ref={svgRef}></svg>
         </div>
     );
