@@ -41,7 +41,7 @@ const ThresholdsPieChart = () => {
     if (data.length > 0) {
       const svg = d3.select(svgRef.current);
       const width = 700;
-      const height = 500;
+      const height = 400;
       const radius = Math.min(width, height) / 2;
 
       svg.attr("width", width).attr("height", height);
@@ -111,9 +111,8 @@ const ThresholdsPieChart = () => {
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .text(
-          (d) => `${d.data.tier}\n
-                        $${d.data.thresholds}\n
-                        ${d.data.requestNumber} request(s)`
+          (d) => ` $${d.data.thresholds}\n
+                ${d.data.requestNumber} request(s)`
         );
 
       // const legends = svg.append("g").attr("transform", "translate(500, 300)")
@@ -122,7 +121,7 @@ const ThresholdsPieChart = () => {
       // legend.append("rect").attr("width", 20).attr("hegith",20).attr("fill",function(d){return color(d.data.thresholds)})
       // legend.append("text").text(function(d){return color(d.data.tier)})
 
-      const legend = svg.append("g").attr("transform", "translate(500, 100)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(600, 50)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
