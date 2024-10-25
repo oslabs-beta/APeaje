@@ -89,7 +89,7 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
 dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
-      SELECT tier_name, thresholds
+      SELECT tier_name, thresholds, cost
       FROM Tiers
     `);
     console.log('thresholds breakdown', thresholdsBreakdown);

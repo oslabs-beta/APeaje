@@ -16,9 +16,6 @@ return (
         <Col>
             <Display />
         </Col>
-        <Col>
-            <LineChart />
-        </Col>
         {/* <Col>
             <PieChart />
         </Col> */}

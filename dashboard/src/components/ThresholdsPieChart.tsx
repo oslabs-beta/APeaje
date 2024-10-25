@@ -23,7 +23,7 @@ const ThresholdsPieChart = () => {
           tier: row.tier_name,
           thresholds: JSON.parse(row.thresholds).budget || 0, // Default to 0 if there is no budget
           requestNumber: Math.floor(
-            JSON.parse(row.thresholds).budget / row.cost
+            JSON.parse(row.thresholds).budget/row.cost
           ),
         }));
         console.log("thresholds in the front-end:", thresholds, "chart", chart);
@@ -79,7 +79,7 @@ const ThresholdsPieChart = () => {
         .selectAll("arc")
         .data(arcs)
         .enter()
-        .append("g")
+        .append("g")    
         .attr("class", "arc");
 
       arcGroups
@@ -115,7 +115,7 @@ const ThresholdsPieChart = () => {
         .text((d) => d.data.tier)
        ;
 
-      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(545, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
