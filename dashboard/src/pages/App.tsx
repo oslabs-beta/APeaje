@@ -3,8 +3,8 @@ import Dashboard from './Dashboard';
 import '../../public/style.css';
 import SideBar from '../components/SideBar';
 import HeaderComp from '../components/Header';
-// import Config from './Config';
-import ConfigRevised from "./ConfigRevised";
+import Config from './Config';
+// import ConfigRevised from "./ConfigRevised";
 import Manage from './Manage';
 import Profile from './Profile';
 import Login from './Login';
@@ -43,7 +43,8 @@ const App = () => {
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path='/dashboard' index element={<Dashboard />} />
-                  <Route path='/configuration' element={<ConfigRevised />} />
+                  {/* <Route path='/configuration' element={<ConfigRevised />} /> */}
+                  <Route path='/configuration' element={<Config />} />
                   <Route path='/manage' element={<Manage />} />
                   <Route path='/profile' element={<Profile />} />
                 </Route>

@@ -1,3 +1,7 @@
 .ant-layout-header{
     background-color: inherit !important;
 }
+
+.configThresHoldSelector{
+    width: 100%;
+}
