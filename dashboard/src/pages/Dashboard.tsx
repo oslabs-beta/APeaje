@@ -17,9 +17,6 @@ return (
             <Display />
         </Col>
         {/* <Col>
-            <LineChart />
-        </Col> */}
-        {/* <Col>
             <PieChart />
         </Col> */}
         <Col>
