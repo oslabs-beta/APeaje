@@ -376,7 +376,7 @@ const Config = (): React.ReactNode => {
   return (
     <div className='dashboard'>
       <Display />
-      <ThresholdsPieChart />
+      < ThresholdsPieChart />
       <form onSubmit={saveConfig}>
         <label>
           Budget:

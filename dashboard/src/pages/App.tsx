@@ -35,7 +35,7 @@ const App = () => {
                 darkTheme={darkTheme}
               />
             </Header>
-            <Content style={{ padding: '0 24px', minHeight: '100vh' }}>
+            <Content style={{ padding: "0 24px", minHeight: "100vh" }}>
               <Routes>
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />

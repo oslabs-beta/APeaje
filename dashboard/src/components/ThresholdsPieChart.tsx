@@ -23,7 +23,7 @@ const ThresholdsPieChart = () => {
           tier: row.tier_name,
           thresholds: JSON.parse(row.thresholds).budget || 0, // Default to 0 if there is no budget
           requestNumber: Math.floor(
-            JSON.parse(row.thresholds).budget/row.cost
+            JSON.parse(row.thresholds).budget / row.cost
           ),
         }));
         console.log("thresholds in the front-end:", thresholds, "chart", chart);
@@ -79,7 +79,7 @@ const ThresholdsPieChart = () => {
         .selectAll("arc")
         .data(arcs)
         .enter()
-        .append("g")    
+        .append("g")
         .attr("class", "arc");
 
       arcGroups
@@ -92,19 +92,16 @@ const ThresholdsPieChart = () => {
             .text(`${d.data.tier}: $${d.data.thresholds}`);
         })
         .on("mousemove", (event) => {
-            const tooltipWidth = 100; // Adjust based on your tooltip width
-            const tooltipHeight = 50; 
-
           tooltip
-            .style("top", Math.min(event.pageY - tooltipHeight / 2, window.innerHeight - tooltipHeight) + "px")
-            .style("left", Math.min(event.pageX + 10, window.innerWidth - tooltipWidth) + "px");
+            .style("top", event.pageY - 10 + "px")
+            .style("left", event.pageX + 10 + "px");
         })
         .on("mouseout", () => {
           tooltip.style("visibility", "hidden");
         });
 
       // Add labels
-      g.selectAll(".label")
+      g.selectAll("arc")
         .data(arcs)
         .enter()
         .append("text")
@@ -114,7 +111,7 @@ const ThresholdsPieChart = () => {
         .style("font-size", "12px")
         .text((d) => d.data.tier);
 
-      const legend = svg.append("g").attr("transform", "translate(545, 10)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
