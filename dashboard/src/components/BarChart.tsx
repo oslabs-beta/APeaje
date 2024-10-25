@@ -12,6 +12,7 @@ const BarChart: React.FC = () => {
   const [data, setData] = useState<ChartData[]>([]);
   //SVGSVGElement type is part of the TypeScript DOM library, which provides type definitions for the standard DOM API, including various SVG elements.
   const svgRef = useRef<SVGSVGElement | null >(null);
+  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -19,7 +20,7 @@ const BarChart: React.FC = () => {
         const response = await fetch('/dashboard/chart');
         const data1 = await response.json();
 
-        // console.log('data1', data1);
+         console.log('data1', data1);
 
         // Ensure that the data is in the expected format;
         // For example, if the data needs transformation:
@@ -28,7 +29,7 @@ const BarChart: React.FC = () => {
           cost: Number(d.total_spent),
           requests: Number(d.number_of_requests),
         }));
-        // console.log('Transformed data:', data2);
+         console.log('Transformed data:', data2);
         setData(data2);
       } catch (error) {
         console.log('error found from barChart fetchData');
