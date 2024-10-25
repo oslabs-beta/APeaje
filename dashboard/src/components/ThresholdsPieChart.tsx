@@ -112,8 +112,7 @@ const ThresholdsPieChart = () => {
         .attr("dy", "0.50em")
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
-        .text((d) => d.data.tier)
-       ;
+        .text((d) => d.data.tier);
 
       const legend = svg.append("g").attr("transform", "translate(545, 10)"); // Adjust position here
 

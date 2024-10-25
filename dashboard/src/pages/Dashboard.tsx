@@ -16,9 +16,6 @@ return (
         <Col>
             <Display />
         </Col>
-        {/* <Col>
-            <PieChart />
-        </Col> */}
         <Col>
             <ThresholdsPieChart />
         </Col>
@@ -29,15 +26,6 @@ return (
         </Col>
     </Row>
 
-
-    {/* dropdown menu for different chart */}
-    {/* <select className="dropdown" value = {selectedValue} onChange={(e)=> setSelectedValue(e.target.value)}>
-     {options.map((opt) => (
-        <option key={opt.value} value = {opt.value}>
-            {opt.label}
-        </option>
-     ))}
-    </select> */}
     </div>
 )
 }
