@@ -124,8 +124,10 @@ const Config = (): React.ReactNode => {
       render: (_, tierInfo) => {
         console.log('initialAmount :', initialAmount);
         console.log('tierInfo.percentThreshold :', tierInfo.percentThreshold);
-        const budget = Math.round(initialAmount.budget / tierInfo.percentThreshold * 100) / 100;
-        return budget === Infinity || Number.isNaN(budget)? 0 : budget;
+        const budget =
+          Math.round((initialAmount.budget / tierInfo.percentThreshold) * 100) /
+          100;
+        return budget === Infinity || Number.isNaN(budget) ? 0 : budget;
       },
     },
     {
@@ -221,7 +223,7 @@ const Config = (): React.ReactNode => {
     e.preventDefault(); // Prevent the default form submission
 
     // Validation (optional)
-  // Get the selected tier
+    // Get the selected tier
     const selectedTier = selectedRowKeys[0]; // Use the first selected key
 
     type dataType = {
@@ -230,7 +232,7 @@ const Config = (): React.ReactNode => {
         start: string;
         end: string;
       };
-      tiers:string;
+      tiers: string;
       // threshold: string;
     };
     // Create the data object to send to the backend data send to backend
@@ -265,7 +267,7 @@ const Config = (): React.ReactNode => {
       setInputBudget('');
       setStartTime('');
       setEndTime('');
-      setSelectedRowKeys([])
+      setSelectedRowKeys([]);
       // setThreshold('');
 
       alert('Budget saved successfully');
@@ -324,9 +326,9 @@ const Config = (): React.ReactNode => {
           key: 'price',
         },
         {
-          title: 'Start Time',
-          key: 'startTime',
-          render: (_) => <TimePicker format={'HH:mm'} />,
+          title: 'Time',
+          key: 'time',
+          render: (_) => <TimePicker.RangePicker format={'HH:mm'} />,
         },
         {
           title: 'Delete',
@@ -356,7 +358,7 @@ const Config = (): React.ReactNode => {
     selectedRowKeys,
     onChange: onSelectChange,
   };
-  console.log('what is selectedRowKey', selectedRowKeys[0])
+  console.log('what is selectedRowKey', selectedRowKeys[0]);
   type thresholdType = {
     value: string;
     label: string;
