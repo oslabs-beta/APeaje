@@ -75,6 +75,9 @@ app.get('/dashboard/totalRequests', authController.verify, dashboardSQL.totalReq
   res.status(200).send(res.locals.totalRequests)
 })
 
+app.get('/dashboard/users', authController.verify, dashboardSQL.totalRequests, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.totalRequests)
+})
 
 app.get('/dashboard', (req: Request, res: Response) => {
   res
