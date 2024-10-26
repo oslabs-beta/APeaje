@@ -35,19 +35,19 @@ const App = () => {
                 darkTheme={darkTheme}
               />
             </Header>
-            <Content style={{ padding: '0 24px', minHeight: 280 }}>
+            <Content style={{ padding: '0 24px', minHeight: '100vh' }}>
               <Routes>
                 <Route path='/login' element={<Login />} />
                 <Route path='/register' element={<Register />} />
 
                 {/* Protected Routes */}
-                <Route element={<ProtectedRoute />}>
+                {/* <Route element={<ProtectedRoute />}> */}
                   <Route path='/dashboard' index element={<Dashboard />} />
                   {/* <Route path='/configuration' element={<ConfigRevised />} /> */}
                   <Route path='/configuration' element={<Config />} />
                   <Route path='/manage' element={<Manage />} />
                   <Route path='/profile' element={<Profile />} />
-                </Route>
+                {/* </Route> */}
               </Routes>
             </Content>
             <Footer></Footer>
