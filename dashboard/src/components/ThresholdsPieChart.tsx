@@ -144,5 +144,4 @@ const ThresholdsPieChart = () => {
     </div>
   );
 };
-
 export default ThresholdsPieChart;
