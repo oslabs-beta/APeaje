@@ -7,6 +7,7 @@ import Display from '../components/Display';
 import ConfigurationTableSettings from '../components/ConfigurationTableSettings';
 
 import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState('');
@@ -27,6 +28,9 @@ const Config = (): React.ReactNode => {
       size: '1024x1792',
       price: 0.12,
       percentThreshold: 0,
+      amountSpent: 10,
+      startTime: "00:00",
+      endTime: "00:00",
     },
     {
       id: 'B',
@@ -35,6 +39,9 @@ const Config = (): React.ReactNode => {
       size: '1024x1024',
       price: 0.08,
       percentThreshold: 0,
+      amountSpent: 0,
+      startTime: "00:00",
+      endTime: "10:00",
     },
     {
       id: 'C',
@@ -43,6 +50,9 @@ const Config = (): React.ReactNode => {
       size: '1024x1792',
       price: 0.08,
       percentThreshold: 0,
+      amountSpent: 0,
+      startTime: "00:00",
+      endTime: "00:00",
     },
     {
       id: 'D',
@@ -51,6 +61,9 @@ const Config = (): React.ReactNode => {
       size: '1024x1024',
       price: 0.04,
       percentThreshold: 0,
+      amountSpent: 0,
+      startTime: "00:00",
+      endTime: "00:00",
     },
     {
       id: 'E',
@@ -59,6 +72,9 @@ const Config = (): React.ReactNode => {
       size: '512x512',
       price: 0.018,
       percentThreshold: 0,
+      amountSpent: 0,
+      startTime: "00:00",
+      endTime: "00:00",
     },
     {
       id: 'F',
@@ -67,6 +83,9 @@ const Config = (): React.ReactNode => {
       size: '256x256',
       price: 0.016,
       percentThreshold: 0,
+      amountSpent: 0,
+      startTime: "00:00",
+      endTime: "00:00",
     },
   ]);
 
@@ -78,6 +97,9 @@ const Config = (): React.ReactNode => {
     size: string;
     price: number;
     percentThreshold: number;
+    amountSpent: number;
+    startTime: string;
+    endTime: string;
   };
 
   const columns: TableProps<configType>['columns'] = [
@@ -114,6 +136,7 @@ const Config = (): React.ReactNode => {
           min={0}
           max={100}
           key={tierInfo.id + '-Threshold'}
+          defaultValue={tierInfo.percentThreshold}
           onChange={(val) => updatePercentThreshold(val, index)}
         />
       ),
@@ -122,11 +145,9 @@ const Config = (): React.ReactNode => {
       title: 'Money Budgeted',
       key: 'budgeted',
       render: (_, tierInfo) => {
-        console.log('initialAmount :', initialAmount);
-        console.log('tierInfo.percentThreshold :', tierInfo.percentThreshold);
-        const budget =
-          Math.round((initialAmount.budget / tierInfo.percentThreshold) * 100) /
-          100;
+        const budget = Math.round(
+          initialAmount.budget * (tierInfo.percentThreshold / 100)
+        );
         return budget === Infinity || Number.isNaN(budget) ? 0 : budget;
       },
     },
@@ -134,11 +155,20 @@ const Config = (): React.ReactNode => {
       title: 'Amount Spent',
       key: 'spent',
       dataIndex: 'spent',
+      render: (_, tierInfo) => {
+        return tierInfo.amountSpent;
+      },
     },
     {
       title: 'Amount Left',
       key: 'amountLeft',
       dataIndex: 'amountLeft',
+      render: (_, tierInfo) => {
+        return (
+          Math.round(initialAmount.budget * (tierInfo.percentThreshold / 100)) -
+          tierInfo.amountSpent
+        );
+      },
     },
     {
       title: 'Delete',
@@ -202,13 +232,22 @@ const Config = (): React.ReactNode => {
     console.log('e', e);
   };
 
-  const handleStartTime = (e: React.SyntheticEvent): void => {
-    setStartTime((e.target as HTMLInputElement).value);
+  const handleTime = (e, index:number): void => {
+    if (e.target.getAttribute('date-range') === 'start'){
+      setTierGroup((prev) =>
+        prev.map((elem) =>
+          elem.id === tierGroup[index].id
+            ? { ...elem, percentThreshold: index }
+            : elem
+        )
+      );
+    }
+    else if (e.target.getAttribute('date-range') === 'end'){
+
+    }
   };
 
-  const handleEndTime = (e: React.SyntheticEvent): void => {
-    setEndTime((e.target as HTMLInputElement).value);
-  };
+  const handleEndTime = (e: React.SyntheticEvent): void => {};
 
   const handleTiers = (e: React.SyntheticEvent): void => {
     setTiers((e.target as HTMLInputElement).value);
@@ -328,7 +367,16 @@ const Config = (): React.ReactNode => {
         {
           title: 'Time',
           key: 'time',
-          render: (_) => <TimePicker.RangePicker format={'HH:mm'} />,
+          render: (_, tierInfo, index) => (
+            <TimePicker.RangePicker
+              format={'HH:mm'}
+              defaultValue={[
+                dayjs(tierInfo.startTime, 'HH:mm'),
+                dayjs(tierInfo.endTime, 'HH:mm'),
+              ]}
+              onClick={(e) => handleTime(e, index)}
+            />
+          ),
         },
         {
           title: 'Delete',
