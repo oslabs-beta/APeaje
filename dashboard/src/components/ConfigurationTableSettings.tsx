@@ -14,7 +14,7 @@ const ConfigurationTableSettings = ({ initialAmount, setInitialAmount, remaining
       formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
       parser={(value) => value?.replace(/\$\s?|(,*)/g, '') as unknown as number}
       value={initialAmount.budget}
-      // onChange={(newValue) => setInitialAmount({budget: newValue})}
+      onChange={(newValue) => setInitialAmount({budget: newValue})}
       />
     </Col>
     <Col span={7}>
