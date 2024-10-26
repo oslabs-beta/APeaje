@@ -49,17 +49,17 @@ app.get('/', (req: Request, res: Response ) => {
   res.status(200).send('mainpage');
 });
 
-app.get('/dashboard/chart', authController.verify, dashboardSQL.barGraph, (req: Request, res: Response) =>{
+app.get('/dashboard/chart',  dashboardSQL.barGraph, (req: Request, res: Response) =>{
   res.status(200).send(res.locals.bargraph)
 } )
-app.get('/dashboard/initialAmount', authController.verify, dashboardSQL.initialAmount, (req: Request, res: Response) => {
+app.get('/dashboard/initialAmount',  dashboardSQL.initialAmount, (req: Request, res: Response) => {
   res.status(200).send(res.locals.initialAmount)
 })
-app.get('/dashboard/remaining_balance', authController.verify, dashboardSQL.remainingBalance, (req: Request, res: Response) => {
+app.get('/dashboard/remaining_balance', dashboardSQL.remainingBalance, (req: Request, res: Response) => {
   res.status(200).send(res.locals.remainingBalance)
 })
 
-app.get('/dashboard/tiers', authController.verify, dashboardSQL.tierInfo, (req: Request, res: Response) => {
+app.get('/dashboard/tiers',  dashboardSQL.tierInfo, (req: Request, res: Response) => {
   res.status(200).send(res.locals.tierInfo)
 })
 
@@ -67,16 +67,16 @@ app.get('/dashboard/tiers', authController.verify, dashboardSQL.tierInfo, (req: 
 //   res.status(200).send(res.locals.thresholdInfo)
 // })
 
-app.get('/dashboard/thresholdsChart', authController.verify, dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
+app.get('/dashboard/thresholdsChart', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
   res.status(200).send(res.locals.thresholdInfo)
 })
 
-app.get('/dashboard/totalRequests', authController.verify, dashboardSQL.totalRequests, (req: Request, res: Response) => {
+app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req: Request, res: Response) => {
   res.status(200).send(res.locals.totalRequests)
 })
 
-app.get('/dashboard/users', authController.verify, dashboardSQL.totalRequests, (req: Request, res: Response) => {
-  res.status(200).send(res.locals.totalRequests)
+app.get('/dashboard/users', (req: Request, res: Response) => {
+  res.status(200).send("all the users")
 })
 
 app.get('/dashboard', (req: Request, res: Response) => {
