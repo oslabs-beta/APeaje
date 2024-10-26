@@ -10,7 +10,7 @@ interface TierConfig {
   price: number;
   id?: string;
   threshold?: {
-    budget?: number;
+    percentage?: number;
     time?: { start: number; end: number; };
   };
 }
@@ -25,7 +25,7 @@ interface BudgetRow {
 
 interface ThresholdConfig {
   [tier: string]: {
-    budget?: number;
+    percentage?: number;
     time?: {
       start: string;  // HH:mm format
       end: string;    // HH:mm format
@@ -97,7 +97,7 @@ const configController: ConfigControllerInterface = {
           updateTierStmt.run(
             JSON.stringify({ model: tier.model, quality: tier.quality, size: tier.size }),
             JSON.stringify({
-              budget: tier.threshold?.budget || null,
+              percentage: tier.threshold?.percentage || null,
               time: tier.threshold?.time || null
             }),
             tier.price,
@@ -160,24 +160,24 @@ const configController: ConfigControllerInterface = {
         return;
       }
 
-      // check if budget thresholds sum to 100%
-      // extract all tiers that have budget thresholds
+      // check if percentage thresholds sum to 100%
+      // extract all tiers that have percentage thresholds
       const budgetThresholds = Object.entries(thresholds)
-        .filter(([_, config]:any[]) => config.budget !== undefined)
+        .filter(([_, config]:any[]) => config.percentage !== undefined)
         .map(([tier, config]:any[]) => ({
           tier,
-          budget: config.budget as number
+          percentage: config.percentage as number
         }));
 
-      // if there are any budget thresholds, verify their sum
+      // if there are any percentage thresholds, verify their sum
       if (budgetThresholds.length > 0) {
-        const budgetSum = budgetThresholds.reduce((sum, { budget }) => sum + budget, 0);
+        const percentageSum = budgetThresholds.reduce((sum, { percentage }) => sum + percentage, 0);
 
         // check if sum is exactly 100 (within floating point rounding error)
-        if (Math.abs(budgetSum - 100) > 0.001) {
+        if (Math.abs(percentageSum - 100) > 0.001) {
           res.status(400).json({
-            error: 'invalid budget thresholds',
-            message: `Budget thresholds must sum to exactly 100%. Current sum: ${budgetSum}%`,
+            error: 'invalid percentage thresholds',
+            message: `Budget thresholds must sum to exactly 100%. Current sum: ${percentageSum}%`,
             budgetThresholds
           });
           return;
@@ -200,11 +200,11 @@ const configController: ConfigControllerInterface = {
           }
         }
 
-        // if budget threshold provided, validate 0-100 range
-        if (config.budget !== undefined && (config.budget < 0 || config.budget > 100)) {
+        // if percentage threshold provided, validate 0-100 range
+        if (config.percentage !== undefined && (config.percentage < 0 || config.percentage > 100)) {
           res.status(400).json({
-            error: 'invalid budget threshold',
-            message: 'Budget threshold must be between 0 and 100',
+            error: 'invalid percentage threshold',
+            message: 'Percentage threshold must be between 0 and 100',
             tier
           });
           return;
@@ -224,7 +224,7 @@ const configController: ConfigControllerInterface = {
         // update each tier's thresholds
         for (const [tier, config] of Object.entries(thresholds) as any[]) {
           const thresholdConfig = {
-            budget: config.budget ?? null,  // use null if budget not provided
+            percentage: config.percentage ?? null,  // use null if budget not provided
             time: config.time ?? null       // use null if time not provided
           };
 
@@ -283,7 +283,7 @@ const configController: ConfigControllerInterface = {
             tierName,
             JSON.stringify({ model: tierConfig.model, quality: tierConfig.quality, size: tierConfig.size }),
             JSON.stringify({
-              budget: thresholds.budget?.find(t => t.tier === tierName) || null,
+              percentage: thresholds.percentage?.find(t => t.tier === tierName) || null,
               time: thresholds.time?.find(t => t.tier === tierName) || null
             }),
             tierConfig.price

@@ -13,27 +13,27 @@ const config: any = {
         E: { model: 'dall-e-2', quality: 'standard', size: '512x512', price: 0.018 },
         F: { model: 'dall-e-2', quality: 'standard', size: '256x256', price: 0.016 }
       },
-      initialBudget: 0.2,
+      initialBudget: 1,
       thresholds: {
         "A": {
-          budget: 80,
+          percentage: 20,
           time: { start: "22:00", end: "23:59" }
         },
         "B": {
-          budget: 50
+          percentage: 30
         },
         "C": {
-          budget: 30,
+          percentage: 20,
           time: { start: "06:00", end: "22:00" }
         },
         "D": {
-          budget: 10
+          percentage: 20
         },
         "E": {
-          budget: 5
+          percentage: 5
         },
         "F": {
-          budget: 0,
+          percentage: 5,
           time: { start: "00:00", end: "06:00" }
         }
       }

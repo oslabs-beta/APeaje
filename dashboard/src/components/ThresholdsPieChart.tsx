@@ -21,9 +21,9 @@ const ThresholdsPieChart = () => {
         // data for tier_name type
         const chart = thresholds.map((row) => ({
           tier: row.tier_name,
-          thresholds: JSON.parse(row.thresholds).budget || 0, // Default to 0 if there is no budget
+          thresholds: JSON.parse(row.thresholds).percentage || 0, // Default to 0 if there is no budget
           requestNumber: Math.floor(
-            JSON.parse(row.thresholds).budget / row.cost
+            JSON.parse(row.thresholds).percentage / row.cost
           ),
         }));
         console.log("thresholds in the front-end:", thresholds, "chart", chart);

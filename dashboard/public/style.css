@@ -11,3 +11,13 @@ body{
     background-color: black;
     min-height:100vh;
 }
+
+
+/* Manage Team  */
+.manageBox {
+    width: 800px;
+    height: 500px;
+    background-color:rgb(207, 205, 205);
+    border: none;
+    
+}
