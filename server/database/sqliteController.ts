@@ -200,11 +200,16 @@ export const sqliteController = {
     query: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).all(params),
     run: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).run(params),
     get: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).get(params),
+    getAllUsers: (req: Request, res: Response, next: NextFunction) => {
+        const db = res.locals.db;
+        const users = sqliteController.query(db, 'SELECT * FROM Users');
+        console.log(users)
+        res.locals.users = users;
+        return next();
+    },
 };
 
-const getAllUsers = (db: Database) => {
-    return sqliteController.query(db, 'SELECT * FROM Users');
-};
+
 
 const addNewUser = (db: Database, username: string, password: string, role: string) => {
     return sqliteController.run(db, 'INSERT INTO Users (username, password, role) VALUES (?, ?, ?)', [username, password, role]);

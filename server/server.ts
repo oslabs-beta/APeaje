@@ -11,7 +11,7 @@ import 'dotenv/config'
 import authController from './controller/authController';
 import configController from './controller/configController';
 import dashboardSQL from './controller/dashboardSQL'
-import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware } from './database/sqliteController';
+import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware, sqliteController } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier } from './apiUtils';
 
@@ -23,7 +23,9 @@ interface User {
 }
 
 let dbController: DatabaseController;
-const isDummyDatabase = false; // set this to true to use the dummy database
+
+// set this to true to use the dummy database:
+const isDummyDatabase = false; 
 
 if (isDummyDatabase) {
   dbController = setupDummyDatabase();
@@ -75,8 +77,8 @@ app.get('/dashboard/totalRequests', dashboardSQL.totalRequests, (req: Request, r
   res.status(200).send(res.locals.totalRequests)
 })
 
-app.get('/dashboard/users', (req: Request, res: Response) => {
-  res.status(200).send("all the users")
+app.get('/dashboard/users', sqliteController.getAllUsers, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.users)
 })
 
 app.get('/dashboard', (req: Request, res: Response) => {
