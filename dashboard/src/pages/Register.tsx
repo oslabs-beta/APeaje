@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Form, Input, Radio, Button } from 'antd' ;
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -30,35 +31,38 @@ const Register: React.FC = () => {
     }
   };
 
+  const roleOptions = ['Owner','Admin','User']
+
   return (
     <div>
       <h2>Register</h2>
       <form onSubmit={handleRegister}>
-        <input
+        <Input
           type='text'
           placeholder='Username'
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
-        <input
+        <Input
           type='text'
           placeholder='Email'
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <input
+        <Input
           type='password'
           placeholder='Password'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <input
-          type='text'
-          placeholder='Role'
-          value={role}
+        <h3>Role:</h3>
+        <Radio.Group
+          options={roleOptions}
           onChange={(e) => setRole(e.target.value)}
+          optionType="button"
+          buttonStyle="solid"
         />
-        <button type='submit'>Register</button>
+        <Button htmlType='submit' type = 'primary'>Register</Button>
       </form>
     </div>
   );
