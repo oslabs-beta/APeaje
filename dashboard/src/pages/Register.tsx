@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('');
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const Register: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password, role }),
+        body: JSON.stringify({ username, password, role, email }),
       }
     );
 
@@ -38,6 +39,12 @@ const Register: React.FC = () => {
           placeholder='Username'
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+        />
+        <input
+          type='text'
+          placeholder='Email'
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type='password'
