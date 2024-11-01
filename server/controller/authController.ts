@@ -25,19 +25,18 @@ authController.register = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { username, password, role } = req.body;
-  console.log('info', [username, password, role]);
+  const { username, password, role, email } = req.body;
+  console.log('info', [username, password, role, email]);
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const insertUser = res.locals.db.prepare(
-      'INSERT INTO Users (username, password, role) VALUES (?, ?, ?)'
+      'INSERT INTO Users (username, password, role, email) VALUES (?, ?, ?, ?)'
     );
-    const result = insertUser.run(username, hashedPassword, role);
+    const result = insertUser.run(username, hashedPassword, role, email);
     const userId = result.lastInsertRowid;
 
-
     const token = jwt.sign(
-      { userId, username, role },
+      { userId, username, role, email },
       JWT_SECRET as string,
       { expiresIn: '24h' }
     );
@@ -53,9 +52,10 @@ authController.register = async (
       userId,
       message: 'User registered successfully',
     };
-    
+
     return next();
   } catch (error) {
+    console.log(error)
     next(error);
   }
 };
@@ -68,7 +68,9 @@ authController.login = async (
   const { username, password } = req.body;
   try {
     const getUser = res.locals.db.prepare(
-      'SELECT * FROM Users WHERE username = ?'
+      username.includes('@')
+        ? 'SELECT * FROM Users WHERE email = ?'
+        : 'SELECT * FROM Users WHERE username = ?'
     );
     const user = getUser.get(username) as User | undefined;
 
@@ -93,7 +95,7 @@ authController.login = async (
           role: user.role,
           message: 'Login successful',
         };
-        
+
         next();
       } else {
         res.status(401).json({ error: 'Invalid credentials' });
@@ -111,22 +113,31 @@ interface DecodedJwt extends JwtPayload {
   role?: string;
 }
 
-authController.verify = async (req: Request, res: Response, next: NextFunction) => {
+authController.verify = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   let token: string;
-  console.log(req.cookies)
+  console.log(req.cookies);
 
-  if (req.cookies && req.cookies.authToken){
+  if (req.cookies && req.cookies.authToken) {
     token = req.cookies.authToken;
-  } else  return next({log: 'client has no token', status: 401, message:{ err: 'Authentication Token Missing. Please log in.'}})
-  
+  } else
+    return next({
+      log: 'client has no token',
+      status: 401,
+      message: { err: 'Authentication Token Missing. Please log in.' },
+    });
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as DecodedJwt;
 
-    if(typeof decoded === 'string') {
+    if (typeof decoded === 'string') {
       return next({
         log: 'Invalid token format',
         status: 401,
-        message: { err: 'Invalid token format' }
+        message: { err: 'Invalid token format' },
       });
     }
     if (decoded.userId && decoded.role) {
@@ -136,14 +147,13 @@ authController.verify = async (req: Request, res: Response, next: NextFunction) 
       return next({
         log: 'Token payload missing userId or role',
         status: 401,
-        message: { err: 'Invalid token payload' }
+        message: { err: 'Invalid token payload' },
       });
     }
-
   } catch (error) {
-      console.error('Token verification error:', error);
-      res.clearCookie('authToken');
-      return next(error)
+    console.error('Token verification error:', error);
+    res.clearCookie('authToken');
+    return next(error);
   }
 };
 
