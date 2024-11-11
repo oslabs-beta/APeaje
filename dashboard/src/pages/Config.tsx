@@ -10,7 +10,7 @@ import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const Config = (): React.ReactNode => {
-  const [inputBudget, setInputBudget] = useState('');
+  const [inputBudget, setInputBudget] = useState<number | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [tiers, setTiers] = useState('');
@@ -22,6 +22,14 @@ const Config = (): React.ReactNode => {
 
   const [useTimeBased, setUseTimeBased] = useState(false);
   const [tierGroup, setTierGroup] = useState([]);
+
+  interface BudgetInfo {
+    id: number;
+    api_name: string;
+    budget: number;
+    spent: number;
+    total_spent: number;
+  }
 
   // Tier selection for frontend
   type configType = {
@@ -134,21 +142,35 @@ const Config = (): React.ReactNode => {
           budget: number;
         }
 
+        interface RemainingBalance {
+          remaining_balance: number;
+        }
+
+        // Fetch the budget information for the "openai" API
+        const budgetResponse = await fetch(`/api-config/openai/budget`);
+        const budgetInfo: BudgetInfo = await budgetResponse.json();
+        console.log('budgetInfo:', budgetInfo); // Add this console log
+        setInputBudget(budgetInfo.budget);
+
+        // Fetch the use_time_based_tier setting and update the UI accordingly
+        await fetchUseTimeBasedTier();
+
+        // Fetch the initial amount (total budget) from the server
         const initialValueResponse = await fetch('/dashboard/initialAmount');
         const initialValue: InitialAmount[] = await initialValueResponse.json();
         setInitialAmount(initialValue[0]);
-        console.log('initialAmount :', initialAmount);
 
+        // Fetch the remaining balance from the server
         const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
         const remainingBalance: RemainingBalance[] = await remainingBalanceResponse.json();
         setRemainingBalance(remainingBalance[0]);
 
-        // Get thresholds data
+        // Fetch the thresholds data from the server
         const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
         const thresholdsData = await thresholdsResponse.json();
         console.log('Thresholds data:', thresholdsData);
 
-        // Process tier data
+        // Process the tier data from the thresholds data
         const processedTiers = thresholdsData.map(tier => {
           try {
             const tierConfig = JSON.parse(tier.tier_config);
@@ -179,9 +201,6 @@ const Config = (): React.ReactNode => {
 
         console.log('Processed tiers:', processedTiers);
         setTierGroup(processedTiers);
-
-        // Fetch the use_time_based_tier setting and update the UI accordingly
-        await fetchUseTimeBasedTier();
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -248,7 +267,7 @@ const Config = (): React.ReactNode => {
     const selectedTier = selectedRowKeys[0]; // Use the first selected key
 
     type dataType = {
-      budget: string;
+      budget: number;
       timeRange: {
         start: string;
         end: string;
@@ -256,9 +275,9 @@ const Config = (): React.ReactNode => {
       tiers: string;
       // threshold: string;
     };
-    // Create the data object to send to the backend data send to backend
+    // Create the data object to send to the backend
     const data: dataType = {
-      budget: inputBudget,
+      budget: inputBudget ?? 0,
       timeRange: {
         start: startTime,
         end: endTime,
@@ -281,7 +300,7 @@ const Config = (): React.ReactNode => {
         throw new Error('Network response was not ok');
       }
 
-      setInputBudget('');
+      setInputBudget(undefined);
       setStartTime('');
       setEndTime('');
       setSelectedRowKeys([]);

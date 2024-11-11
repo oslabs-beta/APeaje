@@ -86,6 +86,7 @@ function updateBudget(db: Database, api_name: string, cost: number): void {
 
 function checkBudget(db: Database, api_name: string): BudgetInfo {
   const budget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get(api_name) as BudgetInfo;
+  console.log('Budget information:', budget);
   return budget;
 }
 
