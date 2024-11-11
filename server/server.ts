@@ -65,10 +65,12 @@ app.get('/dashboard/tiers',  dashboardSQL.tierInfo, (req: Request, res: Response
   res.status(200).send(res.locals.tierInfo)
 })
 
-// app.get('/dashboard/thresholds', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
-//   res.status(200).send(res.locals.thresholdInfo)
-// })
-
+app.post('manageTeam', (req: Request, res: Response)=> {
+  res.status(200).send('get to the backend')
+})
+app.put('dashboard/users/:userId/role', (req: Request, res: Response) => {
+  res.status(200).send('gotit')
+})
 app.get('/dashboard/thresholdsChart', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
   res.status(200).send(res.locals.thresholdInfo)
 })
