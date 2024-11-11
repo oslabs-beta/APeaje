@@ -20,82 +20,9 @@ const Config = (): React.ReactNode => {
   console.log('what is endTime', endTime);
   const [initialAmount, setInitialAmount] = useState({ budget: 0 });
 
-  //newstate
-
   const [useTimeBased, setUseTimeBased] = useState(false);
   const [tierGroup, setTierGroup] = useState([]);
 
-  /*
-  const [tierGroup, setTierGroup] = useState([
-    {
-      id: 'A',
-      model: 'dall-e-3',
-      quality: 'hd',
-      size: '1024x1792',
-      price: 0.12,
-      percentThreshold: 0,
-      amountSpent: 10,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'B',
-      model: 'dall-e-3',
-      quality: 'hd',
-      size: '1024x1024',
-      price: 0.08,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "10:00",
-    },
-    {
-      id: 'C',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '1024x1792',
-      price: 0.08,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'D',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '1024x1024',
-      price: 0.04,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'E',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '512x512',
-      price: 0.018,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'F',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '256x256',
-      price: 0.016,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-  ]);
-*/
-  
   // Tier selection for frontend
   type configType = {
     id: string;
@@ -253,16 +180,25 @@ const Config = (): React.ReactNode => {
         console.log('Processed tiers:', processedTiers);
         setTierGroup(processedTiers);
 
-        // For now, let's default to budget mode
-        setUseTimeBased(false);
-        changeThreshold('budget');
-
+        // Fetch the use_time_based_tier setting and update the UI accordingly
+        await fetchUseTimeBasedTier();
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
     fetchData();
   }, []);
+
+  const fetchUseTimeBasedTier = async () => {
+    try {
+      const response = await fetch('/api-config/openai/use-time-based-tier');
+      const { useTimeBasedTier } = await response.json();
+      setUseTimeBased(useTimeBasedTier);
+      changeThreshold(useTimeBasedTier ? 'time' : 'budget');
+    } catch (error) {
+      console.error('Error fetching use_time_based_tier setting:', error);
+    }
+  };
 
   const updatePercentThreshold = (val, index: number) => {
     setTierGroup((prev) =>
@@ -278,8 +214,8 @@ const Config = (): React.ReactNode => {
     console.log('e', e);
   };
 
-  const handleTime = (e, index:number): void => {
-    if (e.target.getAttribute('date-range') === 'start'){
+  const handleTime = (e, index: number): void => {
+    if (e.target.getAttribute('date-range') === 'start') {
       setTierGroup((prev) =>
         prev.map((elem) =>
           elem.id === tierGroup[index].id
@@ -288,12 +224,12 @@ const Config = (): React.ReactNode => {
         )
       );
     }
-    else if (e.target.getAttribute('date-range') === 'end'){
+    else if (e.target.getAttribute('date-range') === 'end') {
 
     }
   };
 
-  const handleEndTime = (e: React.SyntheticEvent): void => {};
+  const handleEndTime = (e: React.SyntheticEvent): void => { };
 
   const handleTiers = (e: React.SyntheticEvent): void => {
     setTiers((e.target as HTMLInputElement).value);
@@ -345,15 +281,10 @@ const Config = (): React.ReactNode => {
         throw new Error('Network response was not ok');
       }
 
-      // const responseBody = await response; // or await response.json()
-      // console.log('response from Body', responseBody)
-
-      // }
       setInputBudget('');
       setStartTime('');
       setEndTime('');
       setSelectedRowKeys([]);
-      // setThreshold('');
 
       alert('Budget saved successfully');
     } catch (error) {
@@ -492,6 +423,7 @@ const Config = (): React.ReactNode => {
               setInitialAmount={setInitialAmount}
               remainingBalance={remainingBalance}
               changeThreshold={changeThreshold}
+              useTimeBased={useTimeBased}
             />
           )}
           rowKey={(record) => record.id}

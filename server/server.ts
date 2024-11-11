@@ -120,6 +120,10 @@ app.put('/api-config/:apiName/thresholds', configController.newBudget, configCon
   res.status(200).json(res.locals.updatedThresholds);
 });
 
+app.get('/api-config/:apiName/use-time-based-tier', configController.getUseTimeBasedTier, (req: Request, res: Response) => {
+  res.status(200).json({ useTimeBasedTier: res.locals.useTimeBasedTier });
+});
+
 // PUT request to update the `use_time_based_tier` setting
 app.put('/api-config/openai/settings', (req, res) => {
   const { use_time_based_tier } = req.body;
