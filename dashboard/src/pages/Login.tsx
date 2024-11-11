@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import { Input, Button } from 'antd';
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login, logout } = useAuth();
+  const { login, logout, isAuth } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,7 +18,7 @@ const Login: React.FC = () => {
     });
     const data = await response.json();
     if (data.token) {
-      login(data.token);
+      login(data.username, data.role);
       navigate('/dashboard');
     } else {
       alert('Invalid credentials');
@@ -32,21 +32,23 @@ const Login: React.FC = () => {
   return (
     <div>
       <form onSubmit={handleLogin}>
-        <input
+        <Input
           type='text'
-          placeholder='Username'
+          placeholder='Username or Email'
           value={username}
           onChange={(e) => setUsername(e.target.value)}
         />
-        <input
+        <Input
           type='password'
           placeholder='Password'
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button type='submit'>Login</button>
+        <Button htmlType='submit' type='primary'>
+          Login
+        </Button>
       </form>
-      <button onClick={handleLogout}>Logout</button>
+      <Button onClick={handleLogout}>Logout</Button>
       <p>
         Don't have an account? <Link to='/register'>Register here</Link>
       </p>

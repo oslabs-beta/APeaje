@@ -1,13 +1,13 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from './AuthContext'; // Assuming you have an AuthContext for managing auth state
+import { useAuth } from './AuthContext'; 
 
 const ProtectedRoute: React.FC = () => {
-  const { user } = useAuth(); // Assuming useAuth() gives access to auth state
+  const { isAuth, username, role } = useAuth(); 
   const location = useLocation();
 
   // If the user is not authenticated, redirect to the login page
-  if (!user) {
+  if (!isAuth) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   // If authenticated, render the child routes

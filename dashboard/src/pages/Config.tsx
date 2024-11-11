@@ -211,6 +211,12 @@ const Config = (): React.ReactNode => {
         const remainingBalance: RemainingBalance[] =
           await remainingBalanceResponse.json();
         setRemainingBalance(remainingBalance[0]);
+
+        const initialConfig = await fetch('/api-config/openai');
+        const initialTiers = await initialConfig.json();
+        console.log('config data', initialTiers)
+        
+
       } catch (error) {
         console.error('Error fetching data:', error);
       }

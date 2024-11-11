@@ -52,175 +52,46 @@
 //     ]
 //                 */
                 
-//                 setUser(users);
-//               } catch (error) {
-//                 console.log("error found from fetchData for users in manageTeam");
-//               }
-//             };
-//             fetchUsers();
-//           }, []);
-
- 
-
-//   const deleteUser = async (userId:number): Promise<void> => {
-//     if(user) {
-//     const updateUsers = user.filter((user) => user.id !== userId)
-//     setUser(updateUsers);
-//     setIsDeleted({isDeleted: true});
-
-//     try{
-//       const response = await fetch(`/dashboard/users/${userId}`, {
-//         method: 'DELETE',
-//         headers: {
-//           'Content-Type': 'application/json'
-//         }
-//       });
-
-//       if(response.ok) {
-//         message.success('User deleted successfully');
-//       } else {
-//         message.error('Failed to delete user');
-//         // If the API request fails, add the user back to the state 
-//         setUser([...updateUsers, user.find(u=> u.id === userId)])
-//       }
-//       } catch(error) {
-//         console.log('found error from delete request')
-//         message.error('Error deleting user')
-//     }
-
-//   };
-// }
-
-// const newRoles: Role[] = [
-//     {id: 1, role: 'Owner'},
-//     {id: 2, role: 'Administrator'},
-//     {id: 3, role: 'User'},
-//   ]
-
-// //Handle Role update
-//   const handleNewRoleClick = async (userId: number, roleId: number) => {
-//     // Send PUT request to update the user role
-//     console.log('roleId', roleId)
-//     try{
-//      const response = await fetch(`/dashboard/users/${userId}/role`, {
-//         method: 'PUT',
-//         headers : {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify({ roleId }), 
-//      });
-
-//      if (response.ok) {
-//         message.success('Role updated successfully ')
-//      } else {
-//         message.error('Failed to update role')
-//      }
-//     }catch(error) {
-//         console.error('Error updating role:', error)
-//         message.error('Error updating role')
-//     }
-//   }
-  
-
-// //   const menuProps: MenuProps = {
-// //    items: newRoles?.map(role => ({
-// //     key: role.id, 
-// //     label: role.role,
-// //     onClick: handleNewRoleClick,
-// //    })) || [],
-// //   }
-
-// const columns = [
-//     {
-//         title: 'Username',
-//         dataIndex: 'username',
-//         key: 'username'
-//     },
-//     {
-//         title: 'Email Address',
-//         dataIndex: 'email_address',
-//         key: 'email_address'
-//     },
-//     {
-//         title: 'Role',
-//         dataIndex: 'role',
-//         key: 'role'
-//     },
- 
-//     {
-//         title: 'New Assigned Role',
-//         dataIndex: '',
-//         key: 'newRole',
-//         render: (_, user) => (
-//             <Dropdown.Button 
-//             overlay = {
-//                 <Menu
-//                     items = {newRoles.map((role) => ({
-//                         key: role.id,
-//                         label: role.role,
-//                         onClick: () => handleNewRoleClick(user.id, role.id),
-//                     }))}
-//             />
-//              }
-//              >
-//             New Assigned Role
-//           </Dropdown.Button>
-//         )
-//     },
-//     {
-//         title: 'Action',
-//         dataIndex: '',
-//         key:'action',
-//         render:(_, user) => (
-//             <Button
-//               key={user.id + '-Delete'}
-//               onClick={() => deleteUser(user.id)}
-//             >
-//               {<TrashcanIcon />}
-//             </Button>
-//           ),
-//     }
-// ]
-
-// const updateInfo = async(e: React.SyntheticEvent) => {
-//   e.preventDefault();
-  
-//   type dataType = {
-//     id: number;
-//     email: string;
-//     title: string;
-//     isDeleted: boolean;
-//   }
-
-//   const data = {
-//     id: {user},
-//     role: newRole,
-//     isDeleted: {isDeleted}
-//   }
-//   useEffect(()=> {
-//     const saveButton = ()=> {
-
-//       const response = fetch('/manageTeam', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type' : 'application/json'
-//         },
-//         body: JSON.stringify(data),
-//       })
-//     }
-//   })
+                setUser(users);
+              } catch (error) {
+                console.log("error found from fetchData for users in manageTeam");
+              }
+            };
+            fetchUsers();
+          }, []);
 
 
-// return (
-//     <div className = 'manageBox'>
-//       <form onSubmit = {updateInfo}>
-//         <Table dataSource = {user} columns = {columns}/>
+const columns = [
+    {
+        title: 'Username',
+        dataIndex: 'username',
+        key: 'username'
+    },
+    {
+        title: 'Role',
+        dataIndex: 'role',
+        key: 'role'
+    },
+    {
+        title: 'Email Address',
+        dataIndex: 'email_address',
+        key: 'email_address'
+    },
+    {
+        title: 'Authorization',
+        dataIndex: 'authorization',
+        key: 'authorization'
+    }
+]
 
-//         </form>
-//     </div>
-// )
-// }
-// }
 
 
-// export default Manage
+return (
+    <div className = 'manageBox'>
+        <Table dataSource = {user} columns = {columns} pagination={false}/>
+    </div>
+
+
+)}
+
+export default Manage

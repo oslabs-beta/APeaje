@@ -6,12 +6,14 @@ import React, {
   useEffect,
 } from 'react';
 import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode , JwtPayload } from 'jwt-decode';
 
 interface AuthContextType {
-  user: string | null;
-  login: (token: string) => void;
+  login: (username: string, role: string) => void;
   logout: () => void;
+  isAuth: Boolean;
+  username: string;
+  role: string
 }
 
 // for ts it will have a user (string or null), a login function, and a logout function
@@ -25,21 +27,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   // create a component that will provide the auth context to its children
 
-  const [user, setUser] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null >(null);
+  const [role, setRole] = useState<string | null >(null);
+  const [isAuth, setAuth] = useState<Boolean>(false)
 
   useEffect(() => {
+    //console.log('autheffect');
     const token = Cookies.get('authToken');
+    console.log('token', token);
     if (token) {
       try {
-        const decodedToken = jwtDecode(token);
-        console.log(decodedToken);
+        const decodedToken: any = jwtDecode(token);
+        console.log('decoded',decodedToken);
         const currentTime = Date.now() / 1000;
 
         if (decodedToken.exp < currentTime) {
           console.log('Token expired');
           logout();
         } else {
-          setUser(token);
+          setAuth(true);
+          setUsername(decodedToken.username);
+          setRole(decodedToken.role)
         }
       } catch (error) {
         logout();
@@ -47,20 +55,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, []);
 
-  const login = (token: string) => {
-    Cookies.set('authToken', token)
-    setUser(token);
+  const login = (username: string, role: string) => {
+    setUsername(username);
+    setRole(role);
+    setAuth(true)
   };
 
   const logout = () => {
     Cookies.remove('authToken');
-    setUser(null);
+    setUsername(null);
+    setRole(null);
+    setAuth(false);
   };
 
-
-
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ login, logout, isAuth, username, role }}>
       {children}
     </AuthContext.Provider>
   );
