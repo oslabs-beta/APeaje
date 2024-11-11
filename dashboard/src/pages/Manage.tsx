@@ -83,7 +83,7 @@ const columns = [
 
 return (
     <div className = 'manageBox'>
-        <Table dataSource = {user} columns = {columns}/>
+        <Table dataSource = {user} columns = {columns} pagination={false}/>
     </div>
 
 

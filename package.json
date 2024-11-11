@@ -7,7 +7,9 @@
     "start": "nodemon server/server.ts & webpack-dev-server",
     "dev": "nodemon server/server.ts",
     "dash": "webpack-dev-server",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "ts-coverage": "typescript-coverage-report",
+    "type-coverage": "typescript-coverage-report"
   },
   "author": "Mobius Collective",
   "license": "MIT",

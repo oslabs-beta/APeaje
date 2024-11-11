@@ -8,6 +8,7 @@ interface User {
   username: string;
   password: string;
   role: string;
+  email: string
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -25,7 +26,7 @@ authController.register = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { username, password, role, email } = req.body;
+  const { username, password, role, email } : User = req.body;
   console.log('info', [username, password, role, email]);
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,7 +34,7 @@ authController.register = async (
       'INSERT INTO Users (username, password, role, email) VALUES (?, ?, ?, ?)'
     );
     const result = insertUser.run(username, hashedPassword, role, email);
-    const userId = result.lastInsertRowid;
+    const userId: number = result.lastInsertRowid;
 
     const token = jwt.sign(
       { userId, username, role, email },
@@ -42,14 +43,18 @@ authController.register = async (
     );
 
     res.cookie('authToken', token, {
-      httpOnly: true,
+      //making not http only for now for simpler verification in authContext. 
+      //can make http only again if we want to create a verify route
+      //httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 3600000 * 24,
     });
 
     res.locals.response = {
       token,
+      username,
       userId,
+      role,
       message: 'User registered successfully',
     };
 
@@ -65,7 +70,7 @@ authController.login = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { username, password } = req.body;
+  const { username, password} = req.body;
   try {
     const getUser = res.locals.db.prepare(
       username.includes('@')
@@ -77,14 +82,15 @@ authController.login = async (
     if (user) {
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (isPasswordValid) {
+        const {id, username, role, email} : User = user
         const token = jwt.sign(
-          { userId: user.id, username: user.username, role: user.role },
+          { userId: id, username, role, email },
           process.env.JWT_SECRET as string,
           { expiresIn: '24h' }
         );
 
         res.cookie('authToken', token, {
-          httpOnly: true,
+          //httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           maxAge: 3600000 * 24,
         });
@@ -92,7 +98,8 @@ authController.login = async (
         res.locals.response = {
           token,
           userId: user.id,
-          role: user.role,
+          username,
+          role,
           message: 'Login successful',
         };
 
@@ -141,7 +148,8 @@ authController.verify = async (
       });
     }
     if (decoded.userId && decoded.role) {
-      res.locals.user = { userId: decoded.userId, role: decoded.role };
+      const {userId, username, role} = decoded
+      res.locals.user = { userId, username, role };
       return next();
     } else {
       return next({

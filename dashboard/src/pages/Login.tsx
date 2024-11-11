@@ -6,7 +6,7 @@ import { Input, Button } from 'antd';
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const { login, logout } = useAuth();
+  const { login, logout, isAuth } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,7 +18,7 @@ const Login: React.FC = () => {
     });
     const data = await response.json();
     if (data.token) {
-      login(data.token);
+      login(data.username, data.role);
       navigate('/dashboard');
     } else {
       alert('Invalid credentials');

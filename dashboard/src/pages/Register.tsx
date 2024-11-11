@@ -1,12 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Input, Radio, Button } from 'antd' ;
+import { useAuth } from '../components/AuthContext';
+
+interface UserResponse {
+  userId: number;
+  username: string;
+  role: string;
+  message: string;
+}
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState('User');
+  const { login, logout, isAuth } = useAuth();
   const navigate = useNavigate();
 
   const handleRegister = async (e: React.SyntheticEvent) => {
@@ -22,9 +31,10 @@ const Register: React.FC = () => {
       }
     );
 
-    const data = await response.json();
+    const data: UserResponse = await response.json();
     console.log(data.message);
     if (data.message === 'User registered successfully') {
+      login(data.username, data.role)
       navigate('/dashboard');
     } else {
       alert('Error registering user');
@@ -59,6 +69,7 @@ const Register: React.FC = () => {
         <Radio.Group
           options={roleOptions}
           onChange={(e) => setRole(e.target.value)}
+          value={role}
           optionType="button"
           buttonStyle="solid"
         />
