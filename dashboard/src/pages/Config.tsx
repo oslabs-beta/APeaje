@@ -146,26 +146,26 @@ const Config = (): React.ReactNode => {
           remaining_balance: number;
         }
 
-        // Fetch the budget information for the "openai" API
+        // fetch the budget information for the "openai" API
         const budgetResponse = await fetch(`/api-config/openai/budget`);
         const budgetInfo: BudgetInfo = await budgetResponse.json();
         console.log('budgetInfo:', budgetInfo); // Add this console log
         setInputBudget(budgetInfo.budget);
 
-        // Fetch the use_time_based_tier setting and update the UI accordingly
+        // fetch the use_time_based_tier setting and update the UI accordingly
         await fetchUseTimeBasedTier();
 
-        // Fetch the initial amount (total budget) from the server
+        // fetch the initial amount (total budget) from the server
         const initialValueResponse = await fetch('/dashboard/initialAmount');
         const initialValue: InitialAmount[] = await initialValueResponse.json();
         setInitialAmount(initialValue[0]);
 
-        // Fetch the remaining balance from the server
+        // fetch the remaining balance from the server
         const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
         const remainingBalance: RemainingBalance[] = await remainingBalanceResponse.json();
         setRemainingBalance(remainingBalance[0]);
 
-        // Fetch the thresholds data from the server
+        // fetch the thresholds data from the server
         const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
         const thresholdsData = await thresholdsResponse.json();
         console.log('Thresholds data:', thresholdsData);
@@ -197,7 +197,7 @@ const Config = (): React.ReactNode => {
             console.error('Error processing tier:', tier, e);
             return null;
           }
-        }).filter(Boolean); // Remove any null entries
+        }).filter(Boolean); // remove any null entries
 
         console.log('Processed tiers:', processedTiers);
         setTierGroup(processedTiers);
@@ -258,12 +258,12 @@ const Config = (): React.ReactNode => {
     setThreshold((e.target as HTMLInputElement).value);
   };
 
-  // Handle form submission
+  // save form
   const saveConfig = async (e: React.SyntheticEvent) => {
     e.preventDefault(); // Prevent the default form submission
 
-    // Validation (optional)
-    // Get the selected tier
+
+    // get the selected tier
     const selectedTier = selectedRowKeys[0]; // Use the first selected key
 
     type dataType = {
@@ -275,7 +275,7 @@ const Config = (): React.ReactNode => {
       tiers: string;
       // threshold: string;
     };
-    // Create the data object to send to the backend
+    // create the data object to send to the backend
     const data: dataType = {
       budget: inputBudget ?? 0,
       timeRange: {
