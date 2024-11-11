@@ -87,6 +87,9 @@ app.get('/dashboard', (req: Request, res: Response) => {
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
 });
 
+app.get('/dashboard/fullTierInfo', dashboardSQL.fullTierInfo, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.fullTierInfo)
+})
 
 // app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
 //   res.status(200).send('Configuration updated successfully')

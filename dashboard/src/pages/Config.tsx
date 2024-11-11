@@ -20,6 +20,12 @@ const Config = (): React.ReactNode => {
   console.log('what is endTime', endTime);
   const [initialAmount, setInitialAmount] = useState({ budget: 0 });
 
+  //newstate
+
+  const [useTimeBased, setUseTimeBased] = useState(false);
+  const [tierGroup, setTierGroup] = useState([]);
+
+  /*
   const [tierGroup, setTierGroup] = useState([
     {
       id: 'A',
@@ -88,7 +94,8 @@ const Config = (): React.ReactNode => {
       endTime: "00:00",
     },
   ]);
-
+*/
+  
   // Tier selection for frontend
   type configType = {
     id: string;
@@ -202,20 +209,53 @@ const Config = (): React.ReactNode => {
 
         const initialValueResponse = await fetch('/dashboard/initialAmount');
         const initialValue: InitialAmount[] = await initialValueResponse.json();
-        setInitialAmount(initialValue[0]); // {budget: 0}
+        setInitialAmount(initialValue[0]);
         console.log('initialAmount :', initialAmount);
 
-        const remainingBalanceResponse = await fetch(
-          '/dashboard/remaining_balance'
-        );
-        const remainingBalance: RemainingBalance[] =
-          await remainingBalanceResponse.json();
+        const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
+        const remainingBalance: RemainingBalance[] = await remainingBalanceResponse.json();
         setRemainingBalance(remainingBalance[0]);
 
-        const initialConfig = await fetch('/api-config/openai');
-        const initialTiers = await initialConfig.json();
-        console.log('config data', initialTiers)
-        
+        // Get thresholds data
+        const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
+        const thresholdsData = await thresholdsResponse.json();
+        console.log('Thresholds data:', thresholdsData);
+
+        // Process tier data
+        const processedTiers = thresholdsData.map(tier => {
+          try {
+            const tierConfig = JSON.parse(tier.tier_config);
+            const thresholds = JSON.parse(tier.thresholds || '{}');
+
+            console.log('Processing tier:', {
+              id: tier.tier_name,
+              config: tierConfig,
+              thresholds: thresholds
+            });
+
+            return {
+              id: tier.tier_name,
+              model: tierConfig.model,
+              quality: tierConfig.quality,
+              size: tierConfig.size,
+              price: tier.cost,
+              percentThreshold: thresholds.percentage || 0,
+              amountSpent: 0,
+              startTime: thresholds.time?.start || "00:00",
+              endTime: thresholds.time?.end || "00:00"
+            };
+          } catch (e) {
+            console.error('Error processing tier:', tier, e);
+            return null;
+          }
+        }).filter(Boolean); // Remove any null entries
+
+        console.log('Processed tiers:', processedTiers);
+        setTierGroup(processedTiers);
+
+        // For now, let's default to budget mode
+        setUseTimeBased(false);
+        changeThreshold('budget');
 
       } catch (error) {
         console.error('Error fetching data:', error);
