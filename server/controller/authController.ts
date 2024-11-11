@@ -8,7 +8,7 @@ interface User {
   username: string;
   password: string;
   role: string;
-  email: string
+  email: string;
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -26,15 +26,41 @@ authController.register = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { username, password, role, email } : User = req.body;
+  const { username, password, role, email }: User = req.body;
   console.log('info', [username, password, role, email]);
+  let userId: number
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    //Check if owner or admin accounts have been pre-initialized.
+    if (role === 'owner' || 'admin') {
+      const initialAccount: User = sqliteController.get(
+        res.locals.db,
+        'SELECT * from Users WHERE username = ? OR email = ?',
+        [username, email]
+      );
+      userId = initialAccount.id;
+      console.log(initialAccount)
+      if(initialAccount.role === `pre-${role}`){
+        sqliteController.run(res.locals.db, 'UPDATE Users SET username = ?, email = ?, password = ?, role = ? WHERE id = ?', [
+          username,
+          email,
+          hashedPassword,  
+          role,
+          userId,
+        ]);
+      } else return next({
+        log: `Attempt to create uninitialized ${role}. Attempted account: ${[username, email]}`,
+        status: 401,
+        message: { err: 'You attempted to create a privileged account without initializing. Please contact instance owner.' },
+      })
+    } else {
     const insertUser = res.locals.db.prepare(
       'INSERT INTO Users (username, password, role, email) VALUES (?, ?, ?, ?)'
     );
     const result = insertUser.run(username, hashedPassword, role, email);
-    const userId: number = result.lastInsertRowid;
+    userId= result.lastInsertRowid;
+   }
 
     const token = jwt.sign(
       { userId, username, role, email },
@@ -43,7 +69,7 @@ authController.register = async (
     );
 
     res.cookie('authToken', token, {
-      //making not http only for now for simpler verification in authContext. 
+      //making not http only for now for simpler verification in authContext.
       //can make http only again if we want to create a verify route
       //httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -60,7 +86,7 @@ authController.register = async (
 
     return next();
   } catch (error) {
-    console.log(error)
+    console.log(error);
     next(error);
   }
 };
@@ -70,7 +96,7 @@ authController.login = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { username, password} = req.body;
+  const { username, password } = req.body;
   try {
     const getUser = res.locals.db.prepare(
       username.includes('@')
@@ -82,7 +108,7 @@ authController.login = async (
     if (user) {
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (isPasswordValid) {
-        const {id, username, role, email} : User = user
+        const { id, username, role, email }: User = user;
         const token = jwt.sign(
           { userId: id, username, role, email },
           process.env.JWT_SECRET as string,
@@ -148,7 +174,7 @@ authController.verify = async (
       });
     }
     if (decoded.userId && decoded.role) {
-      const {userId, username, role} = decoded
+      const { userId, username, role } = decoded;
       res.locals.user = { userId, username, role };
       return next();
     } else {
