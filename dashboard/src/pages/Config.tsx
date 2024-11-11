@@ -10,7 +10,7 @@ import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const Config = (): React.ReactNode => {
-  const [inputBudget, setInputBudget] = useState('');
+  const [inputBudget, setInputBudget] = useState<number | undefined>(undefined);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [tiers, setTiers] = useState('');
@@ -20,74 +20,16 @@ const Config = (): React.ReactNode => {
   console.log('what is endTime', endTime);
   const [initialAmount, setInitialAmount] = useState({ budget: 0 });
 
-  const [tierGroup, setTierGroup] = useState([
-    {
-      id: 'A',
-      model: 'dall-e-3',
-      quality: 'hd',
-      size: '1024x1792',
-      price: 0.12,
-      percentThreshold: 0,
-      amountSpent: 10,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'B',
-      model: 'dall-e-3',
-      quality: 'hd',
-      size: '1024x1024',
-      price: 0.08,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "10:00",
-    },
-    {
-      id: 'C',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '1024x1792',
-      price: 0.08,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'D',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '1024x1024',
-      price: 0.04,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'E',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '512x512',
-      price: 0.018,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-    {
-      id: 'F',
-      model: 'dall-e-3',
-      quality: 'standard',
-      size: '256x256',
-      price: 0.016,
-      percentThreshold: 0,
-      amountSpent: 0,
-      startTime: "00:00",
-      endTime: "00:00",
-    },
-  ]);
+  const [useTimeBased, setUseTimeBased] = useState(false);
+  const [tierGroup, setTierGroup] = useState([]);
+
+  interface BudgetInfo {
+    id: number;
+    api_name: string;
+    budget: number;
+    spent: number;
+    total_spent: number;
+  }
 
   // Tier selection for frontend
   type configType = {
@@ -200,29 +142,82 @@ const Config = (): React.ReactNode => {
           budget: number;
         }
 
+        interface RemainingBalance {
+          remaining_balance: number;
+        }
+
+        // fetch the budget information for the "openai" API
+        const budgetResponse = await fetch(`/api-config/openai/budget`);
+        const budgetInfo: BudgetInfo = await budgetResponse.json();
+        console.log('budgetInfo:', budgetInfo); // Add this console log
+        setInputBudget(budgetInfo.budget);
+
+        // fetch the use_time_based_tier setting and update the UI accordingly
+        await fetchUseTimeBasedTier();
+
+        // fetch the initial amount (total budget) from the server
         const initialValueResponse = await fetch('/dashboard/initialAmount');
         const initialValue: InitialAmount[] = await initialValueResponse.json();
-        setInitialAmount(initialValue[0]); // {budget: 0}
-        console.log('initialAmount :', initialAmount);
+        setInitialAmount(initialValue[0]);
 
-        const remainingBalanceResponse = await fetch(
-          '/dashboard/remaining_balance'
-        );
-        const remainingBalance: RemainingBalance[] =
-          await remainingBalanceResponse.json();
+        // fetch the remaining balance from the server
+        const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
+        const remainingBalance: RemainingBalance[] = await remainingBalanceResponse.json();
         setRemainingBalance(remainingBalance[0]);
 
-        const initialConfig = await fetch('/api-config/openai');
-        const initialTiers = await initialConfig.json();
-        console.log('config data', initialTiers)
-        
+        // fetch the thresholds data from the server
+        const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
+        const thresholdsData = await thresholdsResponse.json();
+        console.log('Thresholds data:', thresholdsData);
 
+        // Process the tier data from the thresholds data
+        const processedTiers = thresholdsData.map(tier => {
+          try {
+            const tierConfig = JSON.parse(tier.tier_config);
+            const thresholds = JSON.parse(tier.thresholds || '{}');
+
+            console.log('Processing tier:', {
+              id: tier.tier_name,
+              config: tierConfig,
+              thresholds: thresholds
+            });
+
+            return {
+              id: tier.tier_name,
+              model: tierConfig.model,
+              quality: tierConfig.quality,
+              size: tierConfig.size,
+              price: tier.cost,
+              percentThreshold: thresholds.percentage || 0,
+              amountSpent: 0,
+              startTime: thresholds.time?.start || "00:00",
+              endTime: thresholds.time?.end || "00:00"
+            };
+          } catch (e) {
+            console.error('Error processing tier:', tier, e);
+            return null;
+          }
+        }).filter(Boolean); // remove any null entries
+
+        console.log('Processed tiers:', processedTiers);
+        setTierGroup(processedTiers);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
     fetchData();
   }, []);
+
+  const fetchUseTimeBasedTier = async () => {
+    try {
+      const response = await fetch('/api-config/openai/use-time-based-tier');
+      const { useTimeBasedTier } = await response.json();
+      setUseTimeBased(useTimeBasedTier);
+      changeThreshold(useTimeBasedTier ? 'time' : 'budget');
+    } catch (error) {
+      console.error('Error fetching use_time_based_tier setting:', error);
+    }
+  };
 
   const updatePercentThreshold = (val, index: number) => {
     setTierGroup((prev) =>
@@ -238,8 +233,8 @@ const Config = (): React.ReactNode => {
     console.log('e', e);
   };
 
-  const handleTime = (e, index:number): void => {
-    if (e.target.getAttribute('date-range') === 'start'){
+  const handleTime = (e, index: number): void => {
+    if (e.target.getAttribute('date-range') === 'start') {
       setTierGroup((prev) =>
         prev.map((elem) =>
           elem.id === tierGroup[index].id
@@ -248,12 +243,12 @@ const Config = (): React.ReactNode => {
         )
       );
     }
-    else if (e.target.getAttribute('date-range') === 'end'){
+    else if (e.target.getAttribute('date-range') === 'end') {
 
     }
   };
 
-  const handleEndTime = (e: React.SyntheticEvent): void => {};
+  const handleEndTime = (e: React.SyntheticEvent): void => { };
 
   const handleTiers = (e: React.SyntheticEvent): void => {
     setTiers((e.target as HTMLInputElement).value);
@@ -263,16 +258,16 @@ const Config = (): React.ReactNode => {
     setThreshold((e.target as HTMLInputElement).value);
   };
 
-  // Handle form submission
+  // save form
   const saveConfig = async (e: React.SyntheticEvent) => {
     e.preventDefault(); // Prevent the default form submission
 
-    // Validation (optional)
-    // Get the selected tier
+
+    // get the selected tier
     const selectedTier = selectedRowKeys[0]; // Use the first selected key
 
     type dataType = {
-      budget: string;
+      budget: number;
       timeRange: {
         start: string;
         end: string;
@@ -280,9 +275,9 @@ const Config = (): React.ReactNode => {
       tiers: string;
       // threshold: string;
     };
-    // Create the data object to send to the backend data send to backend
+    // create the data object to send to the backend
     const data: dataType = {
-      budget: inputBudget,
+      budget: inputBudget ?? 0,
       timeRange: {
         start: startTime,
         end: endTime,
@@ -305,15 +300,10 @@ const Config = (): React.ReactNode => {
         throw new Error('Network response was not ok');
       }
 
-      // const responseBody = await response; // or await response.json()
-      // console.log('response from Body', responseBody)
-
-      // }
-      setInputBudget('');
+      setInputBudget(undefined);
       setStartTime('');
       setEndTime('');
       setSelectedRowKeys([]);
-      // setThreshold('');
 
       alert('Budget saved successfully');
     } catch (error) {
@@ -452,6 +442,7 @@ const Config = (): React.ReactNode => {
               setInitialAmount={setInitialAmount}
               remainingBalance={remainingBalance}
               changeThreshold={changeThreshold}
+              useTimeBased={useTimeBased}
             />
           )}
           rowKey={(record) => record.id}

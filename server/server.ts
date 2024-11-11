@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import 'dotenv/config'
+import { Database } from 'better-sqlite3';
 
 //our controllers
 import authController from './controller/authController';
@@ -13,7 +14,7 @@ import configController from './controller/configController';
 import dashboardSQL from './controller/dashboardSQL'
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware, sqliteController } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
-import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier } from './apiUtils';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier, checkBudget } from './apiUtils';
 
 interface User {
   id: number;
@@ -87,6 +88,9 @@ app.get('/dashboard', (req: Request, res: Response) => {
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
 });
 
+app.get('/dashboard/fullTierInfo', dashboardSQL.fullTierInfo, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.fullTierInfo)
+})
 
 // app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
 //   res.status(200).send('Configuration updated successfully')
@@ -115,6 +119,30 @@ app.delete('/api-config/:apiName', configController.deleteApiConfig, (req: Reque
 // update thresholds for an API
 app.put('/api-config/:apiName/thresholds', configController.newBudget, configController.updateThresholds, (req: Request, res: Response) => {
   res.status(200).json(res.locals.updatedThresholds);
+});
+
+app.get('/api-config/:apiName/use-time-based-tier', configController.getUseTimeBasedTier, (req: Request, res: Response) => {
+  res.status(200).json({ useTimeBasedTier: res.locals.useTimeBasedTier });
+});
+
+
+// checks budget 
+app.get('/api-config/:apiName/budget', (req: Request, res: Response) => {
+  const { apiName } = req.params;
+
+  try {
+    const budgetInfo = checkBudget(res.locals.db as Database, apiName);
+    res.status(200).json(budgetInfo);
+  } catch (error) {
+    console.error('Error fetching budget:', error);
+    res.status(500).json({ error: 'Error fetching budget information' });
+  }
+});
+
+
+
+app.patch('/api-config/:apiName/newBudget', configController.newBudget, (req: Request, res: Response) => {
+  res.status(200).json(res.locals.budgetInfo);
 });
 
 // PUT request to update the `use_time_based_tier` setting
