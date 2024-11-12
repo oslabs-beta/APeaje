@@ -6,6 +6,7 @@ import HeaderComp from '../components/Header';
 import Config from './Config';
 // import ConfigRevised from "./ConfigRevised";
 import ManageRevised from './ManageRevised';
+import Manage from './Manage';
 import Profile from './Profile';
 import Login from './Login';
 import Register from './Register';
@@ -47,7 +48,7 @@ const App = () => {
                   <Route path='/dashboard' index element={<Dashboard />} />
                   {/* <Route path='/configuration' element={<ConfigRevised />} /> */}
                   <Route path='/configuration' element={<Config />} />
-                  <Route path='/manage' element={<ManageRevised />} />
+                  <Route path='/manage' element={<Manage />} />
                   {/* <Route path='/profile' element={<Profile />} /> */}
                 {/* </Route> */}
               </Routes>

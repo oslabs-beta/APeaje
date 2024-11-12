@@ -72,7 +72,7 @@ const ManageRevised: React.FC = () => {
   // Define roles
   const newRoles: Role[] = [
     { id: 1, role: 'Owner' },
-    { id: 2, role: 'Administrator' },
+    { id: 2, role: 'Admin' },
     { id: 3, role: 'User' },
   ];
 

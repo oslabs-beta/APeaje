@@ -119,11 +119,11 @@ const initializeAccounts = (db: Database): void => {
     const { initialAccounts } = config;
     initialAccounts.forEach((account: InitialAccount) => {
       account.type === 'username'
-        ? addNewUser(db, account.username, account.username, 'pre', `pre-${account.role}`)
+        ? sqliteController.addNewUser(db, account.username, account.username, 'pre', `pre-${account.role}`)
         : account.type === 'email'
-        ? addNewUser(db, account.email, account.email, 'pre', `pre-${account.role}`)
+        ? sqliteController.addNewUser(db, account.email, account.email, 'pre', `pre-${account.role}`)
         : account.type === 'both'
-        ? addNewUser(db, account.username, account.email, 'pre', `pre-${account.role}`)
+        ? sqliteController.addNewUser(db, account.username, account.email, 'pre', `pre-${account.role}`)
         : null;
     });
     console.log('\n=== Accounts initialized ===');
@@ -230,33 +230,20 @@ export const databaseMiddleware =
   };
 
 export const sqliteController = {
-  query: (db: Database, sql: string, params: any[] = []) =>
-    db.prepare(sql).all(params),
-  run: (db: Database, sql: string, params: any[] = []) =>
-    db.prepare(sql).run(params),
-  get: (db: Database, sql: string, params: any[] = []): any =>
-    db.prepare(sql).get(params),
-  getAllUsers: (req: Request, res: Response, next: NextFunction) => {
-    const db = res.locals.db;
-    const users = sqliteController.query(db, 'SELECT * FROM Users');
-    console.log(users);
-    res.locals.users = users;
-    return next();
-  },
-};
-    query: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).all(params),
-    run: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).run(params),
-    get: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).get(params),
-    getAllUsers: (req: Request, res: Response, next: NextFunction) => {
-        const db = res.locals.db;
-        const users = sqliteController.query(db, 'SELECT * FROM Users');
-        console.log(users)
-        res.locals.users = users;
-        return next();
-    },
 
-addNewUser : (db: Database, username: string, password: string, role: string) => {
-    return sqliteController.run(db, 'INSERT INTO Users (username, password, role) VALUES (?, ?, ?)', [username, password, role]);
+  query: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).all(params),
+  run: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).run(params),
+  get: (db: Database, sql: string, params: any[] = []): any => db.prepare(sql).get(params),
+  getAllUsers: (req: Request, res: Response, next: NextFunction) => {
+      const db = res.locals.db;
+      const users = sqliteController.query(db, 'SELECT * FROM Users');
+      console.log(users)
+      res.locals.users = users;
+      return next();
+  },
+
+addNewUser : (db: Database, username: string, email: string, password: string, role: string) => {
+    return sqliteController.run(db, 'INSERT INTO Users (username, email, password, role) VALUES (?, ?, ?, ?)', [username, email, password, role]);
 },
 
 updateUserRole: (db: Database, userId: number, newRole: string) => {
