@@ -44,13 +44,12 @@ const App = () => {
                   <Route path='/register' element={<Register />} />
 
                 {/* Protected Routes */}
-                {/* <Route element={<ProtectedRoute />}> */}
+                <Route element={<ProtectedRoute />}>
                   <Route path='/dashboard' index element={<Dashboard />} />
-                  {/* <Route path='/configuration' element={<ConfigRevised />} /> */}
                   <Route path='/configuration' element={<Config />} />
                   <Route path='/manage' element={<Manage />} />
-                  {/* <Route path='/profile' element={<Profile />} /> */}
-                {/* </Route> */}
+                  <Route path='/profile' element={<Profile />} />
+                </Route>
               </Routes>
             </Content>
             <Footer></Footer>
