@@ -89,16 +89,32 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
 dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
-      SELECT tier_name, thresholds, cost
+      SELECT tier_name, tier_config, thresholds, cost
       FROM Tiers
+      WHERE api_name = 'openai'
+      ORDER BY cost DESC
     `);
     console.log('thresholds breakdown', thresholdsBreakdown);
-
     res.locals.thresholdInfo = thresholdsBreakdown;
     next();
   } catch (error) {
     console.error('Error fetching tier breakdown:', error);
     res.status(500).send('Error from tierInfo middleware');
+  }
+};
+
+
+dashboardSQL.fullTierInfo = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const fullTierInfo = await sqliteController.query(res.locals.db, `
+      SELECT tier_name as id, tier_config, cost as price, thresholds
+      FROM Tiers
+    `);
+    res.locals.fullTierInfo = fullTierInfo;
+    next();
+  } catch (error) {
+    console.error('Error fetching full tier info:', error);
+    res.status(500).send('Error from fullTierInfo middleware');
   }
 };
 

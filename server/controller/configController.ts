@@ -54,6 +54,7 @@ interface ConfigControllerInterface {
   deleteApiConfig?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   getApiConfig?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   listApiConfigs?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  getUseTimeBasedTier: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   validateApiConfig?: (config: any) => { isValid: boolean; errors: string[] };
 }
 
@@ -75,6 +76,30 @@ const configController: ConfigControllerInterface = {
       res.status(500).send('error updating budget');
     }
   },
+
+
+  getUseTimeBasedTier: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { apiName } = req.params;
+
+      const db = res.locals.db as Database;
+      const useTimeBasedTierStmt = db.prepare(`
+      SELECT use_time_based_tier
+      FROM Api_settings
+      WHERE api_name = ?
+    `);
+
+      const useTimeBasedTierResult = useTimeBasedTierStmt.get(apiName) as { use_time_based_tier: boolean };
+
+      res.locals.useTimeBasedTier = useTimeBasedTierResult?.use_time_based_tier ?? false;
+      next();
+    } catch (error) {
+      console.error('Error fetching use_time_based_tier setting:', error);
+      res.status(500).json({ error: 'Error fetching use_time_based_tier setting' });
+    }
+  },
+
+
 
   // updates existing tier configurations
   updateTiers: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
