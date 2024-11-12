@@ -94,9 +94,9 @@ app.get('/dashboard', (req: Request, res: Response) => {
 });
 
 
-// app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
-//   res.status(200).send('Configuration updated successfully')
-// })
+app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
+  res.status(200).send('Configuration updated successfully')
+})
 
 // list all API configurations
 app.get('/api-config', configController.listApiConfigs, (req: Request, res: Response) => {

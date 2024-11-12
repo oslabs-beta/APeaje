@@ -136,7 +136,7 @@ const Config = (): React.ReactNode => {
     remaining_balance: 0,
   });
 
-  useEffect(() => {
+
     const fetchData = async () => {
       try {
         interface InitialAmount {
@@ -206,6 +206,7 @@ const Config = (): React.ReactNode => {
         console.error('Error fetching data:', error);
       }
     };
+    useEffect(() => {
     fetchData();
   }, []);
 

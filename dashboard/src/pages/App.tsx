@@ -5,7 +5,6 @@ import SideBar from '../components/SideBar';
 import HeaderComp from '../components/Header';
 import Config from './Config';
 // import ConfigRevised from "./ConfigRevised";
-import ManageRevised from './ManageRevised';
 import Manage from './Manage';
 import Profile from './Profile';
 import Login from './Login';
