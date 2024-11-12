@@ -9,7 +9,6 @@ import ConfigurationTableSettings from '../components/ConfigurationTableSettings
 import ThresholdsPieChart from '../components/ThresholdsPieChart'
 import PreviousChange from '../components/PreviousChange'
 import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
-import dayjs from 'dayjs';
 
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState<number>(0);
