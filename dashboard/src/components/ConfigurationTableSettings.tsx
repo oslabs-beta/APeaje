@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Col, Row, Select, InputNumber } from 'antd';
 
 interface ConfigurationTableSettingsProps {
   initialAmount: { budget: number };
-  setInitialAmount: (amount: { budget: number }) => void;
+  setInitialAmount: React.Dispatch<React.SetStateAction<{ budget: number }>>;
   remainingBalance: { remaining_balance: number };
-  changeThreshold: (threshold: string) => void;
+  changeThreshold: (threshold: 'budget' | 'time') => void;
   useTimeBased: boolean;
+  inputBudget: number;
+  setInputBudget: (value: number) => void;
 }
 
 const ConfigurationTableSettings: React.FC<ConfigurationTableSettingsProps> = ({
@@ -15,7 +17,16 @@ const ConfigurationTableSettings: React.FC<ConfigurationTableSettingsProps> = ({
   remainingBalance,
   changeThreshold,
   useTimeBased,
+  inputBudget,
+  setInputBudget,
 }) => {
+  const handleBudgetChange = (value: number | null) => {
+    if (value !== null) {
+      setInputBudget(value);
+      setInitialAmount({ budget: value });
+    }
+  };
+
   return (
     <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
       <Col span={5}>
@@ -26,8 +37,8 @@ const ConfigurationTableSettings: React.FC<ConfigurationTableSettingsProps> = ({
           max={100_000_000}
           formatter={(value) => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
           parser={(value) => value?.replace(/\$\s?|(,*)/g, '') as unknown as number}
-          value={initialAmount.budget}
-          onChange={(newValue) => setInitialAmount({ budget: newValue })}
+          value={inputBudget}
+          onChange={handleBudgetChange}
         />
       </Col>
       <Col span={7}>
