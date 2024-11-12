@@ -90,6 +90,21 @@ function checkBudget(db: Database, api_name: string): BudgetInfo {
   return budget;
 }
 
+function updateSpent(db: Database, api_name: string, cost: number): void {
+  const updateSpent = db.prepare(`
+    UPDATE Budget
+    SET spent = ?
+    WHERE api_name = ?
+  `);
+  const currentBudgetInfo = checkBudget(db, api_name);
+
+  const currentSpent = currentBudgetInfo.spent;
+
+  const result = updateSpent.run(currentSpent + cost, api_name);
+
+  console.log(`Budget updated for ${api_name}: Cost: ${cost}, Rows affected: ${result.changes}`);
+}
+
 /**
   core logic for selecting a tier based on either budget or time thresholds
       Convert current time and tier times to minutes
@@ -116,6 +131,8 @@ function selectTier(db: Database, apiName: string): ProcessedTier {
   try {
     const settings = getAPISettings(db, apiName);
     
+    console.log("SETTTTTTTTTT", settings);
+
     if (!settings) {
       console.log('No settings found, defaulting to budget-based selection');
       return selectTierBasedOnBudget(db, apiName);
@@ -165,8 +182,10 @@ function getAPISettings(db: Database, api_name: string): APISettings | null {
     
 function selectTierBasedOnBudget(db: Database, apiName: string): ProcessedTier {
   const budgetInfo = checkBudget(db, apiName);
-  const remainingBudgetPercentage = ((budgetInfo.budget - budgetInfo.spent) / budgetInfo.budget) * 100;
-  return selectTierBasedOnThreshold(db, apiName, 'budget', remainingBudgetPercentage);
+  console.log("BUDDDDDDDDD", budgetInfo);
+  const percentSpent = (budgetInfo.spent / budgetInfo.budget) * 100;
+
+  return selectTierBasedOnThreshold(db, apiName, 'budget', percentSpent);
 }
 
 function selectTierBasedOnTime(db: Database, apiName: string): ProcessedTier {
@@ -188,13 +207,18 @@ function selectTierBasedOnThreshold(db: Database, apiName: string, thresholdType
     cost: number;
   }>;
 
+  let percentAccumulated: number = 0;
+
   for (const tier of tiers) {
     const tierConfig = JSON.parse(tier.tier_config) as TierConfig;
     const thresholds = JSON.parse(tier.thresholds) as ThresholdConfig;
 
+    console.log("THRESHHHHHH", thresholds)
+
     if (thresholdType === 'budget') {
-      // check if remaining budget percentage meets threshold
-      if (thresholds.percentage !== null && value >= thresholds.percentage) {
+      
+      // check if remaining budgt percentage meets threshold
+      if (thresholds.percentage !== null && (percentAccumulated+=thresholds.percentage) > value) {
         return {
           ...tierConfig,
           id: tier.tier_name,
@@ -237,5 +261,6 @@ export {
   updateBudget,
   selectTierBasedOnBudget,
   selectTierBasedOnTime,
-  selectTier
+  selectTier,
+  updateSpent
 };

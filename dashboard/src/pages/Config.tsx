@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Table, InputNumber, Select, Card, TimePicker } from 'antd';
 import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
 import ConfigurationTableSettings from '../components/ConfigurationTableSettings';
-import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
-import dayjs from 'dayjs';
 
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState<number>(0);
@@ -105,18 +104,6 @@ const Config = (): React.ReactNode => {
         );
       },
     },
-    {
-      title: 'Delete',
-      key: 'delete',
-      render: (_, tierInfo) => (
-        <Button
-          key={tierInfo.id + '-Delete'}
-          onClick={() => deleteTier(tierInfo.id)}
-        >
-          {<TrashcanIcon />}
-        </Button>
-      ),
-    },
   ];
 
   const [tableColumns, setTableColumns] = useState(columns);
@@ -193,24 +180,25 @@ const Config = (): React.ReactNode => {
   };
 
   const updatePercentThreshold = (val: number | null | undefined, index: number) => {
-    if (!tierGroup[index]) return;
+    if (val === undefined || val === null) return;
 
-    const updatedTierGroup = [...tierGroup];
-    updatedTierGroup[index] = {
-      ...updatedTierGroup[index],
-      percentThreshold: val ?? updatedTierGroup[index].percentThreshold,
-    };
-
-    console.log('Updating tier', index, 'to value', val);
-    console.log('Updated tier group:', updatedTierGroup);
-
-    setTierGroup(updatedTierGroup);
+    setTierGroup(prevTierGroup => {
+      return prevTierGroup.map((tier, idx) => {
+        if (idx === index) {
+          return {
+            ...tier,
+            percentThreshold: val
+          };
+        }
+        return tier;
+      });
+    });
   };
 
   const handleTime = (times: [Dayjs, Dayjs], index: number): void => {
-    if (!times || !tierGroup[index]) return;
-    setTierGroup(prev =>
-      prev.map((tier, idx) => {
+    if (!times) return;
+    setTierGroup(prevTierGroup =>
+      prevTierGroup.map((tier, idx) => {
         if (idx === index) {
           return {
             ...tier,
@@ -223,7 +211,7 @@ const Config = (): React.ReactNode => {
     );
   };
 
-  const saveConfig = async (e: React.SyntheticEvent) => {
+const saveConfig = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     try {
@@ -236,32 +224,38 @@ const Config = (): React.ReactNode => {
         payload.budget = inputBudget;
       }
 
-      // Log current state before formatting
-      console.log('Current tier group before save:', tierGroup);
-
-      // Format thresholds based on current mode
+      // Format thresholds based on current mode while preserving both types
       const formattedThresholds = tierGroup.reduce((acc, tier) => {
-        // Make sure we're using the current values
-        const currentThreshold = useTimeBased ?
-          {
-            percentage: null,
-            time: {
+        // Get the current thresholds
+        const currentThresholds = JSON.parse(tier.thresholds || '{}');
+
+        // Always include both settings in the payload for each tier
+        acc[tier.id] = {
+          // Always include the current percentage
+          percentage: useTimeBased ? 
+            (currentThresholds.percentage ?? tier.percentThreshold ?? 0) : 
+            tier.percentThreshold,
+          // Always include the current time settings
+          time: useTimeBased ? 
+            {
+              start: tier.startTime || currentThresholds.time?.start || "00:00",
+              end: tier.endTime || currentThresholds.time?.end || "00:00"
+            } : 
+            (currentThresholds.time ?? {
               start: tier.startTime || "00:00",
               end: tier.endTime || "00:00"
-            }
-          } : {
-            percentage: tier.percentThreshold,
-            time: null
-          };
+            })
+        };
 
-        acc[tier.id] = currentThreshold;
         return acc;
       }, {});
 
-      console.log('Formatted thresholds:', formattedThresholds);
-
+      // Always include thresholds in payload to ensure both settings are written
       payload.thresholds = formattedThresholds;
-      payload.use_time_based_tier = useTimeBased;
+
+      if (useTimeBased !== initialUseTimeBased) {
+        payload.use_time_based_tier = useTimeBased;
+      }
 
       console.log('Saving payload:', payload);
 
@@ -278,53 +272,45 @@ const Config = (): React.ReactNode => {
         throw new Error(error.error || 'Failed to save configuration');
       }
 
-      // Update initial states
-      setInitialUseTimeBased(useTimeBased);
-      setInitialBudget(inputBudget);
+      const savedData = await response.json();
+      
+      // Update state with the returned data
+      if (savedData.budget) {
+        setInputBudget(savedData.budget.budget);
+        setInitialBudget(savedData.budget.budget);
+        setInitialAmount({ budget: savedData.budget.budget });
+      }
 
-      // Refresh all data
-      const budgetResponse = await fetch(`/api-config/openai/budget`);
-      const budgetInfo = await budgetResponse.json();
-      setInputBudget(budgetInfo.budget);
-      setInitialAmount({ budget: budgetInfo.budget });
+      if (savedData.thresholds) {
+        const updatedTiers = tierGroup.map(tier => {
+          const updatedThreshold = savedData.thresholds.find(
+            (t: any) => t.tier_name === tier.id
+          );
+          
+          if (updatedThreshold) {
+            const thresholds = JSON.parse(updatedThreshold.thresholds);
+            return {
+              ...tier,
+              percentThreshold: thresholds.percentage ?? tier.percentThreshold ?? 0,
+              startTime: thresholds.time?.start || tier.startTime || "00:00",
+              endTime: thresholds.time?.end || tier.endTime || "00:00"
+            };
+          }
+          return tier;
+        });
 
-      const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
-      const thresholdsData = await thresholdsResponse.json();
+        setTierGroup(updatedTiers);
+      }
 
-      const refreshedTiers = thresholdsData.map(tier => {
-        try {
-          const tierConfig = JSON.parse(tier.tier_config);
-          const thresholds = JSON.parse(tier.thresholds || '{}');
-
-          return {
-            id: tier.tier_name,
-            model: tierConfig.model,
-            quality: tierConfig.quality,
-            size: tierConfig.size,
-            price: tier.cost,
-            percentThreshold: thresholds.percentage ?? 0,
-            amountSpent: tier.spent || 0,
-            startTime: thresholds.time?.start || "00:00",
-            endTime: thresholds.time?.end || "00:00"
-          };
-        } catch (e) {
-          console.error('Error processing tier:', tier, e);
-          return null;
-        }
-      }).filter(Boolean);
-
-      console.log('Refreshed tiers:', refreshedTiers);
-      setTierGroup(refreshedTiers);
+      if (savedData.settings) {
+        setInitialUseTimeBased(!!savedData.settings.use_time_based_tier);
+      }
 
       alert('Configuration saved successfully');
     } catch (error) {
       console.error('Error saving configuration:', error);
       alert(error.message || 'Failed to save configuration');
     }
-  };
-
-  const deleteTier = (tierId): void => {
-    setTierGroup(tierGroup.filter((tier) => tier.id !== tierId));
   };
 
   const changeThreshold = (threshold): void => {
@@ -372,30 +358,8 @@ const Config = (): React.ReactNode => {
             />
           ),
         },
-        {
-          title: 'Delete',
-          key: 'delete',
-          render: (_, tierInfo) => (
-            <Button
-              key={tierInfo.id + '-Delete'}
-              onClick={() => deleteTier(tierInfo.id)}
-            >
-              {<TrashcanIcon />}
-            </Button>
-          ),
-        },
       ]);
     }
-  };
-
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const onSelectChange = (selectedRowKeys, selectedRows, { type }) => {
-    setSelectedRowKeys(selectedRowKeys);
-  };
-
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: onSelectChange,
   };
 
   return (
@@ -405,7 +369,6 @@ const Config = (): React.ReactNode => {
         <Table
           className='tiersTable'
           pagination={false}
-          rowSelection={{ type: 'radio', ...rowSelection }}
           dataSource={tierGroup}
           columns={tableColumns}
           title={() => (
