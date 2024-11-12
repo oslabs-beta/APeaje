@@ -15,9 +15,15 @@ body{
 
 /* Manage Team  */
 .manageBox {
-    width: 800px;
-    height: 500px;
-    background-color:rgb(207, 205, 205);
+    width: 1200px;
+    height: 700px;
+    background-color:transparent;
     border: none;
-    
+    margin: auto;
+    margin-top: 70px;
+}
+
+.display {
+    display:flex;
+    justify-content:space-between;
 }

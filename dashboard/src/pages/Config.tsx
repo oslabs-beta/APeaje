@@ -5,7 +5,8 @@ import type { TableProps } from 'antd';
 import config from '../../../config';
 import Display from '../components/Display';
 import ConfigurationTableSettings from '../components/ConfigurationTableSettings';
-
+import ThresholdsPieChart from '../components/ThresholdsPieChart'
+import PreviousChange from '../components/PreviousChange'
 import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -438,7 +439,11 @@ const Config = (): React.ReactNode => {
 
   return (
     <div className='dashboard'>
+      <div className = 'display'>
       <Display />
+      <PreviousChange />
+      <ThresholdsPieChart />
+      </div>
       <form onSubmit={saveConfig}>
         <Table
           className='tiersTable'

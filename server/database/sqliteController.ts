@@ -2,6 +2,7 @@ import DatabaseConstructor, { Database } from 'better-sqlite3';
 import path from 'path';
 import config from '../../config';
 import { Request, Response, NextFunction } from 'express';
+import { nextTick } from 'process';
 
 interface TierConfig {
     model: string;
@@ -207,22 +208,21 @@ export const sqliteController = {
         res.locals.users = users;
         return next();
     },
-};
 
-
-
-const addNewUser = (db: Database, username: string, password: string, role: string) => {
+addNewUser : (db: Database, username: string, password: string, role: string) => {
     return sqliteController.run(db, 'INSERT INTO Users (username, password, role) VALUES (?, ?, ?)', [username, password, role]);
-};
+},
 
-const updateUserRole = (db: Database, userId: number, newRole: string) => {
+updateUserRole: (db: Database, userId: number, newRole: string) => {
     return sqliteController.run(db, 'UPDATE Users SET role = ? WHERE id = ?', [newRole, userId]);
-};
+},
 
-const getUserById = (db: Database, userId: number) => {
+getUserById : (db: Database, userId: number) => {
     return sqliteController.get(db, 'SELECT * FROM Users WHERE id = ?', [userId]);
-};
+},
 
-const deleteUser = (db: Database, userId: number) => {
+deleteUser :(db: Database, userId: number) => {
     return sqliteController.run(db, 'DELETE FROM Users WHERE id = ?', [userId]);
-};
+}
+
+}

@@ -47,7 +47,7 @@ const App = () => {
                   <Route path='/dashboard' index element={<Dashboard />} />
                   {/* <Route path='/configuration' element={<ConfigRevised />} /> */}
                   <Route path='/configuration' element={<Config />} />
-                  <Route path='/manage' element={<Manage />} />
+                  <Route path='/manage' element={<ManageRevised />} />
                   {/* <Route path='/profile' element={<Profile />} /> */}
                 {/* </Route> */}
               </Routes>
@@ -57,7 +57,8 @@ const App = () => {
         </Layout>
       </div>
     </ConfigProvider>
-  );
+    </AuthProvider>
+  )
 };
 
 export default App;

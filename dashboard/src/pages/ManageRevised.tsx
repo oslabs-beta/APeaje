@@ -24,7 +24,6 @@ const ManageRevised: React.FC = () => {
   }
 
   // Fetch users on component mount
-  useEffect(() => {
     const fetchUsers = async () => {
       try {
         const response = await fetch('/dashboard/users');
@@ -35,6 +34,8 @@ const ManageRevised: React.FC = () => {
         console.log('Error fetching users in manageTeam');
       }
     };
+
+    useEffect(()=> {
     fetchUsers();
   }, []);
 
@@ -55,6 +56,7 @@ const ManageRevised: React.FC = () => {
 
         if (response.ok) {
           message.success('User deleted successfully');
+          fetchUsers();
         } else {
           message.error('Failed to delete user');
           // If API request fails, add the user back to the state
@@ -75,19 +77,21 @@ const ManageRevised: React.FC = () => {
   ];
 
   // Handle role update
-  const handleNewRoleClick = async (userId: number, roleId: number): Promise<void> => {
-    console.log('roleId', roleId);
+  const handleNewRoleClick = async (userId: number, roleName: string): Promise<void> => {
+    console.log('roleId', roleName);
     try {
       const response = await fetch(`/dashboard/users/${userId}/role`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ roleId }),
+        body: JSON.stringify({ roleName}),
       });
+      console.log('response', response)
 
       if (response.ok) {
         message.success('Role updated successfully');
+        fetchUsers();
       } else {
         message.error('Failed to update role');
       }
@@ -125,7 +129,7 @@ const ManageRevised: React.FC = () => {
               items={newRoles.map((role) => ({
                 key: role.id,
                 label: role.role,
-                onClick: () => handleNewRoleClick(user.id, role.id),
+                onClick: () => handleNewRoleClick(user.id, role.role),
               }))}
             />
           }
@@ -176,7 +180,8 @@ const ManageRevised: React.FC = () => {
   return (
     <div className="manageBox">
       <form onSubmit={updateInfo}>
-        <Table dataSource={user || []} columns={columns} rowKey="id" />
+      <Table dataSource = {user} columns = {columns} rowKey="id"/>
+        {/* <Table dataSource={user || []} columns={columns} rowKey="id" /> */}
       </form>
     </div>
   );

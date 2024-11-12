@@ -14,7 +14,7 @@ import dashboardSQL from './controller/dashboardSQL'
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware, sqliteController } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
 import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier } from './apiUtils';
-
+import newRole from './controller/manageController'
 interface User {
   id: number;
   username: string;
@@ -65,12 +65,16 @@ app.get('/dashboard/tiers',  dashboardSQL.tierInfo, (req: Request, res: Response
   res.status(200).send(res.locals.tierInfo)
 })
 
-app.post('manageTeam', (req: Request, res: Response)=> {
+app.post('/manageTeam', (req: Request, res: Response)=> {
   res.status(200).send('get to the backend')
 })
-app.put('dashboard/users/:userId/role', (req: Request, res: Response) => {
-  res.status(200).send('gotit')
+app.put('/dashboard/users/:userId/role', newRole.updateNewRole, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.newRole)
 })
+app.delete('/dashboard/users/:userId', newRole.deleteUser, (req: Request, res: Response) => {
+  res.status(200).send(res.locals.deletedUser)
+})
+
 app.get('/dashboard/thresholdsChart', dashboardSQL.thresholdsInfo, (req: Request, res: Response) => {
   res.status(200).send(res.locals.thresholdInfo)
 })
