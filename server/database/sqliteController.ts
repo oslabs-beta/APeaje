@@ -80,38 +80,72 @@ const createTables = (db: Database): void => {
 };
 
 const insertTiers = (db: Database): void => {
-  const insertTier = db.prepare(`
-    INSERT OR REPLACE INTO Tiers (api_name, tier_name, tier_config, thresholds, cost)
-    VALUES (?, ?, ?, ?, ?)
-  `);
+  // First check if tiers exist
+  const existingTiers = db.prepare('SELECT COUNT(*) as count FROM Tiers WHERE api_name = ?')
+    .get('openai') as { count: number };
 
-  console.log('\n=== Inserting Tiers ===');
-  for (const [tierName, tierConfig] of Object.entries(
-    config.apis.openai.tiers
-  )) {
-    try {
-      const thresholdData = config.apis.openai.thresholds[tierName];
-      insertTier.run(
-        'openai',
-        tierName,
-        JSON.stringify(tierConfig),
-        JSON.stringify(thresholdData),
-        (tierConfig as TierConfig).price
-      );
-      console.log(`✓ Inserted tier ${tierName}`);
-    } catch (error) {
-      console.error(`✗ Error inserting tier ${tierName}:`, error);
+  // Only insert if no tiers exist
+  if (existingTiers.count === 0) {
+    const insertTier = db.prepare(`
+      INSERT INTO Tiers (api_name, tier_name, tier_config, thresholds, cost)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    console.log('\n=== Inserting Initial Tiers ===');
+    for (const [tierName, tierConfig] of Object.entries(config.apis.openai.tiers)) {
+      try {
+        const thresholdData = config.apis.openai.thresholds[tierName];
+        insertTier.run(
+          'openai',
+          tierName,
+          JSON.stringify(tierConfig),
+          JSON.stringify({
+            percentage: null,
+            time: { start: "00:00", end: "00:00" }
+          }), // Initialize with empty thresholds
+          (tierConfig as TierConfig).price
+        );
+        console.log(`✓ Inserted tier ${tierName}`);
+      } catch (error) {
+        console.error(`✗ Error inserting tier ${tierName}:`, error);
+      }
     }
+  } else {
+    console.log('\n=== Tiers already exist, skipping initialization ===');
   }
 };
 
-const initializeBudget = (db: Database): void => {
-  const insertBudget = db.prepare(`
-    INSERT OR IGNORE INTO Budget (api_name, budget)
-    VALUES (?, ?)
+// Also let's add a function to update tier configs without touching thresholds
+const updateTierConfig = (db: Database, apiName: string, tierName: string, config: TierConfig): void => {
+  const updateStmt = db.prepare(`
+    UPDATE Tiers 
+    SET tier_config = ?, cost = ?
+    WHERE api_name = ? AND tier_name = ?
   `);
-  insertBudget.run('openai', config.apis.openai.initialBudget);
-  console.log('\n=== Budget initialized ===');
+
+  updateStmt.run(
+    JSON.stringify({
+      model: config.model,
+      quality: config.quality,
+      size: config.size
+    }),
+    config.price,
+    apiName,
+    tierName
+  );
+};
+
+const initializeBudget = (db: Database): void => {
+  // only insert if no budget exists
+  const existingBudget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get('openai');
+  if (!existingBudget) {
+    const insertBudget = db.prepare(`
+      INSERT INTO Budget (api_name, budget, spent, total_spent)
+      VALUES (?, ?, 0, 0)
+    `);
+    insertBudget.run('openai', config.apis.openai.initialBudget);
+    console.log('\n=== Budget initialized ===');
+  }
 };
 
 const initializeAccounts = (db: Database): void => {

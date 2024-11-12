@@ -13,7 +13,7 @@ import configController from './controller/configController';
 import dashboardSQL from './controller/dashboardSQL'
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware, sqliteController } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
-import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, selectTier } from './apiUtils';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, updateSpent, selectTier } from './apiUtils';
 import newRole from './controller/manageController'
 interface User {
   id: number;
@@ -155,7 +155,81 @@ app.put('/api-config/openai/settings', (req, res) => {
   }
 });
 
+app.put('/api-config/:apiName/save', async (req: Request, res: Response, next: NextFunction) => {
+  const db = res.locals.db as Database;
+  console.log('Save endpoint received payload:', req.body);
 
+  try {
+    // Wrap everything in a single transaction
+    const transaction = db.transaction(() => {
+      // 1. Update budget if provided
+      if (req.body.budget !== undefined) {
+        updateBudget(db, req.params.apiName, req.body.budget);
+      }
+
+      // 2. Update thresholds if provided
+      if (req.body.thresholds) {
+        const updateThresholdStmt = db.prepare(`
+          UPDATE tiers
+          SET thresholds = CASE
+            WHEN json_valid(thresholds) = 1 THEN
+              json_patch(
+                COALESCE(thresholds, '{}'),
+                json(?)
+              )
+            ELSE
+              json(?)
+            END
+          WHERE api_name = ? AND tier_name = ?
+        `);
+
+        for (const [tier, config] of Object.entries(req.body.thresholds)) {
+          const thresholdJson = JSON.stringify(config);
+          updateThresholdStmt.run(
+            thresholdJson,
+            thresholdJson,
+            req.params.apiName,
+            tier
+          );
+        }
+      }
+
+      // 3. Update API settings if provided
+      if (req.body.use_time_based_tier !== undefined) {
+        const updateSettingsStmt = db.prepare(`
+          INSERT OR REPLACE INTO Api_settings (api_name, use_time_based_tier, updated_at)
+          VALUES (?, ?, CURRENT_TIMESTAMP)
+        `);
+
+        updateSettingsStmt.run(
+          req.params.apiName,
+          req.body.use_time_based_tier ? 1 : 0
+        );
+      }
+    });
+
+    transaction();
+
+    // Return updated state
+    const updatedBudget = checkBudget(db, req.params.apiName);
+    const updatedTiers = db.prepare(
+      'SELECT tier_name, thresholds FROM tiers WHERE api_name = ?'
+    ).all(req.params.apiName);
+    const updatedSettings = db.prepare(
+      'SELECT use_time_based_tier FROM Api_settings WHERE api_name = ?'
+    ).get(req.params.apiName);
+
+    res.status(200).json({
+      message: 'Configuration saved successfully',
+      budget: updatedBudget,
+      thresholds: updatedTiers,
+      settings: updatedSettings
+    });
+  } catch (error) {
+    console.error('Error in save operation:', error);
+    res.status(500).json({ error: 'Failed to save configuration' });
+  }
+});
 
 app.post('/generate-image', async (req: Request, res: Response) => {
   const { prompt } = req.body;
@@ -188,7 +262,7 @@ app.post('/generate-image', async (req: Request, res: Response) => {
     const openaiData = await openaiResponse.json();
     console.log('OpenAI response:', JSON.stringify(openaiData));
 
-    updateBudget(res.locals.db, 'openai', selectedTierConfig.price);
+    updateSpent(res.locals.db, 'openai', selectedTierConfig.price);
 
     const insertQuery = res.locals.db.prepare(
       'INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)'

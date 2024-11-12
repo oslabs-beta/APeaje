@@ -27,8 +27,8 @@ authController.register = async (
   next: NextFunction
 ) => {
   const { username, password, role, email }: User = req.body;
-  console.log('info', [username, password, role, email]);
-  let userId: number
+  console.log('Registration attempt:', { username, role, email });
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -39,29 +39,40 @@ authController.register = async (
         'SELECT * from Users WHERE username = ? OR email = ?',
         [username, email]
       );
-      userId = initialAccount.id;
-      console.log(initialAccount)
-      if(initialAccount.role === `pre-${role}`){
-        sqliteController.run(res.locals.db, 'UPDATE Users SET username = ?, email = ?, password = ?, role = ? WHERE id = ?', [
-          username,
-          email,
-          hashedPassword,  
-          role,
-          userId,
-        ]);
-      } else return next({
-        log: `Attempt to create uninitialized ${role}. Attempted account: ${[username, email]}`,
-        status: 401,
-        message: { err: 'You attempted to create a privileged account without initializing. Please contact instance owner.' },
-      })
+
+      console.log('Found initial account:', initialAccount);
+
+      // Check if initialAccount exists first
+      if (!initialAccount) {
+        return next({
+          log: `Attempt to create uninitialized ${role}. Attempted account: ${[username, email]}`,
+          status: 401,
+          message: { err: 'You attempted to create a privileged account without initializing. Please contact instance owner.' },
+        });
+      }
+
+      if (initialAccount.role === `pre-${role}`) {
+        sqliteController.run(
+          res.locals.db,
+          'UPDATE Users SET username = ?, email = ?, password = ?, role = ? WHERE id = ?',
+          [username, email, hashedPassword, role, initialAccount.id]
+        );
+        userId = initialAccount.id;
+      } else {
+        return next({
+          log: `Attempt to create uninitialized ${role}. Attempted account: ${[username, email]}`,
+          status: 401,
+          message: { err: 'You attempted to create a privileged account without initializing. Please contact instance owner.' },
+        });
+      }
     } else {
-      //REGULAR USER REGISTRATION
-    const insertUser = res.locals.db.prepare(
-      'INSERT INTO Users (username, password, role, email) VALUES (?, ?, ?, ?)'
-    );
-    const result = insertUser.run(username, hashedPassword, role, email);
-    userId= result.lastInsertRowid;
-   }
+      // Regular user registration
+      const insertUser = res.locals.db.prepare(
+        'INSERT INTO Users (username, password, role, email) VALUES (?, ?, ?, ?)'
+      );
+      const result = insertUser.run(username, hashedPassword, role, email);
+      userId = Number(result.lastInsertRowid);
+    }
 
     const token = jwt.sign(
       { userId, username, role, email },
@@ -70,9 +81,6 @@ authController.register = async (
     );
 
     res.cookie('authToken', token, {
-      //making not http only for now for simpler verification in authContext.
-      //can make http only again if we want to create a verify route
-      //httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 3600000 * 24,
     });
@@ -87,7 +95,7 @@ authController.register = async (
 
     return next();
   } catch (error) {
-    console.log(error);
+    console.error('Registration error:', error);
     next(error);
   }
 };
