@@ -13,6 +13,10 @@ const BarChart: React.FC = () => {
   //SVGSVGElement type is part of the TypeScript DOM library, which provides type definitions for the standard DOM API, including various SVG elements.
   const svgRef = useRef<SVGSVGElement | null >(null);
   
+  const legendData = [
+    {label: 'Cost', color: 'pink'},
+    {label: 'Request', color: 'white'}
+  ]
 
   useEffect(() => {
     const fetchData = async () => {
@@ -171,6 +175,32 @@ const BarChart: React.FC = () => {
       .attr('width', x.bandwidth() / 2)
       .attr('height', (d) => height - margin.bottom - y2(d.requests))
       .attr('fill', 'white');
+
+      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
+
+      const legends = legend
+        .selectAll(".legend")
+        .data(legendData)
+        .enter()
+        .append("g")
+        .attr("class", "legend")
+        .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Adjust vertical spacing
+
+      legends
+        .append("rect")
+        .attr("x", 0)
+        .attr("width", 18)
+        .attr("height", 18)
+        .attr("fill", d=> d.color);
+
+      legends
+        .append("text")
+        .attr("x", 25)
+        .attr("y", 9)
+        .attr("dy", "0.35em") // Center text vertically
+        .text((d) =>`d. label`);
+
+
   }, [data]);
 
   return (

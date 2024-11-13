@@ -10,7 +10,7 @@ interface TierConfig {
   price: number;
   id?: string;
   threshold?: {
-    budget?: number;
+    percentage?: number;
     time?: { start: number; end: number; };
   };
 }
@@ -25,7 +25,7 @@ interface BudgetRow {
 
 interface ThresholdConfig {
   [tier: string]: {
-    budget?: number;
+    percentage?: number;
     time?: {
       start: string;  // HH:mm format
       end: string;    // HH:mm format
@@ -54,6 +54,7 @@ interface ConfigControllerInterface {
   deleteApiConfig?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   getApiConfig?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   listApiConfigs?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
+  getUseTimeBasedTier: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   validateApiConfig?: (config: any) => { isValid: boolean; errors: string[] };
 }
 
@@ -76,6 +77,30 @@ const configController: ConfigControllerInterface = {
     }
   },
 
+
+  getUseTimeBasedTier: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { apiName } = req.params;
+
+      const db = res.locals.db as Database;
+      const useTimeBasedTierStmt = db.prepare(`
+      SELECT use_time_based_tier
+      FROM Api_settings
+      WHERE api_name = ?
+    `);
+
+      const useTimeBasedTierResult = useTimeBasedTierStmt.get(apiName) as { use_time_based_tier: boolean };
+
+      res.locals.useTimeBasedTier = useTimeBasedTierResult?.use_time_based_tier ?? false;
+      next();
+    } catch (error) {
+      console.error('Error fetching use_time_based_tier setting:', error);
+      res.status(500).json({ error: 'Error fetching use_time_based_tier setting' });
+    }
+  },
+
+
+
   // updates existing tier configurations
   updateTiers: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -97,7 +122,7 @@ const configController: ConfigControllerInterface = {
           updateTierStmt.run(
             JSON.stringify({ model: tier.model, quality: tier.quality, size: tier.size }),
             JSON.stringify({
-              budget: tier.threshold?.budget || null,
+              percentage: tier.threshold?.percentage || null,
               time: tier.threshold?.time || null
             }),
             tier.price,
@@ -119,14 +144,9 @@ const configController: ConfigControllerInterface = {
   // updates thresholds for existing tiers
   updateThresholds: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      
       const { apiName } = req.params;
       const { thresholds } = req.body as { thresholds: ThresholdConfig };
 
-      console.log('api_name', apiName);
-
-      // check required inputs
-      // if no API name or thresholds object provided, return 400 error
       if (!apiName || !thresholds) {
         res.status(400).json({ error: 'api name and thresholds required' });
         return;
@@ -134,118 +154,79 @@ const configController: ConfigControllerInterface = {
 
       const db = res.locals.db as Database;
 
-      // check if API exists in database
-      // query database to get all tier names for this API
-      const tiersStmt = db.prepare('select tier_name from tiers where api_name = ?');
-      const existingTiers = tiersStmt.all(apiName) as { tier_name: string }[];
+      // Validate tiers exist
+      const existingTiers = db.prepare('select tier_name from tiers where api_name = ?')
+        .all(apiName) as { tier_name: string }[];
 
-      // if no tiers found for this API, it doesn't exist
       if (!existingTiers.length) {
         res.status(404).json({ error: 'api configuration not found' });
         return;
       }
 
-      // check if provided tiers actually exist for this API
-      // compare provided tier names against existing tier names
-      const providedTiers = Object.keys(thresholds);
-      const validTiers = existingTiers.map(t => t.tier_name);
-      const invalidTiers = providedTiers.filter(t => !validTiers.includes(t));
-
-      // if any invalid tiers found, return error with list of invalid tiers
-      if (invalidTiers.length > 0) {
-        res.status(400).json({
-          error: 'invalid tiers provided',
-          invalidTiers
-        });
-        return;
-      }
-
-      // check if budget thresholds sum to 100%
-      // extract all tiers that have budget thresholds
+      // Separate budget and time thresholds validation
       const budgetThresholds = Object.entries(thresholds)
-        .filter(([_, config]:any[]) => config.budget !== undefined)
-        .map(([tier, config]:any[]) => ({
+        .filter(([_, config]) => config.percentage !== null)
+        .map(([tier, config]) => ({
           tier,
-          budget: config.budget as number
+          percentage: config.percentage as number
         }));
 
-      // if there are any budget thresholds, verify their sum
-      if (budgetThresholds.length > 0) {
-        const budgetSum = budgetThresholds.reduce((sum, { budget }) => sum + budget, 0);
+      const timeThresholds = Object.entries(thresholds)
+        .filter(([_, config]) => config.time !== null)
+        .map(([tier, config]) => ({
+          tier,
+          time: config.time
+        }));
 
-        // check if sum is exactly 100 (within floating point rounding error)
-        if (Math.abs(budgetSum - 100) > 0.001) {
+      // Only validate budget sum if budget thresholds exist
+      if (budgetThresholds.length > 0) {
+        const percentageSum = budgetThresholds.reduce((sum, { percentage }) => sum + (percentage || 0), 0);
+        if (Math.abs(percentageSum - 100) > 0.001) {
           res.status(400).json({
-            error: 'invalid budget thresholds',
-            message: `Budget thresholds must sum to exactly 100%. Current sum: ${budgetSum}%`,
-            budgetThresholds
+            error: 'invalid percentage thresholds',
+            message: `Budget thresholds must sum to exactly 100%. Current sum: ${percentageSum}%`
           });
           return;
         }
       }
 
-      // check individual threshold values
-      // validate time format and budget range for each tier
+      // Only validate time format if time thresholds exist
       const timeFormatRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-      for (const [tier, config] of Object.entries(thresholds) as any[]) {
-        // if time thresholds provided, validate HH:mm format
-        if (config.time) {
-          if (!timeFormatRegex.test(config.time.start) || !timeFormatRegex.test(config.time.end)) {
-            res.status(400).json({
-              error: 'invalid time format',
-              message: 'Time must be in HH:mm format',
-              tier
-            });
-            return;
-          }
-        }
-
-        // if budget threshold provided, validate 0-100 range
-        if (config.budget !== undefined && (config.budget < 0 || config.budget > 100)) {
+      for (const { tier, time } of timeThresholds) {
+        if (!timeFormatRegex.test(time.start) || !timeFormatRegex.test(time.end)) {
           res.status(400).json({
-            error: 'invalid budget threshold',
-            message: 'Budget threshold must be between 0 and 100',
+            error: 'invalid time format',
+            message: 'Time must be in HH:mm format',
             tier
           });
           return;
         }
       }
 
-
-      // prepare database statement for updating thresholds
-      const updateThresholdStmt = db.prepare(`
-      update tiers
-      set thresholds = ?
-      where api_name = ? and tier_name = ?
-    `);
-
-      // wrap all updates in a transaction for atomicity
+      // Update thresholds in transaction
       const transaction = db.transaction(() => {
-        // update each tier's thresholds
-        for (const [tier, config] of Object.entries(thresholds) as any[]) {
-          const thresholdConfig = {
-            budget: config.budget ?? null,  // use null if budget not provided
-            time: config.time ?? null       // use null if time not provided
-          };
+        const updateStmt = db.prepare(`
+        UPDATE tiers
+        SET thresholds = ?
+        WHERE api_name = ? AND tier_name = ?
+      `);
 
-          // execute update for this tier
-          updateThresholdStmt.run(
-            JSON.stringify(thresholdConfig),
+        for (const [tier, config] of Object.entries(thresholds)) {
+          updateStmt.run(
+            JSON.stringify({
+              percentage: config.percentage,
+              time: config.time
+            }),
             apiName,
             tier
           );
         }
       });
 
-      // execute the transaction
       transaction();
-
-      // store updated thresholds for response
       res.locals.updatedThresholds = thresholds;
       next();
-
     } catch (error) {
-
       console.error('error updating thresholds:', error);
       res.status(500).json({ error: 'error updating thresholds' });
     }
@@ -283,7 +264,7 @@ const configController: ConfigControllerInterface = {
             tierName,
             JSON.stringify({ model: tierConfig.model, quality: tierConfig.quality, size: tierConfig.size }),
             JSON.stringify({
-              budget: thresholds.budget?.find(t => t.tier === tierName) || null,
+              percentage: thresholds.percentage?.find(t => t.tier === tierName) || null,
               time: thresholds.time?.find(t => t.tier === tierName) || null
             }),
             tierConfig.price

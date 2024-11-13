@@ -4,7 +4,7 @@ import type { MenuProps } from 'antd';
 import { Button, Table, message, Dropdown, Menu } from 'antd';
 import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 
-const Manage: React.FC = () => {
+const ManageRevised: React.FC = () => {
   const [newRole, setNewRole] = useState<Role | null>(null);
   const [user, setUser] = useState<User[] | null>(null);
   const [isDeleted, setIsDeleted] = useState<boolean>(false);
@@ -187,4 +187,4 @@ const Manage: React.FC = () => {
   );
 };
 
-export default Manage;
+export default ManageRevised;

@@ -6,7 +6,7 @@ import {
   TranslationOutlined,
 } from "@ant-design/icons";
 
-const ThresholdsPieChart = () => {
+const PreviousChange = () => {
   const [data, setData] = useState([]);
   const svgRef = useRef(null);
 
@@ -145,4 +145,4 @@ const ThresholdsPieChart = () => {
     </div>
   );
 };
-export default ThresholdsPieChart;
+export default PreviousChange;

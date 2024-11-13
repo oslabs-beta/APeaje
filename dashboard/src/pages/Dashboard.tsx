@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import BarChart from '../components/BarChart';
-import LineChart from '../components/LineChart';
+// import LineChart from '../components/LineChart';
 import Display from '../components/Display';
 // import PieChart from '../components/PieChart';
 import ThresholdsPieChart from '../components/ThresholdsPieChart'
@@ -12,22 +12,37 @@ const [selectedValue, setSelectedValue] = useState('');
 
 return (    
     <div className ="dashboard">
-    <Row>
-        <Col>
-            <Display />
-        </Col>
-        {/* <Col>
-            <PieChart />
-        </Col> */}
-        <Col>
-            <ThresholdsPieChart />
-        </Col>
-    </Row>
-    <Row>
-        <Col>
-            <BarChart />
-        </Col>
-    </Row>
+    <div className = "outline">
+    <div className = "sub">
+    <Display />
+    </div>
+    <div className = "sub">
+    <ThresholdsPieChart />
+    </div>
+    </div>
+    <div className = "container">
+    <BarChart />
+    </div>
+    </div>
+    
+    
+)
+}
+
+    
+    // <Row>
+    //     <Col>
+         
+    //     </Col>
+    //     <Col>
+            
+    //     </Col>
+    // </Row>
+    // <Row>
+    //     <Col>
+           
+    //     </Col>
+    // </Row>
 
 
     {/* dropdown menu for different chart */}
@@ -38,9 +53,5 @@ return (
         </option>
      ))}
     </select> */}
-    </div>
-)
-}
-
 
 export default Dashboard
