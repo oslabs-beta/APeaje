@@ -8,45 +8,6 @@ import { Type } from 'typescript';
 import { stringify } from 'querystring';
 import ThresholdsPieChart from '../components/ThresholdsPieChart';
 
-/*
-
-const apiName = 'my-api';
-const thresholds = {
-  'tier1': {
-    budget: 40,
-    time: {
-      start: '09:00',
-      end: '17:00'
-    }
-  },
-  'tier2': {
-    budget: 60,
-    time: {
-      start: '00:00',
-      end: '24:00'
-    }
-  }
-};
-
-const body = {
-  thresholds
-};
-
-fetch(`/api/updateThresholds/${apiName}`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify(body)
-})
-.then(response => response.json())
-.then(data => {
-  console.log(data);
-})
-.catch(error => {
-  console.error('Error updating thresholds:', error);
-});
-*/
 
 const Config = (): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState('');
@@ -142,13 +103,7 @@ const Config = (): React.ReactNode => {
     setEndTime((e.target as HTMLInputElement).value);
   };
 
-  // const handleTiers = (e: React.SyntheticEvent): void => {
-  //   setTiers((e.target as HTMLInputElement).value);
-  // };
 
-  // const handleThreshold = (e: React.SyntheticEvent): void => {
-  //   setThreshold((e.target as HTMLInputElement).value);
-  // };
 
   const handleThresholdChange = (
     tierId: string,
@@ -163,77 +118,13 @@ const Config = (): React.ReactNode => {
   ): Promise<void> => {
     e.preventDefault(); // Prevent the default form submission
 
-    // Validation (optional)
-    // Get the selected tier
-    // const selectedTier = selectedRowKeys.map((key) => ({
-    //   id: key,
-    //   threshold: thresholds[key] || 0,
-    // })); // Use the first selected key
-
-    // Create the thresholds array for the backend
-
-    // const budgetThresholds= Object.entries(thresholds).map(([tier, threshold]) => ({
-    //   tier,
-    //   threshold,
-    // }))
-
-    // selecting time from the Table
-    // const timeThresholds = selectedRowKeys.map((timerId) => ({
-    //   tier: timerId,
-    //   start: parseInt(startTime, 10), // Ensure the start time is a number
-    //   end: parseInt(endTime, 10),
-    // }));
-
-    // build the selected tiers array with all necessary properties.
-
-    // const selectedTiers: ConfigType[] = selectedRowKeys
-    //   .map((key) => {
-    //     console.log("checking selectedRowKeys", selectedRowKeys);
-    //     const tierInfo = tierGroup.find((tier) => tier.id === key);
-    //     console.log("tierInfo", tierInfo);
-    //     return tierInfo ? { ...tierInfo } : null;
-    //   })
-    //   .filter((tier) => tier !== null) as ConfigType[];
-
-    // Create the data object to send to the backend data send to backend
-    // const data: DataType = {
-    //   budget: inputBudget,
-    //   api_name: 'openai',
-    //   timeRange: {
-    //     start: startTime,
-    //     end: endTime,
-    //   },
-    //   tiers: selectedTiers,
-    //   thresholds: {
-    //     budget: budgetThresholds,
-    //     time: timeThresholds,
-    //   }
-    // };
-
-    // the table needs to be contain the time range.
-    //   const budgetThresholds = selectedRowKeys.reduce((acc, tierId) => {
-    //     const tierInfo = tierGroup.find(tier => tier.id === tierId); // Find the tier info based on id
-    //     if (tierInfo) {
-    //       console.log('tier name', acc[tierInfo.id])
-    //         acc[tierInfo.id] = {
-    //             budget: thresholds[tierId] || 0,
-    //             time: {
-    //                 start: startTime || undefined,
-    //                 end: endTime || undefined,
-    //             }
-    //         };
-    //     }
-    //     console.log('acc', acc)
-    //     return acc;
-    // }, {} as Record<string, { budget: number; time?: { start?: string; end?: string } }>);
-
     // Create the thresholds object
     const thresholdsObject = {};
 
     // Populate budget thresholds
-    Object.entries(thresholds).forEach(([tier, threshold]) => {
+    Object.entries(thresholds).forEach(([tier, percentage]) => {
       thresholdsObject[tier] = {
-        budget: threshold,
+        percentage,
         time: selectedRowKeys.includes(tier)
           ? { start: parseInt(startTime, 10), end: parseInt(endTime, 10) }
           : undefined, // Optional time
@@ -263,17 +154,14 @@ const Config = (): React.ReactNode => {
         throw new Error('Network response was not ok');
       }
 
-      // const responseBody = await response; // or await response.json()
-      // console.log('response from Body', responseBody)
-
-      // }
+   
       setInputBudget('');
       setStartTime('');
       setEndTime('');
       setSelectedRowKeys([]);
       setThreshold([]);
 
-      alert('Budget saved successfully');
+      alert('Config saved successfully');
     } catch (error) {
       console.error('error found from configuration', error);
       alert('Failed to save configuration. Please try again.');
@@ -328,7 +216,7 @@ const Config = (): React.ReactNode => {
     },
     {
       title: 'Threshold',
-      key: 'threshold',
+      key: 'percentage',
       render: (_, tierInfo) => (
         <InputNumber
           min={0}
@@ -352,8 +240,7 @@ const Config = (): React.ReactNode => {
     },
   ];
 
-  /*  const [threshold, setThreshold] = useState({});
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);  */
+
 
   const onSelectChange = (newSelectedRowKeys: []): void => {
     console.log('selectedRowKeys changed: ', newSelectedRowKeys);
@@ -364,19 +251,12 @@ const Config = (): React.ReactNode => {
     onChange: onSelectChange,
   };
 
-  // console.log('what is selectedRowKey', selectedRowKeys[0])
-  // const generateThresholds = () => {
-  //   return config.apis.openai.thresholds.budget.map(({ threshold, tier }) => (
-  //     <option key={tier} value={tier}>
-  //       ${threshold} (Tier {tier})
-  //     </option>
-  //   ));
-  // };
+
 
   return (
     <div className='dashboard'>
       <Display />
-      <ThresholdsPieChart />
+      < ThresholdsPieChart />
       <form onSubmit={saveConfig}>
         <label>
           Budget:
@@ -421,18 +301,6 @@ const Config = (): React.ReactNode => {
             columns={columns}
           />
         </label>
-
-        {/* <label>
-          Thresholds:
-          <select
-            className='thresholds'
-            value={threshold}
-            onChange={handleThreshold}
-          >
-            <option value=''> Select Thresholds </option>
-            {generateThresholds()}
-          </select>
-        </label> */}
 
         <button type='submit' className='config-save'>
           Save

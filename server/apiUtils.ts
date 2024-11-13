@@ -35,7 +35,7 @@ interface TierConfig {
 }
 
 interface ThresholdConfig {
-  budget: number | null;
+  percentage: number | null;
   time: {
     start: string;
     end: string;
@@ -86,7 +86,23 @@ function updateBudget(db: Database, api_name: string, cost: number): void {
 
 function checkBudget(db: Database, api_name: string): BudgetInfo {
   const budget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get(api_name) as BudgetInfo;
+  console.log('Budget information:', budget);
   return budget;
+}
+
+function updateSpent(db: Database, api_name: string, cost: number): void {
+  const updateSpent = db.prepare(`
+    UPDATE Budget
+    SET spent = ?
+    WHERE api_name = ?
+  `);
+  const currentBudgetInfo = checkBudget(db, api_name);
+
+  const currentSpent = currentBudgetInfo.spent;
+
+  const result = updateSpent.run(currentSpent + cost, api_name);
+
+  console.log(`Budget updated for ${api_name}: Cost: ${cost}, Rows affected: ${result.changes}`);
 }
 
 /**
@@ -110,6 +126,73 @@ function isTimeInRange(current: number, start: number, end: number): boolean {
   }
 }
 
+//selects between time and budget mode according to APIsettings and returns relevant tier
+function selectTier(db: Database, apiName: string): ProcessedTier {
+  try {
+    const settings = getAPISettings(db, apiName);
+    
+    console.log("SETTTTTTTTTT", settings);
+
+    if (!settings) {
+      console.log('No settings found, defaulting to budget-based selection');
+      return selectTierBasedOnBudget(db, apiName);
+    }
+    
+    const useTimeBased = Boolean(settings.use_time_based_tier);
+    console.log(`Using ${useTimeBased ? 'time' : 'budget'}-based tier selection for ${apiName}`);
+    
+    return useTimeBased ?
+    selectTierBasedOnTime(db, apiName) :
+    selectTierBasedOnBudget(db, apiName);
+    
+  } catch (error) {
+    console.error('Error in tier selection:', error);
+    return selectTierBasedOnBudget(db, apiName);
+  }
+}
+// determine if APISettings are time or budget-based mode
+function getAPISettings(db: Database, api_name: string): APISettings | null {
+  const settings = db.prepare(`
+    SELECT api_name, use_time_based_tier, updated_at 
+    FROM Api_settings 
+    WHERE api_name = ?
+    `).get(api_name) as APISettings | undefined;
+    
+    if (!settings) {
+      const insertStmt = db.prepare(`
+        INSERT INTO Api_settings (api_name, use_time_based_tier) 
+        VALUES (?, 0)
+        `);
+        
+        try {
+          insertStmt.run(api_name);
+          return {
+            api_name,
+            use_time_based_tier: 0,
+            updated_at: new Date().toISOString()
+          };
+        } catch (error) {
+          console.error('Error creating default settings:', error);
+          return null;
+        }
+      }
+      
+      return settings;
+    }
+    
+function selectTierBasedOnBudget(db: Database, apiName: string): ProcessedTier {
+  const budgetInfo = checkBudget(db, apiName);
+  console.log("BUDDDDDDDDD", budgetInfo);
+  const percentSpent = (budgetInfo.spent / budgetInfo.budget) * 100;
+
+  return selectTierBasedOnThreshold(db, apiName, 'budget', percentSpent);
+}
+
+function selectTierBasedOnTime(db: Database, apiName: string): ProcessedTier {
+  const currentHour = new Date().getHours();
+  return selectTierBasedOnThreshold(db, apiName, 'time', currentHour);
+}
+    
 function selectTierBasedOnThreshold(db: Database, apiName: string, thresholdType: 'budget' | 'time', value: number): ProcessedTier {
   // get tiers ordered by cost (highest first)
   const tiers = db.prepare(`
@@ -124,13 +207,18 @@ function selectTierBasedOnThreshold(db: Database, apiName: string, thresholdType
     cost: number;
   }>;
 
+  let percentAccumulated: number = 0;
+
   for (const tier of tiers) {
     const tierConfig = JSON.parse(tier.tier_config) as TierConfig;
     const thresholds = JSON.parse(tier.thresholds) as ThresholdConfig;
 
+    console.log("THRESHHHHHH", thresholds)
+
     if (thresholdType === 'budget') {
-      // check if remaining budget percentage meets threshold
-      if (thresholds.budget !== null && value >= thresholds.budget) {
+      
+      // check if remaining budgt percentage meets threshold
+      if (thresholds.percentage !== null && (percentAccumulated+=thresholds.percentage) > value) {
         return {
           ...tierConfig,
           id: tier.tier_name,
@@ -165,68 +253,7 @@ function selectTierBasedOnThreshold(db: Database, apiName: string, thresholdType
 }
 
 
-function selectTierBasedOnBudget(db: Database, apiName: string): ProcessedTier {
-  const budgetInfo = checkBudget(db, apiName);
-  const remainingBudgetPercentage = ((budgetInfo.budget - budgetInfo.spent) / budgetInfo.budget) * 100;
-  return selectTierBasedOnThreshold(db, apiName, 'budget', remainingBudgetPercentage);
-}
 
-function selectTierBasedOnTime(db: Database, apiName: string): ProcessedTier {
-  const currentHour = new Date().getHours();
-  return selectTierBasedOnThreshold(db, apiName, 'time', currentHour);
-}
-
-function getAPISettings(db: Database, api_name: string): APISettings | null {
-  const settings = db.prepare(`
-    SELECT api_name, use_time_based_tier, updated_at 
-    FROM Api_settings 
-    WHERE api_name = ?
-  `).get(api_name) as APISettings | undefined;
-
-  if (!settings) {
-    const insertStmt = db.prepare(`
-      INSERT INTO Api_settings (api_name, use_time_based_tier) 
-      VALUES (?, 0)
-    `);
-
-    try {
-      insertStmt.run(api_name);
-      return {
-        api_name,
-        use_time_based_tier: 0,
-        updated_at: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Error creating default settings:', error);
-      return null;
-    }
-  }
-
-  return settings;
-}
-
-
-function selectTier(db: Database, apiName: string): ProcessedTier {
-  try {
-    const settings = getAPISettings(db, apiName);
-
-    if (!settings) {
-      console.log('No settings found, defaulting to budget-based selection');
-      return selectTierBasedOnBudget(db, apiName);
-    }
-
-    const useTimeBased = Boolean(settings.use_time_based_tier);
-    console.log(`Using ${useTimeBased ? 'time' : 'budget'}-based tier selection for ${apiName}`);
-
-    return useTimeBased ?
-      selectTierBasedOnTime(db, apiName) :
-      selectTierBasedOnBudget(db, apiName);
-
-  } catch (error) {
-    console.error('Error in tier selection:', error);
-    return selectTierBasedOnBudget(db, apiName);
-  }
-}
 
 export {
   loadAPIConfigs,
@@ -234,5 +261,6 @@ export {
   updateBudget,
   selectTierBasedOnBudget,
   selectTierBasedOnTime,
-  selectTier
+  selectTier,
+  updateSpent
 };
