@@ -5,6 +5,7 @@ import SideBar from '../components/SideBar';
 import HeaderComp from '../components/Header';
 import Config from './Config';
 // import ConfigRevised from "./ConfigRevised";
+import ManageRevised from './ManageRevised';
 import Manage from './Manage';
 import Profile from './Profile';
 import Login from './Login';
@@ -42,23 +43,22 @@ const App = () => {
                   <Route path='/login' element={<Login />} />
                   <Route path='/register' element={<Register />} />
 
-                  {/* Protected Routes */}
-                  <Route element={<ProtectedRoute />}>
-                    <Route path='/dashboard' index element={<Dashboard />} />
-                    {/* <Route path='/configuration' element={<ConfigRevised />} /> */}
-                    <Route path='/configuration' element={<Config />} />
-                    <Route path='/manage' element={<Manage />} />
-                    <Route path='/profile' element={<Profile />} />
-                  </Route>
-                </Routes>
-              </Content>
-              <Footer></Footer>
-            </Layout>
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path='/dashboard' index element={<Dashboard />} />
+                  <Route path='/configuration' element={<Config />} />
+                  <Route path='/manage' element={<Manage />} />
+                  <Route path='/profile' element={<Profile />} />
+                </Route>
+              </Routes>
+            </Content>
+            <Footer></Footer>
           </Layout>
-        </div>
-      </ConfigProvider>
+        </Layout>
+      </div>
+    </ConfigProvider>
     </AuthProvider>
-  );
+  )
 };
 
 export default App;

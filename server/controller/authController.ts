@@ -31,12 +31,11 @@ authController.register = async (
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
+    let userId: number
 
-    let userId: number;
-
-    // Fix the condition - it was always evaluating to true
-    if (role === 'owner' || role === 'admin') {
-      const initialAccount: User | undefined = sqliteController.get(
+    //Check if owner or admin accounts have been pre-initialized.
+    if (role === 'Owner' || role === 'Admin') {
+      const initialAccount: User = sqliteController.get(
         res.locals.db,
         'SELECT * from Users WHERE username = ? OR email = ?',
         [username, email]
@@ -52,6 +51,8 @@ authController.register = async (
           message: { err: 'You attempted to create a privileged account without initializing. Please contact instance owner.' },
         });
       }
+
+
 
       if (initialAccount.role === `pre-${role}`) {
         sqliteController.run(

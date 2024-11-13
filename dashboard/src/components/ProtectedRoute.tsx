@@ -3,8 +3,12 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext'; 
 
 const ProtectedRoute: React.FC = () => {
-  const { isAuth, username, role } = useAuth(); 
+  const { isAuth, loading, username, role } = useAuth(); 
   const location = useLocation();
+
+  if (loading) {
+    return <div>Loading...</div>
+  }
 
   // If the user is not authenticated, redirect to the login page
   if (!isAuth) {
