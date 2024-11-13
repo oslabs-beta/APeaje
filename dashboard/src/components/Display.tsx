@@ -32,6 +32,7 @@ const Display = (): React.JSX.Element => {
 
                 const numberOfRequestResponse = await fetch('/dashboard/totalRequests');
                 const numberOfRequest: TotalRequest[] = await numberOfRequestResponse.json();
+                console.log('number,', numberOfRequest)
                 setTotalRequest(numberOfRequest[0]); // { total_requests: 5 }
             } catch (error) {
                 console.error('Error fetching data:', error);
