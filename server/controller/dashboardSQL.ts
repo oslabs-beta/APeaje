@@ -9,10 +9,10 @@ dashboardSQL.barGraph = async (req: Request, res: Response, next: NextFunction) 
     const budgetData = await sqliteController.query(res.locals.db, `
       SELECT 
         DATE(Q.timestamp) AS date,
-        SUM(T.cost) AS total_spent,
+        SUM(B.total_spent) AS total_spent,
         COUNT(Q.id) AS number_of_requests
       FROM Queries Q
-      JOIN Tiers T ON Q.tier_id = T.id
+      JOIN Budget B ON Q.id
       GROUP BY DATE(Q.timestamp)
       ORDER BY DATE(Q.timestamp)
     `);
