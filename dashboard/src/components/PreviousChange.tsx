@@ -1,178 +1,101 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import * as d3 from "d3";
-import {
-  BgColorsOutlined,
-  CrownFilled,
-  TranslationOutlined,
-} from "@ant-design/icons";
-interface PreviousChangeProps {
-  chart: {
-    name: string;
-    value: number;
-    initialAmount: { budget:number} // need an conditional where this is existing value or newInput
-    thresholdPercent: number;
-  }[] // array of object
-  , currentTheme: string,
-  lightTheme: string
-}
 
-const PreviousChange: React.FC<PreviousChangeProps> = ({ currentTheme, lightTheme, chart }) => {
-  const [data, setData] = useState([]);
-  const svgRef = useRef(null);
+const PreviousChange = ({ currentTheme, lightTheme, chart }) => {
+    const svgRef = useRef(null);
 
-  
+    const calculateRequests = (budget, price) => {
+        return Math.floor(budget / price);
+    };
 
- useEffect(()=> {
-  setData(chart);
- }, [chart])
+    useEffect(() => {
+        if (chart && chart.length > 0) {
+            const svg = d3.select(svgRef.current);
+            const width = 400;
+            const height = 300;
+            const radius = Math.min(300, height) / 2;
 
+            svg.attr("width", width).attr("height", height);
+            svg.selectAll("*").remove();
 
- console.log("tier previous data", chart);
+            const g = svg
+                .append("g")
+                .attr("transform", `translate(${150}, ${height / 2})`);
 
+            const colorScheme = {
+                'A': '#ffcdd2',
+                'B': '#bbdefb',
+                'C': '#c8e6c9',
+                'D': '#e1bee7',
+                'E': '#ffe0b2',
+                'F': '#f5f5f5'
+            };
 
-  //   const fetchThresholds = async () => {
-  //     try {
-  //       const response = await fetch("/dashboard/thresholdsChart");
-  //       const thresholds = await response.json();
+            const color = d3.scaleOrdinal()
+                .domain(Object.keys(colorScheme))
+                .range(Object.values(colorScheme));
 
-  //       console.log("fetching thresholds", thresholds);
+            const pie = d3.pie()
+                .sort(null)
+                .value(d => d.thresholdPercent);
 
-  //       // data for tier_name type
-  //       const chart = thresholds.map((row) => ({
-  //         tier: row.tier_name,
-  //         thresholds: JSON.parse(row.thresholds).percentage || 0, // Default to 0 if there is no budget
-  //         requestNumber: Math.floor(
-  //           JSON.parse(row.thresholds).percentage / row.cost
-  //         ),
-  //       }));
-  //       console.log("thresholds in the front-end:", thresholds, "chart", chart);
-  //       setData(chart);
-  //     } catch (error) {
-  //       console.log("error found from fetchData for thresholds");
-  //     }
-  //   };
-  //   useEffect(() => {
-  //   fetchThresholds();
-  // }, []);
+            const arc = d3.arc()
+                .innerRadius(0)
+                .outerRadius(radius - 10);
 
-  /*
-0:{name: 'A', initialAmount: {…}, value: 0.2, thresholdPercent: 10}
-1:{name: 'B', initialAmount: {…}, value: 0.6, thresholdPercent: 30}
-2:{name: 'C', initialAmount: {…}, value: 1.2, thresholdPercent: 60}
-3:{name: 'D', initialAmount: {…}, value: 0, thresholdPercent: 0}
-4:{name: 'E', initialAmount: {…}, value: 0, thresholdPercent: 0}
-5:{name: 'F', initialAmount: {…}, value: 0, thresholdPercent: 0}
-length
-: 
-6
-  */
+            const arcs = pie(chart);
 
-  useEffect(() => {
-    if (data.length > 0) {
-      const svg = d3.select(svgRef.current);
-      const width = 500;
-      const height = 300;
-      const radius = Math.min(width, height) / 2;
+            const arcGroup = g.selectAll(".arc")
+                .data(arcs)
+                .enter()
+                .append("g")
+                .attr("class", "arc");
 
-      svg.attr("width", width).attr("height", height);
+            arcGroup.append("path")
+                .attr("d", arc)
+                .style("fill", d => color(d.data.name))
+                .style("stroke", "white")
+                .style("stroke-width", "2");
 
-      svg.selectAll("*").remove(); // Clear previous drawings
+            arcGroup.append("text")
+                .attr("transform", d => `translate(${arc.centroid(d)})`)
+                .attr("dy", ".35em")
+                .style("text-anchor", "middle")
+                .style("font-size", "14px")
+                .style("fill", "#000")
+                .text(d => d.data.name);
 
-      const g = svg
-        .append("g")
-        .attr("transform", `translate(${width / 2}, ${height / 2})`);
+            const legend = svg.append("g")
+                .attr("transform", `translate(${300}, 20)`);
 
-      const color = d3.scaleOrdinal(d3.schemePastel1);
+            chart.forEach((d, i) => {
+                const legendRow = legend.append("g")
+                    .attr("transform", `translate(0, ${i * 20})`);
 
-      // Create pie chart
-      const pie = d3
-        .pie()
-        .sort(null)
-        .value((d) => d.thresholdPercent)
-        .padAngle(0.03);
+                legendRow.append("rect")
+                    .attr("width", 15)
+                    .attr("height", 15)
+                    .style("fill", color(d.name));
 
-      const arc = d3.arc().innerRadius(0).outerRadius(radius);
+                const budget = d.initialAmount.budget * (d.thresholdPercent / 100);
+                const requests = calculateRequests(budget, 0.12); // Using 0.12 as the price per request
 
-      const arcs = pie(data);
+                legendRow.append("text")
+                    .attr("x", 20)
+                    .attr("y", 12)
+                    .style("font-size", "12px")
+                    .style("fill", "#FFF")
+                    .text(`$${budget.toFixed(2)} (${requests} req(s))`);
+            });
+        }
+    }, [chart, currentTheme, lightTheme]);
 
-      const tooltip = d3
-        .select("body")
-        .append("div")
-        .attr("class", "tooltip")
-        .style("position", "absolute")
-        .style("visibility", "hidden")
-        .style("background", "lightsteelblue")
-        .style("padding", "5px")
-        .style("border-radius", "5px");
-
-      const arcGroups = g
-        .selectAll("arc")
-        .data(arcs)
-        .enter()
-        .append("g")
-        .attr("class", "arc");
-
-      arcGroups
-        .append("path")
-        .attr("d", arc)
-        .attr("fill", (d, i) => color(i))
-        .on("mouseover", (event, d) => {
-          tooltip
-            .style("visibility", "visible")
-            .text(`${d.data.name}: $${d.data.thresholdAmount}`);
-        })
-        .on("mousemove", (event) => {
-          tooltip
-            .style("top", event.pageY - 10 + "px")
-            .style("left", event.pageX + 10 + "px");
-        })
-        .on("mouseout", () => {
-          tooltip.style("visibility", "hidden");
-        });
-
-      // Add labels
-      g.selectAll("arc")
-        .data(arcs)
-        .enter()
-        .append("text")
-        .attr("transform", (d) => `translate(${arc.centroid(d)})`)
-        .attr("dy", "0.50em")
-        .attr("text-anchor", "middle")
-        .style("font-size", "12px")
-        .text((d) => d.data.name);
-
-      const legend = svg.append("g").attr("transform", "translate(400, 10)"); // Adjust position here
-
-      const legends = legend
-        .selectAll(".legend")
-        .data(data)
-        .enter()
-        .append("g")
-        .attr("class", "legend")
-        .attr("transform", (d, i) => `translate(0, ${i * 15})`); // Adjust vertical spacing
-
-      legends
-        .append("rect")
-        .attr("x", 0)
-        .attr("width", 18)
-        .attr("height", 18)
-        .attr("fill", (d, i) => color(i));
-
-      legends
-        .append("text")
-        .attr("x", 25)
-        .attr("y", 9)
-        .attr("dy", "0.35em") // Center text vertically
-        .text((d) =>`$${d.thresholdAmount}`)
-        .attr("fill", currentTheme === lightTheme ? "#000" : "#FFF");
-    }
-  }, [data, currentTheme, lightTheme]);
-
-  return (
-    <div className="pie-chart">
-      <h6>Preview Breakdown</h6>
-      <svg ref={svgRef}></svg>
-    </div>
-  );
+    return (
+        <div className="pie-chart">
+            <h6>Preview Breakdown</h6>
+            <svg ref={svgRef}></svg>
+        </div>
+    );
 };
+
 export default PreviousChange;

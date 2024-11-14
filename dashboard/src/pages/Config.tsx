@@ -8,37 +8,51 @@ import ConfigurationTableSettings from '../components/ConfigurationTableSettings
 import ThresholdsPieChart from '../components/ThresholdsPieChart';
 import PreviousChange from '../components/PreviousChange';
 
-const Config = ({currentTheme, lightTheme}) => {
+interface ConfigProps {
+  currentTheme: string;
+  lightTheme: string;
+}
+
+interface BudgetInfo {
+  id: number;
+  api_name: string;
+  budget: number;
+  spent: number;
+  total_spent: number;
+}
+
+interface TierInfo {
+  id: string;
+  model: string;
+  quality: string;
+  size: string;
+  price: number;
+  percentThreshold: number;
+  spent: number;
+  request_count?: number;
+  startTime: string;
+  endTime: string;
+  thresholds?: string;
+  amountSpent?: number;
+}
+
+interface RemainingBalance {
+  remaining_balance: number;
+}
+
+const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
   const [inputBudget, setInputBudget] = useState<number>(0);
   const [initialBudget, setInitialBudget] = useState<number>(0);
   const [initialAmount, setInitialAmount] = useState({ budget: 0 });
   const [useTimeBased, setUseTimeBased] = useState(false);
   const [initialUseTimeBased, setInitialUseTimeBased] = useState(false);
-  const [tierGroup, setTierGroup] = useState([]);
+  const [tierGroup, setTierGroup] = useState<TierInfo[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({
+    remaining_balance: 0,
+  });
 
-  interface BudgetInfo {
-    id: number;
-    api_name: string;
-    budget: number;
-    spent: number;
-    total_spent: number;
-  }
-
-  type configType = {
-    id: string;
-    model: string;
-    quality: string;
-    size: string;
-    price: number;
-    percentThreshold: number;
-    amountSpent: number;
-    startTime: string;
-    endTime: string;
-  };
-
- 
-
-  const columns: TableProps<configType>['columns'] = [
+  const columns: TableProps<TierInfo>['columns'] = [
     {
       title: 'Tier',
       dataIndex: 'id',
@@ -87,7 +101,10 @@ const Config = ({currentTheme, lightTheme}) => {
     {
       title: 'Amount Spent',
       key: 'spent',
-      render: (_, tierInfo) => (tierInfo.spent || 0).toFixed(2)
+      render: (_, tierInfo) => {
+        const spentValue = typeof tierInfo.spent === 'number' ? tierInfo.spent : parseFloat(tierInfo.spent || '0');
+        return spentValue.toFixed(2);
+      }
     },
     {
       title: 'Amount Left',
@@ -101,59 +118,65 @@ const Config = ({currentTheme, lightTheme}) => {
 
   const [tableColumns, setTableColumns] = useState(columns);
 
-    const fetchData = async () => {
-      try {
-        const budgetResponse = await fetch(`/api-config/openai/budget`);
-        const budgetInfo = await budgetResponse.json();
+  const fetchData = async () => {
+    try {
+      const budgetResponse = await fetch(`/api-config/openai/budget`);
+      const budgetInfo = await budgetResponse.json();
 
-        if (isInitialLoad) {
-          setInputBudget(budgetInfo.budget);
-          setIsInitialLoad(false);
-        }
-        setInitialBudget(budgetInfo.budget);
-        setInitialAmount({ budget: budgetInfo.budget });
-
-        await fetchUseTimeBasedTier();
-
-        const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
-        const remainingBalance = await remainingBalanceResponse.json();
-        setRemainingBalance(remainingBalance[0]);
-
-        const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
-        const thresholdsData = await thresholdsResponse.json();
-
-        const processedTiers = thresholdsData.map(tier => {
-          const tierConfig = JSON.parse(tier.tier_config);
-          const thresholds = JSON.parse(tier.thresholds || '{}');
-          const tierSpent = Number(tier.spent) || 0;
-
-          return {
-            id: tier.tier_name,
-            model: tierConfig.model,
-            quality: tierConfig.quality,
-            size: tierConfig.size,
-            price: tier.cost,
-            percentThreshold: thresholds.percentage ?? 0,
-            request_count: tier.request_count ?? 0,
-            spent: tierSpent,
-            startTime: thresholds.time?.start || "00:00",
-            endTime: thresholds.time?.end || "00:00"
-          };
-        });
-
-        setTierGroup(processedTiers);
-
-        const totalSpent = processedTiers.reduce((sum, tier) => sum + tier.spent, 0);
-        setRemainingBalance({
-          remaining_balance: inputBudget - totalSpent
-        });
-
-      } catch (error) {
-        console.error('Error:', error);
+      if (isInitialLoad) {
+        setInputBudget(budgetInfo.budget);
+        setIsInitialLoad(false);
       }
-    };
-    
-    useEffect(() => {
+      setInitialBudget(budgetInfo.budget);
+      setInitialAmount({ budget: budgetInfo.budget });
+
+      await fetchUseTimeBasedTier();
+
+      const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
+      const remainingBalance = await remainingBalanceResponse.json();
+      setRemainingBalance(remainingBalance[0]);
+
+      const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
+      const thresholdsData = await thresholdsResponse.json();
+
+      const processedTiers = thresholdsData.map(tier => {
+        const tierConfig = JSON.parse(tier.tier_config);
+        const thresholds = JSON.parse(tier.thresholds || '{}');
+        // Fix the spent value parsing
+        const tierSpent = typeof tier.spent === 'string'
+          ? parseFloat(tier.spent)
+          : typeof tier.spent === 'number'
+            ? tier.spent
+            : 0;
+
+        return {
+          id: tier.tier_name,
+          model: tierConfig.model,
+          quality: tierConfig.quality,
+          size: tierConfig.size,
+          price: tier.cost,
+          percentThreshold: thresholds.percentage ?? 0,
+          request_count: tier.request_count ?? 0,
+          spent: tierSpent, // This should now correctly handle the spent value
+          startTime: thresholds.time?.start || "00:00",
+          endTime: thresholds.time?.end || "00:00",
+          thresholds: tier.thresholds
+        };
+      });
+
+      setTierGroup(processedTiers);
+
+      const totalSpent = processedTiers.reduce((sum, tier) => sum + tier.spent, 0);
+      setRemainingBalance({
+        remaining_balance: inputBudget - totalSpent
+      });
+
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [inputBudget, isInitialLoad]);
 
@@ -213,7 +236,7 @@ const Config = ({currentTheme, lightTheme}) => {
         payload.budget = inputBudget;
       }
 
-      const formattedThresholds = tierGroup.reduce((acc, tier) => {
+      const formattedThresholds = tierGroup.reduce((acc: Record<string, any>, tier) => {
         const currentThresholds = JSON.parse(tier.thresholds || '{}');
 
         acc[tier.id] = {
@@ -235,7 +258,6 @@ const Config = ({currentTheme, lightTheme}) => {
       }, {});
 
       payload.thresholds = formattedThresholds;
-      console.log('payload.thresholds', payload.thresholds)
 
       if (useTimeBased !== initialUseTimeBased) {
         payload.use_time_based_tier = useTimeBased;
@@ -341,31 +363,24 @@ const Config = ({currentTheme, lightTheme}) => {
       ]);
     }
   };
-  type chart ={
-    name: string;
-    value: number;
-    initialAmount: { budget:number}
-    thresholdAmount: number; 
-  }
-
 
   const pieChartData = tierGroup.map(tier => ({
     name: tier.id,
-    initialAmount: {budget: initialAmount.budget },
-    value: (tier.percentThreshold/100) * initialAmount.budget,
+    initialAmount: { budget: initialAmount.budget },
+    value: (tier.percentThreshold / 100) * initialAmount.budget,
     thresholdPercent: tier.percentThreshold
-  }))
+  }));
 
   return (
     <div className='dashboard'>
-      <div className = 'display'>
-      <Display />
-      <ThresholdsPieChart currentTheme={currentTheme} lightTheme={lightTheme}/>
-      <PreviousChange
-        currentTheme={currentTheme} 
-        lightTheme={lightTheme} 
-        chart = {pieChartData}
-      />
+      <div className='display'>
+        <Display />
+        <ThresholdsPieChart currentTheme={currentTheme} lightTheme={lightTheme} />
+        <PreviousChange
+          currentTheme={currentTheme}
+          lightTheme={lightTheme}
+          chart={pieChartData}
+        />
       </div>
       <form onSubmit={saveConfig}>
         <Table
