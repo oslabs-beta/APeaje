@@ -45,8 +45,8 @@ const App = () => {
 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
-                  <Route path='/dashboard' index element={<Dashboard />} />
-                  <Route path='/configuration' element={<Config />} />
+                  <Route path='/dashboard' index element={<Dashboard currentTheme={currentTheme} lightTheme={lightTheme} />} />
+                  <Route path='/configuration' element={<Config currentTheme={currentTheme} lightTheme={lightTheme}/>} />
                   <Route path='/manage' element={<Manage />} />
                   <Route path='/profile' element={<Profile />} />
                 </Route>

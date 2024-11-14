@@ -1,45 +1,44 @@
 import React, { useState, useEffect } from 'react';
 
 const Display = (): React.JSX.Element => {
-    // Define the type of return state after API
     interface TotalRequest {
         total_requests: number;
     }
-
     interface InitialAmount {
         budget: number;
     }
-
     interface RemainingBalance {
         remaining_balance: number;
     }
 
-    // Initialize state
     const [totalRequest, setTotalRequest] = useState<TotalRequest>({ total_requests: 0 });
     const [initialAmount, setInitialAmount] = useState<InitialAmount>({ budget: 0 });
     const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({ remaining_balance: 0 });
 
-    useEffect(() => {
-        const fetchData = async () => {
+   
+    const fetchData = async () => {
             try {
                 const initialValueResponse = await fetch('/dashboard/initialAmount');
                 const initialValue: InitialAmount[] = await initialValueResponse.json();
-                setInitialAmount(initialValue[0]); // {budget: 0}
-
-                const remainingBalanceResponse = await fetch('/dashboard/remaining_balance');
-                const remainingBalance: RemainingBalance[] = await remainingBalanceResponse.json();
-                setRemainingBalance(remainingBalance[0]);
+                setInitialAmount(initialValue[0]);
 
                 const numberOfRequestResponse = await fetch('/dashboard/totalRequests');
                 const numberOfRequest: TotalRequest[] = await numberOfRequestResponse.json();
-                setTotalRequest(numberOfRequest[0]); // { total_requests: 5 }
+                setTotalRequest(numberOfRequest[0]);
+
+                // Calculate remaining balance based on input budget and total spent
+                const totalSpent = numberOfRequest[0].total_requests * 0.12; // Assuming $0.12 per request
+                setRemainingBalance({
+                    remaining_balance: initialValue[0].budget - totalSpent
+                });
+
             } catch (error) {
                 console.error('Error fetching data:', error);
             }
         };
-        
+        useEffect(() => {
         fetchData();
-    }, []); // Fetch data on component mount
+    }, []);
 
     return (
         <div className="overview">

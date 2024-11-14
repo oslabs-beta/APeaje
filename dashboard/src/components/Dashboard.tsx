@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
         <div>
             <h1>Dashboard</h1>
             <Button onClick={handleLogout}>Logout</Button>
-            <App /> {/* here the graphs */}
+            <App /> here the graphs
         </div>
     );
 };

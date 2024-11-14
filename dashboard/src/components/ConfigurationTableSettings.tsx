@@ -2,16 +2,18 @@ import React from 'react';
 import { Col, Row, Select, InputNumber } from 'antd';
 
 interface ConfigurationTableSettingsProps {
+  title?: string; 
   initialAmount: { budget: number };
   setInitialAmount: React.Dispatch<React.SetStateAction<{ budget: number }>>;
   remainingBalance: { remaining_balance: number };
-  changeThreshold: (threshold: 'budget' | 'time') => void;
+  changeThreshold: (threshold: string) => void;
   useTimeBased: boolean;
   inputBudget: number;
-  setInputBudget: (value: number) => void;
+  setInputBudget: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const ConfigurationTableSettings: React.FC<ConfigurationTableSettingsProps> = ({
+  title,
   initialAmount,
   setInitialAmount,
   remainingBalance,
@@ -31,7 +33,7 @@ const ConfigurationTableSettings: React.FC<ConfigurationTableSettingsProps> = ({
     <Row gutter={{ xs: 8, sm: 16, md: 24, lg: 32 }}>
       <Col span={5}>
         <InputNumber
-          addonBefore="Budget"
+          addonBefore="New Budget"
           id="inputBudget"
           min={1}
           max={100_000_000}
