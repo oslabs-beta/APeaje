@@ -4,4 +4,4 @@ COPY . .
 RUN npm install
 RUN npm run build
 EXPOSE 2024
-CMD ["npm","run", "server"]
+ENTRYPOINT node ./dist/server/server.js
