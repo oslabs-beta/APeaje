@@ -52,7 +52,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
         C: '#c8e6c9',
         D: '#e1bee7',
         E: '#ffe0b2',
-        F: '#f5f5f5',
+        F: '#d5d5d5',
       };
 
       const color = d3
@@ -95,9 +95,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
         .style('fill', '#000')
         .text((d) => d.data.name);
 
-      const legend = svg
-        .append('g')
-        .attr('transform', `translate(${width * 0.8}, ${height * 0.3})`);
+      const legend = svg.append('g').attr('transform', `translate(${300}, 20)`);
 
       data.forEach((d, i) => {
         const legendRow = legend
@@ -118,7 +116,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
           .attr('x', 20)
           .attr('y', 12)
           .style('font-size', '12px')
-          .style('fill', '#FFF')
+          .style('fill', currentTheme === lightTheme ? '#000' : '#FFF')
           .text(`$${budget.toFixed(2)} (${requests} req(s))`);
       });
     }
