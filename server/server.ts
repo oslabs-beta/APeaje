@@ -73,6 +73,69 @@ app.use('/dashboard', express.static(path.resolve(__dirname, '../dist')));
 // attach db to middleware
 app.use(databaseMiddleware(dbController));
 
+//GENERATES IMAGE—THIS IS OUR PRIMARY API QUERY REDIRECT ENDPOINT
+app.post('/generate-image', async (req: Request, res: Response) => {
+  const { prompt } = req.body;
+
+  try {
+    console.log('headers', req.headers);
+    let key: string  = req.headers.authorization;
+
+    const selectedTierConfig = selectTier(res.locals.db, 'openai');
+    console.log('Selected tier config:', selectedTierConfig);
+
+    if (!selectedTierConfig) {
+      return res.status(400).json({ error: 'No tiers available' });
+    }
+
+    const requestHeaders: HeadersInit = new Headers();
+    
+    requestHeaders.set('Content-Type', 'application/json');
+    requestHeaders.set('Authorization', key);
+
+    const requestBody = {
+      model: selectedTierConfig.model,
+      prompt: prompt,
+      n: 1,
+      size: selectedTierConfig.size,
+      quality: selectedTierConfig.quality,
+    };
+
+    const openaiResponse = await fetch(
+      'https://api.openai.com/v1/images/generations',
+      {
+        method: 'POST',
+        headers: requestHeaders,
+        body: JSON.stringify(requestBody),
+      }
+    );
+
+    const openaiData = await openaiResponse.json();
+    console.log('OpenAI response:', JSON.stringify(openaiData));
+
+    updateSpent(res.locals.db, 'openai', selectedTierConfig.price);
+
+    const insertQuery = res.locals.db.prepare(
+      'INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)'
+    );
+
+    insertQuery.run('openai', prompt, selectedTierConfig.id);
+    console.log('TIER PROMPTTTTTTTTTTT', selectedTierConfig.id);
+
+    res.json({
+      ...openaiData,
+      tier: selectedTierConfig,
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    res
+      .status(500)
+      .json({
+        error: error.message || 'An error occurred while generating the image',
+      });
+  }
+});
+
 app.get('/', (req: Request, res: Response) => {
   res.status(200).send('mainpage');
 });
@@ -395,65 +458,6 @@ app.put(
     }
   }
 );
-
-
-//GENERATES IMAGE—THIS IS OUR PRIMARY API QUERY REDIRECT ENDPOINT
-app.post('/generate-image', async (req: Request, res: Response) => {
-  const { prompt } = req.body;
-
-  try {
-    const selectedTierConfig = selectTier(res.locals.db, 'openai');
-    console.log('Selected tier config:', selectedTierConfig);
-
-    if (!selectedTierConfig) {
-      return res.status(400).json({ error: 'No tiers available' });
-    }
-
-    const requestBody = {
-      model: selectedTierConfig.model,
-      prompt: prompt,
-      n: 1,
-      size: selectedTierConfig.size,
-      quality: selectedTierConfig.quality,
-    };
-
-    const openaiResponse = await fetch(
-      'https://api.openai.com/v1/images/generations',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiApiKey}`,
-        },
-        body: JSON.stringify(requestBody),
-      }
-    );
-
-    const openaiData = await openaiResponse.json();
-    console.log('OpenAI response:', JSON.stringify(openaiData));
-
-    updateSpent(res.locals.db, 'openai', selectedTierConfig.price);
-
-    const insertQuery = res.locals.db.prepare(
-      'INSERT INTO Queries (api_name, prompt, tier_id) VALUES (?, ?, ?)'
-    );
-
-    insertQuery.run('openai', prompt, selectedTierConfig.id);
-    console.log('TIER PROMPTTTTTTTTTTT', selectedTierConfig.id);
-
-    res.json({
-      ...openaiData,
-      tier: selectedTierConfig,
-    });
-  } catch (error) {
-    console.error('Error:', error);
-    res
-      .status(500)
-      .json({
-        error: error.message || 'An error occurred while generating the image',
-      });
-  }
-});
 
 app.post(
   '/api/register',
