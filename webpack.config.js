@@ -5,17 +5,11 @@ const webpack = require('webpack');
 const Dotenv = require('dotenv-webpack');
 const TerserPlugin = require('terser-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const nodeExternals = require('webpack-node-externals')
 require('dotenv').config();
 
-module.exports = {
-  entry: './dashboard/src/index.tsx',
+const commonConfig = {
   mode: 'development',
-  output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'bundle.js',
-    publicPath: '/',
-  },
-  // module rules for processing different file types
   module: {
     rules: [
       {
@@ -48,6 +42,25 @@ module.exports = {
     extensions: ['.js', '.jsx', '.ts', '.tsx'],
     modules: [path.resolve(__dirname, 'client/src'), 'node_modules'],
   },
+  optimization: {
+    minimize: true,
+    minimizer: [new TerserPlugin(), new CssMinimizerPlugin()],
+  },
+
+}
+
+const frontendConfig = {
+  ...commonConfig,
+  name: 'frontend',
+  entry: './dashboard/src/index.tsx',
+  
+  output: {
+    path: path.resolve(__dirname, 'dist/dashboard'),
+    filename: 'bundle.js',
+    publicPath: '/',
+  },
+  target: 'web',
+  
   // plugins for additional build steps
   plugins: [
     new CleanWebpackPlugin(),
@@ -57,10 +70,7 @@ module.exports = {
     }),
     new Dotenv(),
   ],
-  optimization: {
-    minimize: true,
-    minimizer: [new TerserPlugin(), new CssMinimizerPlugin()],
-  },
+
   devServer: {
     headers: {"Access-Control-Allow-Origin": "*"},
     historyApiFallback: true,
@@ -78,3 +88,27 @@ module.exports = {
     ],
   },
 };
+
+const backendConfig = {
+  ...commonConfig,
+  name: 'backend',
+  entry: './server/server.ts',
+  
+  output: {
+    path: path.resolve(__dirname, 'dist/server'),
+    filename: 'server.js',
+    publicPath: '/',
+  },
+  target: 'node',
+  externals: [nodeExternals()],
+  // plugins for additional build steps
+  plugins: [
+    new Dotenv(),
+  ],
+
+  node: {
+    __dirname: false,
+    __filename: false
+  }
+};
+

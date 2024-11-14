@@ -1,17 +1,32 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "NodeNext",
-    "outDir": "./dist/",
-    "rootDir": "./",
+    //type checking
     "strict": false,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+
+    //modules
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "./",
     "resolveJsonModule": true,
-    "jsx": "react",
+    
+    //js support
     "allowJs": true,
-    "moduleResolution": "node",
+
+    //emit
+    "outDir": "./dist/",
+
+    //interop constraints
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    //language & environment
+    "jsx": "react",
+    "target": "es2020",
+
+    //completeness
+    "skipLibCheck": true
   },
   "include": ["server/**/*"],
   "exclude": ["node_modules", "dist"]

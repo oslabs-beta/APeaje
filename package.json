@@ -42,7 +42,8 @@
     "react-router-dom": "^6.26.2",
     "ts-node": "^10.9.2",
     "tsc": "^2.0.4",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
