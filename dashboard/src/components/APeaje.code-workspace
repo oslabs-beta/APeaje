@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "APeaje",
+			"path": "../../.."
+		},
+		{
+			"name": "dalle-wrapper",
+			"path": "../../../../dalle-wrapper"
+		}
+	],
+	"settings": {}
+}
