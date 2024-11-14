@@ -41,8 +41,8 @@ const ThresholdsPieChart = () => {
   useEffect(() => {
     if (data.length > 0) {
       const svg = d3.select(svgRef.current);
-      const width = 700;
-      const height = 400;
+      const width = 500;
+      const height = 300;
       const radius = Math.min(width, height) / 2;
 
       svg.attr("width", width).attr("height", height);
@@ -112,7 +112,7 @@ const ThresholdsPieChart = () => {
         .style("font-size", "12px")
         .text((d) => d.data.tier);
 
-      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(400, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
@@ -120,7 +120,7 @@ const ThresholdsPieChart = () => {
         .enter()
         .append("g")
         .attr("class", "legend")
-        .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Adjust vertical spacing
+        .attr("transform", (d, i) => `translate(0, ${i * 15})`); // Adjust vertical spacing
 
       legends
         .append("rect")

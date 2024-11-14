@@ -38,6 +38,8 @@ const Config = (): React.ReactNode => {
     endTime: string;
   };
 
+ 
+
   const columns: TableProps<configType>['columns'] = [
     {
       title: 'Tier',
@@ -114,7 +116,6 @@ const Config = (): React.ReactNode => {
     remaining_balance: 0,
   });
 
-  useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch budget first
@@ -166,6 +167,8 @@ const Config = (): React.ReactNode => {
         console.error('Error fetching data:', error);
       }
     };
+    
+    useEffect(() => {
     fetchData();
   }, []);
 
@@ -255,6 +258,7 @@ const saveConfig = async (e: React.SyntheticEvent) => {
 
       // Always include thresholds in payload to ensure both settings are written
       payload.thresholds = formattedThresholds;
+      console.log('payload.thresholds', payload.thresholds)
 
       if (useTimeBased !== initialUseTimeBased) {
         payload.use_time_based_tier = useTimeBased;
@@ -364,13 +368,29 @@ const saveConfig = async (e: React.SyntheticEvent) => {
       ]);
     }
   };
+  type chart ={
+    name: string;
+    value: number;
+    initialAmount: { budget:number}
+    thresholdAmount: number; 
+  }
+
+
+  const pieChartData = tierGroup.map(tier => ({
+    name: tier.id,
+    initialAmount: {budget: initialAmount.budget },
+    value: (tier.percentThreshold/100) * initialAmount.budget,
+    thresholdPercent: tier.percentThreshold
+  }))
 
   return (
     <div className='dashboard'>
       <div className = 'display'>
       <Display />
-      <PreviousChange />
       <ThresholdsPieChart />
+      <PreviousChange
+      chart = {pieChartData}
+      />
       </div>
       <form onSubmit={saveConfig}>
         <Table
