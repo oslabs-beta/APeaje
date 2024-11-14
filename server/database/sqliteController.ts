@@ -102,10 +102,7 @@ const insertTiers = (db: Database): void => {
           'openai',
           tierName,
           JSON.stringify(tierConfig),
-          JSON.stringify({
-            percentage: null,
-            time: { start: '00:00', end: '00:00' },
-          }), // Initialize with empty thresholds
+          JSON.stringify(thresholdData), // Initialize with thresholds from config
           (tierConfig as TierConfig).price
         );
         console.log(`✓ Inserted tier ${tierName}`);
