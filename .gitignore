@@ -144,3 +144,5 @@ server/database/test.db-wal
 test.db
 
 .DS_Store
+
+dist/
