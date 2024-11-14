@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Col, Row } from 'antd';
 import * as d3 from "d3";
 import {
   BgColorsOutlined,
@@ -70,17 +71,17 @@ length
   useEffect(() => {
     if (data.length > 0) {
       const svg = d3.select(svgRef.current);
-      const width = 500;
-      const height = 300;
+      const width = 465;
+      const height = 250;
       const radius = Math.min(width, height) / 2;
 
-      svg.attr("width", width).attr("height", height);
+      svg.attr("viewBox",`0 0 ${width} ${height}`);
 
       svg.selectAll("*").remove(); // Clear previous drawings
 
       const g = svg
         .append("g")
-        .attr("transform", `translate(${width / 2}, ${height / 2})`);
+        .attr("transform", `translate(${width / 3}, ${height / 2})`);
 
       const color = d3.scaleOrdinal(d3.schemePastel1);
 
@@ -141,7 +142,7 @@ length
         .style("font-size", "12px")
         .text((d) => d.data.name);
 
-      const legend = svg.append("g").attr("transform", "translate(400, 10)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(280, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
@@ -168,9 +169,9 @@ length
     }
   }, [data, currentTheme, lightTheme]);
 
-  return (
+  return (    
     <div className="pie-chart">
-      <h6>Preview Breakdown</h6>
+      <h6 className="center">Preview Breakdown</h6>
       <svg ref={svgRef}></svg>
     </div>
   );

@@ -8,6 +8,7 @@ import Display from '../components/Display';
 import ConfigurationTableSettings from '../components/ConfigurationTableSettings';
 import ThresholdsPieChart from '../components/ThresholdsPieChart'
 import PreviousChange from '../components/PreviousChange'
+import { Col, Row } from 'antd';
 import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 
 const Config = ({currentTheme, lightTheme}) => {
@@ -386,13 +387,24 @@ const saveConfig = async (e: React.SyntheticEvent) => {
   return (
     <div className='dashboard'>
       <div className = 'display'>
-      <Display />
-      <ThresholdsPieChart currentTheme={currentTheme} lightTheme={lightTheme}/>
-      <PreviousChange
-        currentTheme={currentTheme} 
-        lightTheme={lightTheme} 
-        chart = {pieChartData}
-      />
+        <Row>
+          <Col span={4}>
+            <Display />
+          </Col>
+          <Col span={10}>
+            <ThresholdsPieChart currentTheme={currentTheme} lightTheme={lightTheme}/>
+          </Col>
+          <Col span={10}>
+            <PreviousChange
+              currentTheme={currentTheme} 
+              lightTheme={lightTheme} 
+              chart = {pieChartData}
+            />
+          </Col>
+        </Row>
+        
+        
+        
       </div>
       <form onSubmit={saveConfig}>
         <Table
