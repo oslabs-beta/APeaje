@@ -9,24 +9,32 @@ import {
 const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
   const [data, setData] = useState([]);
   const svgRef = useRef(null);
-
+  const [initialValue, setInitialValue] = useState();
   
     const fetchThresholds = async () => {
       try {
         const response = await fetch("/dashboard/thresholdsChart");
         const thresholds = await response.json();
 
-        console.log("fetching thresholds", thresholds);
+        // console.log("fetching thresholds", thresholds);
 
+        const initial = await fetch('/dashboard/initialAmount')
+        const value = await initial.json();
+
+        // console.log('checking value', value[0].budget) // 0 :{budget: 2}
+        setInitialValue(value[0].budget);
+        const number = Number(value[0].budget)
         // data for tier_name type
         const chart = thresholds.map((row) => ({
           tier: row.tier_name,
-          thresholds: JSON.parse(row.thresholds).percentage || 0, // Default to 0 if there is no budget
+          thresholds: JSON.parse(row.thresholds).percentage / 100 || 0, // Default to 0 if there is no budget
+          initialAmount: number,
+          thresholdAmount: JSON.parse(row.thresholds).percentage / 100 * number|| 0,
           requestNumber: Math.floor(
-            JSON.parse(row.thresholds).percentage / row.cost
+            (JSON.parse(row.thresholds).percentage / 100) * number / row.cost || 0,
           ),
         }));
-        console.log("thresholds in the front-end:", thresholds, "chart", chart);
+        // console.log("thresholds in the front-end:", thresholds, "chart", chart);
         setData(chart);
       } catch (error) {
         console.log("error found from fetchData for thresholds");
@@ -41,8 +49,8 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
   useEffect(() => {
     if (data.length > 0) {
       const svg = d3.select(svgRef.current);
-      const width = 700;
-      const height = 400;
+      const width = 550;
+      const height = 300;
       const radius = Math.min(width, height) / 2;
 
       svg.attr("width", width).attr("height", height);
@@ -90,7 +98,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
         .on("mouseover", (event, d) => {
           tooltip
             .style("visibility", "visible")
-            .text(`${d.data.tier}: $${d.data.thresholds}`);
+            .text(`${d.data.tier}: $${d.data.thresholdAmount}`);
         })
         .on("mousemove", (event) => {
           tooltip
@@ -112,7 +120,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
         .style("font-size", "12px")
         .text((d) => d.data.tier);
 
-      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(420, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
@@ -120,7 +128,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
         .enter()
         .append("g")
         .attr("class", "legend")
-        .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Adjust vertical spacing
+        .attr("transform", (d, i) => `translate(0, ${i * 15})`); // Adjust vertical spacing
 
       legends
         .append("rect")
@@ -134,7 +142,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
         .attr("x", 25)
         .attr("y", 9)
         .attr("dy", "0.35em") // Center text vertically
-        .text((d) =>`$${d.thresholds} (${d.requestNumber} request(s))`)
+        .text((d) =>`$${d.thresholdAmount} (${d.requestNumber} req(s))`)
         .attr("fill", currentTheme === lightTheme ? "#000" : "#FFF");
         //e5d8bd
     }

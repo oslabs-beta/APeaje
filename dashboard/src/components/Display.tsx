@@ -19,8 +19,8 @@ const Display = (): React.JSX.Element => {
     const [initialAmount, setInitialAmount] = useState<InitialAmount>({ budget: 0 });
     const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({ remaining_balance: 0 });
 
-    useEffect(() => {
-        const fetchData = async () => {
+   
+    const fetchData = async () => {
             try {
                 const initialValueResponse = await fetch('/dashboard/initialAmount');
                 const initialValue: InitialAmount[] = await initialValueResponse.json();
@@ -37,7 +37,7 @@ const Display = (): React.JSX.Element => {
                 console.error('Error fetching data:', error);
             }
         };
-        
+        useEffect(() => {
         fetchData();
     }, []); // Fetch data on component mount
 

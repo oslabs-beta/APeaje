@@ -9,10 +9,10 @@ dashboardSQL.barGraph = async (req: Request, res: Response, next: NextFunction) 
     const budgetData = await sqliteController.query(res.locals.db, `
       SELECT 
         DATE(Q.timestamp) AS date,
-        SUM(T.cost) AS total_spent,
+        SUM(B.total_spent) AS total_spent,
         COUNT(Q.id) AS number_of_requests
       FROM Queries Q
-      JOIN Tiers T ON Q.tier_id = T.id
+      JOIN Budget B ON Q.id
       GROUP BY DATE(Q.timestamp)
       ORDER BY DATE(Q.timestamp)
     `);
@@ -86,12 +86,29 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
+// dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
+//       SELECT tier_name, tier_config, thresholds, cost
+//       FROM Tiers
+//       WHERE api_name = 'openai'
+//       ORDER BY cost DESC
+//     `);
+//     console.log('thresholds breakdown', thresholdsBreakdown);
+//     res.locals.thresholdInfo = thresholdsBreakdown;
+//     next();
+//   } catch (error) {
+//     console.error('Error fetching tier breakdown:', error);
+//     res.status(500).send('Error from tierInfo middleware');
+//   }
+// };
+
 dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
       SELECT tier_name, tier_config, thresholds, cost
       FROM Tiers
-      WHERE api_name = 'openai'
+      WHERE api_name = 'openai' 
       ORDER BY cost DESC
     `);
     console.log('thresholds breakdown', thresholdsBreakdown);

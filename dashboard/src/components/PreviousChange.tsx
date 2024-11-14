@@ -5,44 +5,73 @@ import {
   CrownFilled,
   TranslationOutlined,
 } from "@ant-design/icons";
+interface PreviousChangeProps {
+  chart: {
+    name: string;
+    value: number;
+    initialAmount: { budget:number} // need an conditional where this is existing value or newInput
+    thresholdPercent: number;
+  }[] // array of object
+  , currentTheme: string,
+  lightTheme: string
+}
 
-const PreviousChange = ({ currentTheme, lightTheme }) => {
+const PreviousChange: React.FC<PreviousChangeProps> = ({ currentTheme, lightTheme, chart }) => {
   const [data, setData] = useState([]);
   const svgRef = useRef(null);
 
   
-    const fetchThresholds = async () => {
-      try {
-        const response = await fetch("/dashboard/thresholdsChart");
-        const thresholds = await response.json();
 
-        console.log("fetching thresholds", thresholds);
+ useEffect(()=> {
+  setData(chart);
+ }, [chart])
 
-        // data for tier_name type
-        const chart = thresholds.map((row) => ({
-          tier: row.tier_name,
-          thresholds: JSON.parse(row.thresholds).percentage || 0, // Default to 0 if there is no budget
-          requestNumber: Math.floor(
-            JSON.parse(row.thresholds).percentage / row.cost
-          ),
-        }));
-        console.log("thresholds in the front-end:", thresholds, "chart", chart);
-        setData(chart);
-      } catch (error) {
-        console.log("error found from fetchData for thresholds");
-      }
-    };
-    useEffect(() => {
-    fetchThresholds();
-  }, []);
 
-  console.log("tier current data", data);
+ console.log("tier previous data", chart);
+
+
+  //   const fetchThresholds = async () => {
+  //     try {
+  //       const response = await fetch("/dashboard/thresholdsChart");
+  //       const thresholds = await response.json();
+
+  //       console.log("fetching thresholds", thresholds);
+
+  //       // data for tier_name type
+  //       const chart = thresholds.map((row) => ({
+  //         tier: row.tier_name,
+  //         thresholds: JSON.parse(row.thresholds).percentage || 0, // Default to 0 if there is no budget
+  //         requestNumber: Math.floor(
+  //           JSON.parse(row.thresholds).percentage / row.cost
+  //         ),
+  //       }));
+  //       console.log("thresholds in the front-end:", thresholds, "chart", chart);
+  //       setData(chart);
+  //     } catch (error) {
+  //       console.log("error found from fetchData for thresholds");
+  //     }
+  //   };
+  //   useEffect(() => {
+  //   fetchThresholds();
+  // }, []);
+
+  /*
+0:{name: 'A', initialAmount: {…}, value: 0.2, thresholdPercent: 10}
+1:{name: 'B', initialAmount: {…}, value: 0.6, thresholdPercent: 30}
+2:{name: 'C', initialAmount: {…}, value: 1.2, thresholdPercent: 60}
+3:{name: 'D', initialAmount: {…}, value: 0, thresholdPercent: 0}
+4:{name: 'E', initialAmount: {…}, value: 0, thresholdPercent: 0}
+5:{name: 'F', initialAmount: {…}, value: 0, thresholdPercent: 0}
+length
+: 
+6
+  */
 
   useEffect(() => {
     if (data.length > 0) {
       const svg = d3.select(svgRef.current);
-      const width = 700;
-      const height = 400;
+      const width = 500;
+      const height = 300;
       const radius = Math.min(width, height) / 2;
 
       svg.attr("width", width).attr("height", height);
@@ -59,7 +88,7 @@ const PreviousChange = ({ currentTheme, lightTheme }) => {
       const pie = d3
         .pie()
         .sort(null)
-        .value((d) => d.thresholds)
+        .value((d) => d.thresholdPercent)
         .padAngle(0.03);
 
       const arc = d3.arc().innerRadius(0).outerRadius(radius);
@@ -90,7 +119,7 @@ const PreviousChange = ({ currentTheme, lightTheme }) => {
         .on("mouseover", (event, d) => {
           tooltip
             .style("visibility", "visible")
-            .text(`${d.data.tier}: $${d.data.thresholds}`);
+            .text(`${d.data.name}: $${d.data.thresholdAmount}`);
         })
         .on("mousemove", (event) => {
           tooltip
@@ -110,9 +139,9 @@ const PreviousChange = ({ currentTheme, lightTheme }) => {
         .attr("dy", "0.50em")
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
-        .text((d) => d.data.tier);
+        .text((d) => d.data.name);
 
-      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(400, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
@@ -120,7 +149,7 @@ const PreviousChange = ({ currentTheme, lightTheme }) => {
         .enter()
         .append("g")
         .attr("class", "legend")
-        .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Adjust vertical spacing
+        .attr("transform", (d, i) => `translate(0, ${i * 15})`); // Adjust vertical spacing
 
       legends
         .append("rect")
@@ -134,14 +163,14 @@ const PreviousChange = ({ currentTheme, lightTheme }) => {
         .attr("x", 25)
         .attr("y", 9)
         .attr("dy", "0.35em") // Center text vertically
-        .text((d) =>`$${d.thresholds} (${d.requestNumber} request(s))`)
+        .text((d) =>`$${d.thresholdAmount}`)
         .attr("fill", currentTheme === lightTheme ? "#000" : "#FFF");
     }
   }, [data, currentTheme, lightTheme]);
 
   return (
     <div className="pie-chart">
-      <h6>Threshold Breakdown</h6>
+      <h6>Preview Breakdown</h6>
       <svg ref={svgRef}></svg>
     </div>
   );
