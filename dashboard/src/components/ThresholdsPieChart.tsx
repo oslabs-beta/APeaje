@@ -6,7 +6,7 @@ import {
   TranslationOutlined,
 } from "@ant-design/icons";
 
-const ThresholdsPieChart = () => {
+const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
   const [data, setData] = useState([]);
   const svgRef = useRef(null);
 
@@ -134,9 +134,11 @@ const ThresholdsPieChart = () => {
         .attr("x", 25)
         .attr("y", 9)
         .attr("dy", "0.35em") // Center text vertically
-        .text((d) =>`$${d.thresholds} (${d.requestNumber} request(s))`);
+        .text((d) =>`$${d.thresholds} (${d.requestNumber} request(s))`)
+        .attr("fill", currentTheme === lightTheme ? "#000" : "#FFF");
+        //e5d8bd
     }
-  }, [data]);
+  }, [data, currentTheme, lightTheme]);
 
   return (
     <div className="pie-chart">

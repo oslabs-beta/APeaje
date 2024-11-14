@@ -6,7 +6,7 @@ import {
   TranslationOutlined,
 } from "@ant-design/icons";
 
-const PreviousChange = () => {
+const PreviousChange = ({ currentTheme, lightTheme }) => {
   const [data, setData] = useState([]);
   const svgRef = useRef(null);
 
@@ -134,9 +134,10 @@ const PreviousChange = () => {
         .attr("x", 25)
         .attr("y", 9)
         .attr("dy", "0.35em") // Center text vertically
-        .text((d) =>`$${d.thresholds} (${d.requestNumber} request(s))`);
+        .text((d) =>`$${d.thresholds} (${d.requestNumber} request(s))`)
+        .attr("fill", currentTheme === lightTheme ? "#000" : "#FFF");
     }
-  }, [data]);
+  }, [data, currentTheme, lightTheme]);
 
   return (
     <div className="pie-chart">

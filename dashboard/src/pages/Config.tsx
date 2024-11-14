@@ -10,7 +10,7 @@ import ThresholdsPieChart from '../components/ThresholdsPieChart'
 import PreviousChange from '../components/PreviousChange'
 import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 
-const Config = (): React.ReactNode => {
+const Config = ({currentTheme, lightTheme}) => {
   const [inputBudget, setInputBudget] = useState<number>(0);
   const [initialBudget, setInitialBudget] = useState<number>(0);
   const [initialAmount, setInitialAmount] = useState({ budget: 0 });
@@ -369,8 +369,8 @@ const saveConfig = async (e: React.SyntheticEvent) => {
     <div className='dashboard'>
       <div className = 'display'>
       <Display />
-      <PreviousChange />
-      <ThresholdsPieChart />
+      <PreviousChange currentTheme={currentTheme} lightTheme={lightTheme} />
+      <ThresholdsPieChart currentTheme={currentTheme} lightTheme={lightTheme}/>
       </div>
       <form onSubmit={saveConfig}>
         <Table
