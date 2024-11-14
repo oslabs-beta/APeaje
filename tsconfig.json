@@ -1,12 +1,17 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
-    "target": "es2017",
+    "target": "es2018",
     "module": "commonjs",
+    "outDir": "./build",
+    "rootDir": "./",
+    "strict": false,
     "esModuleInterop": true,
-    "noImplicitAny": false,
-    "jsx": "react",
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "jsx": "react"
   },
-  "include": ["/**/*.ts", "/**/*.tsx", "server/apiUtils.ts"],
-  "exclude": ["node_modules"]
+  "include": ["server/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

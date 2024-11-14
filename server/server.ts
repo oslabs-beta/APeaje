@@ -30,6 +30,9 @@ import {
   selectTier,
 } from './apiUtils';
 import newRole from './controller/manageController';
+import exp from 'constants';
+
+
 interface User {
   id: number;
   username: string;
@@ -58,7 +61,15 @@ const app: Express = express();
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
+
+// Old path for Development 
+// app.use(express.static(path.resolve(__dirname, '../dist')));
+
+// New for production 
 app.use(express.static(path.resolve(__dirname, '../dist')));
+app.use('/dashboard', express.static(path.resolve(__dirname, '../dist')));
+
+
 // attach db to middleware
 app.use(databaseMiddleware(dbController));
 
@@ -138,10 +149,41 @@ app.get(
   }
 );
 
+
+
+// Old for development 
+/*
 app.get('/dashboard', (req: Request, res: Response) => {
   res
     .status(200)
     .sendFile(path.resolve(__dirname, '../dashboard/public/dash.html'));
+});
+*/
+
+
+// New for production
+app.get('/dashboard', (req: Request, res: Response) => {
+  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+});
+
+app.get('/login', (req: Request, res: Response) => {
+  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+});
+
+app.get('/register', (req: Request, res: Response) => {
+  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+});
+
+app.get('/configuration', (req: Request, res: Response) => {
+  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+});
+
+app.get('/manage', (req: Request, res: Response) => {
+  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+});
+
+app.get('/profile', (req: Request, res: Response) => {
+  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
 });
 
 // app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
@@ -397,7 +439,7 @@ app.post('/generate-image', async (req: Request, res: Response) => {
     );
 
     insertQuery.run('openai', prompt, selectedTierConfig.id);
-    console.log('Inserting query with tier_id:', selectedTierConfig.id);
+    console.log('TIER PROMPTTTTTTTTTTT', selectedTierConfig.id);
 
     res.json({
       ...openaiData,
@@ -428,9 +470,17 @@ app.post('/api/login', authController.login, (req: Request, res: Response) => {
 /**
  * 404 handler
  */
+
+/*
 app.get('*', (req: Request, res: Response) => {
   console.log('error finding url for 404 error');
   res.status(404).send('Not Found');
+});
+*/
+
+// new for development 
+app.get('*', (req: Request, res: Response) => {
+  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
 });
 
 /**
