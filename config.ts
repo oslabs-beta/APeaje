@@ -1,6 +1,6 @@
 const config: any = {
   database: {
-    filename: 'test.db',
+    filename: 'apeaje.db',
     verbose: console.log,
   },
   apis: {

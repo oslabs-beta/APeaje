@@ -55,19 +55,21 @@ dbController.initialize();
 
 // attach database middleware
 
-const openaiApiKey: string | undefined = process.env.OPENAI_API_KEY;
+//for saving API KEY on apeaje gateway
+//const openaiApiKey: string | undefined = process.env.OPENAI_API_KEY;
 
 const app: Express = express();
 app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
 
-// Old path for Development 
-// app.use(express.static(path.resolve(__dirname, '../dist')));
+// Old path for Development / tsx deployment
+// app.use(express.static(path.resolve(__dirname, '../dist/dashboard')));
+// app.use('/dashboard', express.static(path.resolve(__dirname, '../dist/dashboard')));
 
-// New for production 
-app.use(express.static(path.resolve(__dirname, '../dist')));
-app.use('/dashboard', express.static(path.resolve(__dirname, '../dist')));
+// New path for production 
+app.use(express.static(path.resolve(__dirname, '../dashboard')));
+app.use('/dashboard', express.static(path.resolve(__dirname, '../dashboard')));
 
 
 // attach db to middleware
@@ -137,7 +139,7 @@ app.post('/generate-image', async (req: Request, res: Response) => {
 });
 
 app.get('/', (req: Request, res: Response) => {
-  res.status(200).send('mainpage');
+  res.status(200).send('apeaje');
 });
 
 app.get(

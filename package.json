@@ -5,7 +5,9 @@
   "main": "server/server.ts",
   "scripts": {
     "start": "nodemon server/server.ts & webpack-dev-server",
-    "server": "tsx server/server.ts",
+    "tsx-server": "tsx server/server.ts",
+    "node-server": "node server/server.js",
+    "prod-server": "node dist/server/server.js",
     "dash": "webpack-dev-server",
     "build": "webpack --mode production",
     "ts-coverage": "typescript-coverage-report",
@@ -42,7 +44,8 @@
     "react-router-dom": "^6.26.2",
     "ts-node": "^10.9.2",
     "tsc": "^2.0.4",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
