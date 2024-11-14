@@ -9,7 +9,7 @@ interface PreviousChangeProps {
   chart: {
     name: string;
     value: number;
-    initialAmount: { budget:number}
+    initialAmount: { budget:number} // need an conditional where this is existing value or newInput
     thresholdPercent: number;
   }[] // array of object
 }
@@ -18,9 +18,16 @@ const PreviousChange: React.FC<PreviousChangeProps>= ({chart}) => {
   const [data, setData] = useState<any[]>([]);
   const svgRef = useRef(null);
 
+  
+
  useEffect(()=> {
   setData(chart);
  }, [chart])
+
+
+ console.log("tier previous data", chart);
+
+
   //   const fetchThresholds = async () => {
   //     try {
   //       const response = await fetch("/dashboard/thresholdsChart");
@@ -46,7 +53,6 @@ const PreviousChange: React.FC<PreviousChangeProps>= ({chart}) => {
   //   fetchThresholds();
   // }, []);
 
-  console.log("tier previous data", chart);
   /*
 0:{name: 'A', initialAmount: {…}, value: 0.2, thresholdPercent: 10}
 1:{name: 'B', initialAmount: {…}, value: 0.6, thresholdPercent: 30}

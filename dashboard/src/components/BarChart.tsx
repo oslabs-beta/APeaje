@@ -175,7 +175,7 @@ const BarChart: React.FC = () => {
       .attr('y', (d) => y2(d.requests))
       .attr('width', x.bandwidth() / 2)
       .attr('height', (d) => height - margin.bottom - y2(d.requests))
-      .attr('fill', 'white');
+      .attr('fill', 'lightYellow');
 
       const legend = svg.append("g").attr("transform", "translate(650, 10)"); // Adjust position here
 

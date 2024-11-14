@@ -86,12 +86,29 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
+// dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
+//   try {
+//     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
+//       SELECT tier_name, tier_config, thresholds, cost
+//       FROM Tiers
+//       WHERE api_name = 'openai'
+//       ORDER BY cost DESC
+//     `);
+//     console.log('thresholds breakdown', thresholdsBreakdown);
+//     res.locals.thresholdInfo = thresholdsBreakdown;
+//     next();
+//   } catch (error) {
+//     console.error('Error fetching tier breakdown:', error);
+//     res.status(500).send('Error from tierInfo middleware');
+//   }
+// };
+
 dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
       SELECT tier_name, tier_config, thresholds, cost
       FROM Tiers
-      WHERE api_name = 'openai'
+      WHERE api_name = 'openai' 
       ORDER BY cost DESC
     `);
     console.log('thresholds breakdown', thresholdsBreakdown);
