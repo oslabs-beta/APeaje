@@ -137,6 +137,10 @@ server/database/test.db
 server/database/test.db-shm
 server/database/test.db-wal
 
+server/database/apeaje.db
+server/database/apeaje.db-shm
+server/database/apeaje.db-wal
+
 */test.db
 */test.db-shm
 */test.db-wal

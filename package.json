@@ -5,7 +5,9 @@
   "main": "server/server.ts",
   "scripts": {
     "start": "nodemon server/server.ts & webpack-dev-server",
-    "server": "tsx server/server.ts",
+    "tsx-server": "tsx server/server.ts",
+    "node-server": "node server/server.js",
+    "prod-server": "node dist/server/server.js",
     "dash": "webpack-dev-server",
     "build": "webpack --mode production",
     "ts-coverage": "typescript-coverage-report",

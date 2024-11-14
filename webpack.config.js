@@ -112,3 +112,4 @@ const backendConfig = {
   }
 };
 
+module.exports = [frontendConfig, backendConfig];
