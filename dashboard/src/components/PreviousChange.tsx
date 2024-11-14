@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Col, Row } from 'antd';
 import * as d3 from "d3";
+
 import {
   BgColorsOutlined,
   CrownFilled,
@@ -21,59 +22,43 @@ const PreviousChange: React.FC<PreviousChangeProps> = ({ currentTheme, lightThem
   const [data, setData] = useState([]);
   const svgRef = useRef(null);
 
+  const calculateRequests = (budget, price) => {
+    return Math.floor(budget / price);
+  }
   
+    const fetchThresholds = async () => {
+      try {
+        const response = await fetch("/dashboard/thresholdsChart");
+        const thresholds = await response.json();
 
- useEffect(()=> {
-  setData(chart);
- }, [chart])
+        console.log("fetching thresholds", thresholds);
 
+        // data for tier_name type
+        const chart = thresholds.map((row) => ({
+          tier: row.tier_name,
+          thresholds: JSON.parse(row.thresholds).percentage || 0, // Default to 0 if there is no budget
+          requestNumber: Math.floor(
+            JSON.parse(row.thresholds).percentage / row.cost
+          ),
+        }));
+        console.log("thresholds in the front-end:", thresholds, "chart", chart);
+        setData(chart);
+      } catch (error) {
+        console.log("error found from fetchData for thresholds");
+      }
+    };
+    useEffect(() => {
+    fetchThresholds();
+  }, []);
 
- console.log("tier previous data", chart);
-
-
-  //   const fetchThresholds = async () => {
-  //     try {
-  //       const response = await fetch("/dashboard/thresholdsChart");
-  //       const thresholds = await response.json();
-
-  //       console.log("fetching thresholds", thresholds);
-
-  //       // data for tier_name type
-  //       const chart = thresholds.map((row) => ({
-  //         tier: row.tier_name,
-  //         thresholds: JSON.parse(row.thresholds).percentage || 0, // Default to 0 if there is no budget
-  //         requestNumber: Math.floor(
-  //           JSON.parse(row.thresholds).percentage / row.cost
-  //         ),
-  //       }));
-  //       console.log("thresholds in the front-end:", thresholds, "chart", chart);
-  //       setData(chart);
-  //     } catch (error) {
-  //       console.log("error found from fetchData for thresholds");
-  //     }
-  //   };
-  //   useEffect(() => {
-  //   fetchThresholds();
-  // }, []);
-
-  /*
-0:{name: 'A', initialAmount: {…}, value: 0.2, thresholdPercent: 10}
-1:{name: 'B', initialAmount: {…}, value: 0.6, thresholdPercent: 30}
-2:{name: 'C', initialAmount: {…}, value: 1.2, thresholdPercent: 60}
-3:{name: 'D', initialAmount: {…}, value: 0, thresholdPercent: 0}
-4:{name: 'E', initialAmount: {…}, value: 0, thresholdPercent: 0}
-5:{name: 'F', initialAmount: {…}, value: 0, thresholdPercent: 0}
-length
-: 
-6
-  */
+  console.log("tier current data", data);
 
   useEffect(() => {
-    if (data.length > 0) {
-      const svg = d3.select(svgRef.current);
-      const width = 465;
-      const height = 250;
-      const radius = Math.min(width, height) / 2;
+    if (chart && chart.length > 0) {
+        const svg = d3.select(svgRef.current);
+        const width = 465;
+        const height = 250;
+        const radius = Math.min(width, height) / 2;
 
       svg.attr("viewBox",`0 0 ${width} ${height}`);
 
@@ -83,91 +68,72 @@ length
         .append("g")
         .attr("transform", `translate(${width / 3}, ${height / 2})`);
 
-      const color = d3.scaleOrdinal(d3.schemePastel1);
+      const colorScheme = {
+        'A': '#ffcdd2',
+        'B': '#bbdefb',
+        'C': '#c8e6c9',
+        'D': '#e1bee7',
+        'E': '#ffe0b2',
+        'F': '#f5f5f5'
+    };
+    const color = d3.scaleOrdinal()
+    .domain(Object.keys(colorScheme))
+    .range(Object.values(colorScheme));
 
-      // Create pie chart
-      const pie = d3
-        .pie()
-        .sort(null)
-        .value((d) => d.thresholdPercent)
-        .padAngle(0.03);
+const pie = d3.pie()
+    .sort(null)
+    .value(d => d.thresholdPercent);
 
-      const arc = d3.arc().innerRadius(0).outerRadius(radius);
+const arc = d3.arc()
+    .innerRadius(0)
+    .outerRadius(radius - 10);
 
-      const arcs = pie(data);
+const arcs = pie(chart);
 
-      const tooltip = d3
-        .select("body")
-        .append("div")
-        .attr("class", "tooltip")
-        .style("position", "absolute")
-        .style("visibility", "hidden")
-        .style("background", "lightsteelblue")
-        .style("padding", "5px")
-        .style("border-radius", "5px");
+const arcGroup = g.selectAll(".arc")
+    .data(arcs)
+    .enter()
+    .append("g")
+    .attr("class", "arc");
 
-      const arcGroups = g
-        .selectAll("arc")
-        .data(arcs)
-        .enter()
-        .append("g")
-        .attr("class", "arc");
+arcGroup.append("path")
+    .attr("d", arc)
+    .style("fill", d => color(d.data.name))
+    .style("stroke", "white")
+    .style("stroke-width", "2");
 
-      arcGroups
-        .append("path")
-        .attr("d", arc)
-        .attr("fill", (d, i) => color(i))
-        .on("mouseover", (event, d) => {
-          tooltip
-            .style("visibility", "visible")
-            .text(`${d.data.name}: $${d.data.thresholdAmount}`);
-        })
-        .on("mousemove", (event) => {
-          tooltip
-            .style("top", event.pageY - 10 + "px")
-            .style("left", event.pageX + 10 + "px");
-        })
-        .on("mouseout", () => {
-          tooltip.style("visibility", "hidden");
-        });
+arcGroup.append("text")
+    .attr("transform", d => `translate(${arc.centroid(d)})`)
+    .attr("dy", ".35em")
+    .style("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("fill", "#000")
+    .text(d => d.data.name);
 
-      // Add labels
-      g.selectAll("arc")
-        .data(arcs)
-        .enter()
-        .append("text")
-        .attr("transform", (d) => `translate(${arc.centroid(d)})`)
-        .attr("dy", "0.50em")
-        .attr("text-anchor", "middle")
+const legend = svg.append("g")
+    .attr("transform", `translate(${300}, 20)`);
+
+chart.forEach((d, i) => {
+    const legendRow = legend.append("g")
+        .attr("transform", `translate(0, ${i * 20})`);
+
+    legendRow.append("rect")
+        .attr("width", 15)
+        .attr("height", 15)
+        .style("fill", color(d.name));
+
+    const budget = d.initialAmount.budget * (d.thresholdPercent / 100);
+    const requests = calculateRequests(budget, 0.12); // Using 0.12 as the price per request
+
+    legendRow.append("text")
+        .attr("x", 20)
+        .attr("y", 12)
         .style("font-size", "12px")
-        .text((d) => d.data.name);
-
-      const legend = svg.append("g").attr("transform", "translate(280, 10)"); // Adjust position here
-
-      const legends = legend
-        .selectAll(".legend")
-        .data(data)
-        .enter()
-        .append("g")
-        .attr("class", "legend")
-        .attr("transform", (d, i) => `translate(0, ${i * 15})`); // Adjust vertical spacing
-
-      legends
-        .append("rect")
-        .attr("x", 0)
-        .attr("width", 18)
-        .attr("height", 18)
-        .attr("fill", (d, i) => color(i));
-
-      legends
-        .append("text")
-        .attr("x", 25)
-        .attr("y", 9)
-        .attr("dy", "0.35em") // Center text vertically
-        .text((d) =>`$${d.thresholdAmount}`)
-        .attr("fill", currentTheme === lightTheme ? "#000" : "#FFF");
-    }
-  }, [data, currentTheme, lightTheme]);
+        .style("fill", "#FFF")
+        .text(`$${budget.toFixed(2)} (${requests} req(s))`);
+});
+}
+}, [chart, currentTheme, lightTheme]);
 
   return (    
     <div className="pie-chart">

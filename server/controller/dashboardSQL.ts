@@ -86,39 +86,48 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
   }
 };
 
-// dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
-//   try {
-//     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
-//       SELECT tier_name, tier_config, thresholds, cost
-//       FROM Tiers
-//       WHERE api_name = 'openai'
-//       ORDER BY cost DESC
-//     `);
-//     console.log('thresholds breakdown', thresholdsBreakdown);
-//     res.locals.thresholdInfo = thresholdsBreakdown;
-//     next();
-//   } catch (error) {
-//     console.error('Error fetching tier breakdown:', error);
-//     res.status(500).send('Error from tierInfo middleware');
-//   }
-// };
-
 dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
-      SELECT tier_name, tier_config, thresholds, cost
-      FROM Tiers
-      WHERE api_name = 'openai' 
-      ORDER BY cost DESC
+      WITH QueryCosts AS (
+        SELECT 
+          q.tier_id,
+          SUM(t.cost) as tier_total_cost
+        FROM Queries q
+        JOIN Tiers t ON q.tier_id = t.tier_name 
+        WHERE t.api_name = 'openai'
+        GROUP BY q.tier_id
+      )
+      SELECT 
+        t.tier_name, 
+        t.tier_config, 
+        t.thresholds, 
+        t.cost,
+        COUNT(q.id) as request_count,
+        COALESCE(qc.tier_total_cost, 0) as spent
+      FROM Tiers t
+      LEFT JOIN Queries q ON q.tier_id = t.tier_name AND t.api_name = 'openai'
+      LEFT JOIN QueryCosts qc ON qc.tier_id = t.tier_name
+      WHERE t.api_name = 'openai'
+      GROUP BY t.tier_name, t.tier_config, t.thresholds, t.cost
+      ORDER BY t.cost DESC;
     `);
-    console.log('thresholds breakdown', thresholdsBreakdown);
+
+    const totalSpent = thresholdsBreakdown.reduce((sum: number, tier: any) => sum + (tier.tier_total_cost || 0), 0);
+
+    await sqliteController.run(res.locals.db, `
+      UPDATE Budget 
+      SET spent = ?, total_spent = ?
+      WHERE api_name = 'openai' 
+    `, [totalSpent, totalSpent]);
+
     res.locals.thresholdInfo = thresholdsBreakdown;
     next();
   } catch (error) {
-    console.error('Error fetching tier breakdown:', error);
-    res.status(500).send('Error from tierInfo middleware');
+    next(error);
   }
 };
+
 
 
 dashboardSQL.fullTierInfo = async (req: Request, res: Response, next: NextFunction) => {
