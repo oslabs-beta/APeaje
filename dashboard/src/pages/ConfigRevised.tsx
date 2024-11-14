@@ -9,7 +9,7 @@ import { stringify } from 'querystring';
 import ThresholdsPieChart from '../components/ThresholdsPieChart';
 
 
-const Config = (): React.ReactNode => {
+const Config = ({ currentTheme, lightTheme }): React.ReactNode => {
   const [inputBudget, setInputBudget] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -256,7 +256,7 @@ const Config = (): React.ReactNode => {
   return (
     <div className='dashboard'>
       <Display />
-      < ThresholdsPieChart />
+      < ThresholdsPieChart currentTheme={currentTheme} lightTheme={lightTheme}/>
       <form onSubmit={saveConfig}>
         <label>
           Budget:

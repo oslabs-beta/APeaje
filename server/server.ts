@@ -194,7 +194,7 @@ app.get(
   '/dashboard/thresholdsChart',
   dashboardSQL.thresholdsInfo,
   (req: Request, res: Response) => {
-    res.status(200).send(res.locals.thresholdInfo);
+    res.status(200).send(res.locals.thresholdInfo)
   }
 );
 
