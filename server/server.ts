@@ -226,7 +226,7 @@ app.get('/dashboard', (req: Request, res: Response) => {
 */
 
 
-// New for production
+// GET ROUTES FOR PRODUCTION
 app.get('/dashboard', (req: Request, res: Response) => {
   res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
@@ -250,6 +250,32 @@ app.get('/manage', (req: Request, res: Response) => {
 app.get('/profile', (req: Request, res: Response) => {
   res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
+
+// GET ROUTES FOR DEV
+// app.get('/dashboard', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/login', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/register', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/configuration', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/manage', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/profile', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
 
 // app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
 //   res.status(200).send('Configuration updated successfully')

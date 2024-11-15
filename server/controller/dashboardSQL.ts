@@ -113,7 +113,9 @@ dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunc
       ORDER BY t.cost DESC;
     `);
 
-    const totalSpent = thresholdsBreakdown.reduce((sum: number, tier: any) => sum + (tier.tier_total_cost || 0), 0);
+     // console.log(thresholdsBreakdown);
+
+    const totalSpent = thresholdsBreakdown.reduce((sum: number, tier: any) => sum + (tier.spent || 0), 0);
 
     await sqliteController.run(res.locals.db, `
       UPDATE Budget 
