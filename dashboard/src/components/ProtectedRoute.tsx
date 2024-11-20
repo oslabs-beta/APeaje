@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from './AuthContext'; 
 
 const ProtectedRoute: React.FC = () => {
-  const { isAuth, loading, username, role } = useAuth(); 
+  const { isAuth, loading } = useAuth(); 
   const location = useLocation();
 
   if (loading) {

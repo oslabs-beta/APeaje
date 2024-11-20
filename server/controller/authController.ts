@@ -84,7 +84,7 @@ authController.register = async (
     );
 
     res.cookie('authToken', token, {
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       maxAge: 3600000 * 24,
     });
 

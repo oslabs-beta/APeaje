@@ -256,6 +256,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
       createTables(db);
       insertTiers(db);
       initializeBudget(db);
+      initializeAccounts(db);
       logDatabaseContent(db);
     },
     close: () => {
@@ -268,7 +269,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
 export const initializeDatabase = (): DatabaseController => {
   const dbPath = path.join(__dirname, config.database.filename);
   const controller = createDatabaseController(dbPath);
-  controller.initialize();
+  //controller.initialize();
   return controller;
 };
 
