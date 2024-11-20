@@ -13,7 +13,7 @@ interface AuthContextType {
   logout: () => void;
   isAuth: Boolean;
   username: string;
-  role: string
+  role: string;
   loading: Boolean
 }
 
@@ -36,11 +36,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     //console.log('autheffect');
     const token = Cookies.get('authToken');
-    console.log('token', token);
+    //console.log('token', token);
     if (token) {
       try {
         const decodedToken: any = jwtDecode(token);
-        console.log('decoded',decodedToken);
+        //console.log('decoded',decodedToken);
         const currentTime = Date.now() / 1000;
 
         if (decodedToken.exp < currentTime) {
@@ -56,7 +56,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       } finally {
         setLoading(false)
       }
-    }
+    } else setLoading(false)
   }, []);
 
   const login = (username: string, role: string) => {

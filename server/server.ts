@@ -1,8 +1,6 @@
 //npm modules
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import 'dotenv/config';
@@ -14,31 +12,13 @@ import configController from './controller/configController';
 import dashboardSQL from './controller/dashboardSQL';
 import {
   initializeDatabase,
-  connectDatabase,
-  resetDatabase,
   DatabaseController,
   databaseMiddleware,
   sqliteController,
 } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
-import {
-  selectTierBasedOnBudget,
-  selectTierBasedOnTime,
-  checkBudget,
-  updateBudget,
-  updateSpent,
-  selectTier,
-} from './apiUtils';
+import { checkBudget, updateBudget, updateSpent, selectTier } from './apiUtils';
 import newRole from './controller/manageController';
-import exp from 'constants';
-
-
-interface User {
-  id: number;
-  username: string;
-  password: string;
-  role: string;
-}
 
 let dbController: DatabaseController;
 
@@ -67,10 +47,9 @@ app.use(cookieParser());
 // app.use(express.static(path.resolve(__dirname, '../dist/dashboard')));
 // app.use('/dashboard', express.static(path.resolve(__dirname, '../dist/dashboard')));
 
-// New path for production 
+// New path for production
 app.use(express.static(path.resolve(__dirname, '../dashboard')));
 app.use('/dashboard', express.static(path.resolve(__dirname, '../dashboard')));
-
 
 // attach db to middleware
 app.use(databaseMiddleware(dbController));
@@ -81,7 +60,7 @@ app.post('/generate-image', async (req: Request, res: Response) => {
 
   try {
     console.log('headers', req.headers);
-    let key: string  = req.headers.authorization;
+    let key: string = req.headers.authorization;
 
     const selectedTierConfig = selectTier(res.locals.db, 'openai');
     console.log('Selected tier config:', selectedTierConfig);
@@ -91,7 +70,7 @@ app.post('/generate-image', async (req: Request, res: Response) => {
     }
 
     const requestHeaders: HeadersInit = new Headers();
-    
+
     requestHeaders.set('Content-Type', 'application/json');
     requestHeaders.set('Authorization', key);
 
@@ -130,11 +109,9 @@ app.post('/generate-image', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error:', error);
-    res
-      .status(500)
-      .json({
-        error: error.message || 'An error occurred while generating the image',
-      });
+    res.status(500).json({
+      error: error.message || 'An error occurred while generating the image',
+    });
   }
 });
 
@@ -194,7 +171,7 @@ app.get(
   '/dashboard/thresholdsChart',
   dashboardSQL.thresholdsInfo,
   (req: Request, res: Response) => {
-    res.status(200).send(res.locals.thresholdInfo)
+    res.status(200).send(res.locals.thresholdInfo);
   }
 );
 
@@ -214,9 +191,7 @@ app.get(
   }
 );
 
-
-
-// Old for development 
+// Old for development
 /*
 app.get('/dashboard', (req: Request, res: Response) => {
   res
@@ -225,37 +200,59 @@ app.get('/dashboard', (req: Request, res: Response) => {
 });
 */
 
-
-// New for production
+// GET ROUTES FOR PRODUCTION
 app.get('/dashboard', (req: Request, res: Response) => {
-  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
 
 app.get('/login', (req: Request, res: Response) => {
-  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
 
 app.get('/register', (req: Request, res: Response) => {
-  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
 
 app.get('/configuration', (req: Request, res: Response) => {
-  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
 
 app.get('/manage', (req: Request, res: Response) => {
-  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
 
 app.get('/profile', (req: Request, res: Response) => {
-  res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
+  res.status(200).sendFile(path.resolve(__dirname, '../dashboard/index.html'));
 });
+
+// GET ROUTES FOR DEV
+// app.get('/dashboard', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/login', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/register', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/configuration', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/manage', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
+
+// app.get('/profile', (req: Request, res: Response) => {
+//   res.status(200).sendFile(path.resolve(__dirname, '../dist/dashboard/index.html'));
+// });
 
 // app.patch('/configuration', configController.newBudget, configController.updateThresholds,  (req:Request, res:Response) => {
 //   res.status(200).send('Configuration updated successfully')
 // })
-
-
 
 app.get(
   '/api-config/:apiName/use-time-based-tier',
@@ -325,7 +322,6 @@ app.patch(
   }
 );
 
-
 // update thresholds for an API
 app.put(
   '/api-config/:apiName/thresholds',
@@ -342,11 +338,9 @@ app.put('/api-config/openai/settings', (req, res) => {
 
   // validate the request body is a boolean
   if (typeof use_time_based_tier !== 'boolean') {
-    return res
-      .status(400)
-      .json({
-        error: 'Invalid value for use_time_based_tier. Expected a boolean.',
-      });
+    return res.status(400).json({
+      error: 'Invalid value for use_time_based_tier. Expected a boolean.',
+    });
   }
 
   // prepare the SQL query to update the `use_time_based_tier` setting
@@ -484,7 +478,7 @@ app.get('*', (req: Request, res: Response) => {
 });
 */
 
-// new for development 
+// new for development
 app.get('*', (req: Request, res: Response) => {
   res.status(200).sendFile(path.resolve(__dirname, '../dist/index.html'));
 });
