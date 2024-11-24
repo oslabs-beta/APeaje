@@ -8,6 +8,7 @@ import Config from './Config';
 import ManageRevised from './ManageRevised';
 import Manage from './Manage';
 import Profile from './Profile';
+import AddModel from './AddModel';
 import Login from './Login';
 import Register from './Register';
 import { Route, Routes } from 'react-router-dom';
@@ -48,7 +49,8 @@ const App = () => {
                   <Route path='/dashboard' index element={<Dashboard currentTheme={currentTheme} lightTheme={lightTheme} />} />
                   <Route path='/configuration' element={<Config currentTheme={currentTheme} lightTheme={lightTheme}/>} />
                   <Route path='/manage' element={<Manage />} />
-                  <Route path='/profile' element={<Profile />} />
+                    <Route path='/profile' element={<Profile />} />
+                    <Route path="/add-model" element={<AddModel currentTheme={currentTheme} lightTheme={lightTheme} />} />
                 </Route>
               </Routes>
             </Content>

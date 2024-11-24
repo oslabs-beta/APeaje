@@ -8,19 +8,10 @@ import ConfigurationTableSettings from '../components/ConfigurationTableSettings
 import ThresholdsPieChart from '../components/ThresholdsPieChart';
 import PreviousChange from '../components/PreviousChange';
 import { Col, Row } from 'antd';
-//import { DeleteFilled as TrashcanIcon } from '@ant-design/icons';
 
 interface ConfigProps {
   currentTheme: string;
   lightTheme: string;
-}
-
-interface BudgetInfo {
-  id: number;
-  api_name: string;
-  budget: number;
-  spent: number;
-  total_spent: number;
 }
 
 interface TierInfo {
@@ -43,6 +34,8 @@ interface RemainingBalance {
 }
 
 const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
+  const [selectedApi, setSelectedApi] = useState<string>('openai');
+  const [availableApis, setAvailableApis] = useState<string[]>([]);
   const [inputBudget, setInputBudget] = useState<number>(0);
   const [initialBudget, setInitialBudget] = useState<number>(0);
   const [initialAmount, setInitialAmount] = useState({ budget: 0 });
@@ -53,8 +46,52 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
   const [remainingBalance, setRemainingBalance] = useState<RemainingBalance>({
     remaining_balance: 0,
   });
+  const [tableColumns, setTableColumns] = useState<TableProps<TierInfo>['columns']>([]);
 
-  const columns: TableProps<TierInfo>['columns'] = [
+  // Add missing functions
+  const updatePercentThreshold = (val: number | null | undefined, index: number) => {
+    if (val === undefined || val === null) return;
+
+    setTierGroup((prevTierGroup) => {
+      return prevTierGroup.map((tier, idx) => {
+        if (idx === index) {
+          return {
+            ...tier,
+            percentThreshold: val,
+          };
+        }
+        return tier;
+      });
+    });
+  };
+
+  const changeThreshold = (threshold: string): void => {
+    setUseTimeBased(threshold === 'time');
+    if (threshold === 'budget') {
+      setTableColumns(budgetColumns);
+    } else {
+      setTableColumns(timeColumns);
+    }
+  };
+
+  const handleTime = (times: [Dayjs, Dayjs] | null, index: number): void => {
+    if (!times) return;
+    setTierGroup((prevTierGroup) =>
+      prevTierGroup.map((tier, idx) => {
+        if (idx === index) {
+          return {
+            ...tier,
+            startTime: times[0].format('HH:mm'),
+            endTime: times[1].format('HH:mm'),
+          };
+        }
+        return tier;
+      })
+    );
+  };
+
+  // Define columns
+  const budgetColumns: TableProps<TierInfo>['columns'] = [
     {
       title: 'Tier',
       dataIndex: 'id',
@@ -104,10 +141,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
       title: 'Amount Spent',
       key: 'spent',
       render: (_, tierInfo) => {
-        const spentValue =
-          typeof tierInfo.spent === 'number'
-            ? tierInfo.spent
-            : parseFloat(tierInfo.spent || '0');
+        const spentValue = typeof tierInfo.spent === 'number' ? tierInfo.spent : parseFloat(tierInfo.spent || '0');
         return spentValue.toFixed(2);
       },
     },
@@ -121,11 +155,65 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
     },
   ];
 
-  const [tableColumns, setTableColumns] = useState(columns);
+  const timeColumns: TableProps<TierInfo>['columns'] = [
+    {
+      title: 'Tier',
+      dataIndex: 'id',
+      key: 'id',
+    },
+    {
+      title: 'Model',
+      dataIndex: 'model',
+      key: 'model',
+    },
+    {
+      title: 'Quality',
+      dataIndex: 'quality',
+      key: 'quality',
+    },
+    {
+      title: 'Size',
+      dataIndex: 'size',
+      key: 'size',
+    },
+    {
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+    },
+    {
+      title: 'Time',
+      key: 'time',
+      render: (_, tierInfo, index) => (
+        <TimePicker.RangePicker
+          format={'HH:mm'}
+          value={[
+            dayjs(tierInfo.startTime, 'HH:mm'),
+            dayjs(tierInfo.endTime, 'HH:mm'),
+          ]}
+          onChange={(times) => handleTime(times as [Dayjs, Dayjs], index)}
+        />
+      ),
+    },
+  ];
+
+  // Fetch available APIs
+  useEffect(() => {
+    const fetchApis = async () => {
+      try {
+        const response = await fetch('/api-config');
+        const data = await response.json();
+        setAvailableApis(data.map(api => api.apiName));
+      } catch (error) {
+        console.error('Error fetching APIs:', error);
+      }
+    };
+    fetchApis();
+  }, []);
 
   const fetchData = async () => {
     try {
-      const budgetResponse = await fetch(`/api-config/openai/budget`);
+      const budgetResponse = await fetch(`/api-config/${selectedApi}/budget`);
       const budgetInfo = await budgetResponse.json();
 
       if (isInitialLoad) {
@@ -137,62 +225,49 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
 
       await fetchUseTimeBasedTier();
 
-      const remainingBalanceResponse = await fetch(
-        '/dashboard/remaining_balance'
-      );
-      const remainingBalance = await remainingBalanceResponse.json();
-      setRemainingBalance(remainingBalance[0]);
+      const dashboardResponse = await fetch(`/api-config/${selectedApi}/dashboard`);
+      const dashboardData = await dashboardResponse.json();
 
-      const thresholdsResponse = await fetch('/dashboard/thresholdsChart');
-      const thresholdsData = await thresholdsResponse.json();
-
-      const processedTiers = thresholdsData.map((tier) => {
-        const tierConfig = JSON.parse(tier.tier_config);
-        const thresholds = JSON.parse(tier.thresholds || '{}');
-        // Fix the spent value parsing
-        const tierSpent =
-          typeof tier.spent === 'string'
-            ? parseFloat(tier.spent)
-            : typeof tier.spent === 'number'
-            ? tier.spent
-            : 0;
-
-        return {
-          id: tier.tier_name,
-          model: tierConfig.model,
-          quality: tierConfig.quality,
-          size: tierConfig.size,
-          price: tier.cost,
-          percentThreshold: thresholds.percentage ?? 0,
-          request_count: tier.request_count ?? 0,
-          spent: tierSpent, // This should now correctly handle the spent value
-          startTime: thresholds.time?.start || '00:00',
-          endTime: thresholds.time?.end || '00:00',
-          thresholds: tier.thresholds,
-        };
+      setRemainingBalance({
+        remaining_balance: dashboardData.budget.budget - dashboardData.budget.spent
       });
+
+      const processedTiers = dashboardData.tiers
+        .filter(tier => tier.tier_name !== 'initialBudget')
+        .map((tier) => {
+          const tierConfig = JSON.parse(tier.tier_config);
+          const thresholds = JSON.parse(tier.thresholds || '{}');
+
+          return {
+            id: tier.tier_name,
+            model: tierConfig.model,
+            quality: tierConfig.quality,
+            size: tierConfig.size,
+            price: tier.cost,
+            percentThreshold: thresholds.percentage ?? 0,
+            request_count: tier.request_count ?? 0,
+            spent: tier.spent,
+            startTime: thresholds.time?.start || '00:00',
+            endTime: thresholds.time?.end || '00:00',
+            thresholds: tier.thresholds,
+          };
+        });
 
       setTierGroup(processedTiers);
-
-      const totalSpent = processedTiers.reduce(
-        (sum, tier) => sum + tier.spent,
-        0
-      );
-      setRemainingBalance({
-        remaining_balance: inputBudget - totalSpent,
-      });
     } catch (error) {
       console.error('Error:', error);
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, [inputBudget, isInitialLoad]);
+    if (selectedApi) {
+      fetchData();
+    }
+  }, [selectedApi, isInitialLoad]);
 
   const fetchUseTimeBasedTier = async () => {
     try {
-      const response = await fetch('/api-config/openai/use-time-based-tier');
+      const response = await fetch(`/api-config/${selectedApi}/use-time-based-tier`);
       const { useTimeBasedTier } = await response.json();
       setUseTimeBased(useTimeBasedTier);
       setInitialUseTimeBased(useTimeBasedTier);
@@ -202,77 +277,38 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
     }
   };
 
-  const updatePercentThreshold = (
-    val: number | null | undefined,
-    index: number
-  ) => {
-    if (val === undefined || val === null) return;
-
-    setTierGroup((prevTierGroup) => {
-      return prevTierGroup.map((tier, idx) => {
-        if (idx === index) {
-          return {
-            ...tier,
-            percentThreshold: val,
-          };
-        }
-        return tier;
-      });
-    });
-  };
-
-  const handleTime = (times: [Dayjs, Dayjs] | null, index: number): void => {
-    if (!times) return;
-    setTierGroup((prevTierGroup) =>
-      prevTierGroup.map((tier, idx) => {
-        if (idx === index) {
-          return {
-            ...tier,
-            startTime: times[0].format('HH:mm'),
-            endTime: times[1].format('HH:mm'),
-          };
-        }
-        return tier;
-      })
-    );
-  };
-
   const saveConfig = async (e: React.SyntheticEvent) => {
     e.preventDefault();
 
     try {
       const payload: any = {
-        api_name: 'openai',
+        api_name: selectedApi,
       };
 
       if (inputBudget !== initialBudget) {
         payload.budget = inputBudget;
       }
 
-      const formattedThresholds = tierGroup.reduce(
-        (acc: Record<string, any>, tier) => {
-          const currentThresholds = JSON.parse(tier.thresholds || '{}');
+      const formattedThresholds = tierGroup.reduce((acc: Record<string, any>, tier) => {
+        const currentThresholds = JSON.parse(tier.thresholds || '{}');
 
-          acc[tier.id] = {
-            percentage: useTimeBased
-              ? currentThresholds.percentage ?? tier.percentThreshold ?? 0
-              : tier.percentThreshold,
-            time: useTimeBased
-              ? {
-                  start:
-                    tier.startTime || currentThresholds.time?.start || '00:00',
-                  end: tier.endTime || currentThresholds.time?.end || '00:00',
-                }
-              : currentThresholds.time ?? {
-                  start: tier.startTime || '00:00',
-                  end: tier.endTime || '00:00',
-                },
-          };
+        acc[tier.id] = {
+          percentage: useTimeBased
+            ? currentThresholds.percentage ?? tier.percentThreshold ?? 0
+            : tier.percentThreshold,
+          time: useTimeBased
+            ? {
+              start: tier.startTime || currentThresholds.time?.start || '00:00',
+              end: tier.endTime || currentThresholds.time?.end || '00:00',
+            }
+            : currentThresholds.time ?? {
+              start: tier.startTime || '00:00',
+              end: tier.endTime || '00:00',
+            },
+        };
 
-          return acc;
-        },
-        {}
-      );
+        return acc;
+      }, {});
 
       payload.thresholds = formattedThresholds;
 
@@ -280,7 +316,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
         payload.use_time_based_tier = useTimeBased;
       }
 
-      const response = await fetch('/api-config/openai/save', {
+      const response = await fetch(`/api-config/${selectedApi}/save`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -293,105 +329,30 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
         throw new Error(error.error || 'Failed to save configuration');
       }
 
-      const savedData = await response.json();
-
-      if (savedData.budget) {
-        setInitialBudget(savedData.budget.budget);
-        setInitialAmount({ budget: savedData.budget.budget });
-      }
-
-      if (savedData.thresholds) {
-        const updatedTiers = tierGroup.map((tier) => {
-          const updatedThreshold = savedData.thresholds.find(
-            (t: any) => t.tier_name === tier.id
-          );
-
-          if (updatedThreshold) {
-            const thresholds = JSON.parse(updatedThreshold.thresholds);
-            return {
-              ...tier,
-              percentThreshold:
-                thresholds.percentage ?? tier.percentThreshold ?? 0,
-              startTime: thresholds.time?.start || tier.startTime || '00:00',
-              endTime: thresholds.time?.end || tier.endTime || '00:00',
-            };
-          }
-          return tier;
-        });
-
-        setTierGroup(updatedTiers);
-      }
-
-      if (savedData.settings) {
-        setInitialUseTimeBased(!!savedData.settings.use_time_based_tier);
-      }
-
       alert('Configuration saved successfully');
-    } catch (error: any) {
+      fetchData();
+    } catch (error) {
       console.error('Error saving configuration:', error);
       alert(error.message || 'Failed to save configuration');
     }
   };
 
-  const changeThreshold = (threshold: string): void => {
-    setUseTimeBased(threshold === 'time');
-    if (threshold === 'budget') {
-      setTableColumns(columns);
-    } else {
-      setTableColumns([
-        {
-          title: 'Tier',
-          dataIndex: 'id',
-          key: 'id',
-        },
-        {
-          title: 'Model',
-          dataIndex: 'model',
-          key: 'model',
-        },
-        {
-          title: 'Quality',
-          dataIndex: 'quality',
-          key: 'quality',
-        },
-        {
-          title: 'Size',
-          dataIndex: 'size',
-          key: 'size',
-        },
-        {
-          title: 'Price',
-          dataIndex: 'price',
-          key: 'price',
-        },
-        {
-          title: 'Time',
-          key: 'time',
-          render: (_, tierInfo, index) => (
-            <TimePicker.RangePicker
-              format={'HH:mm'}
-              value={[
-                dayjs(tierInfo.startTime, 'HH:mm'),
-                dayjs(tierInfo.endTime, 'HH:mm'),
-              ]}
-              onChange={(times) => handleTime(times as [Dayjs, Dayjs], index)}
-            />
-          ),
-        },
-      ]);
-    }
-  };
-
-  const pieChartData = tierGroup.map((tier) => ({
-    name: tier.id,
-    initialAmount: { budget: initialAmount.budget },
-    value: (tier.percentThreshold / 100) * initialAmount.budget,
-    thresholdPercent: tier.percentThreshold,
-  }));
-
   return (
-    <div className='dashboard'>
-      <div className='display'>
+    <div className="dashboard">
+      <Card style={{ marginBottom: '1rem' }}>
+        <Select
+          style={{ width: 200 }}
+          placeholder="Select API"
+          value={selectedApi}
+          onChange={setSelectedApi}
+        >
+          {availableApis.map(api => (
+            <Select.Option key={api} value={api}>{api}</Select.Option>
+          ))}
+        </Select>
+      </Card>
+
+      <div className="display">
         <Row>
           <Col span={4}>
             <Display />
@@ -406,20 +367,26 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
             <PreviousChange
               currentTheme={currentTheme}
               lightTheme={lightTheme}
-              chart={pieChartData}
+              chart={tierGroup.map((tier) => ({
+                name: tier.id,
+                initialAmount: { budget: initialAmount.budget },
+                value: (tier.percentThreshold / 100) * initialAmount.budget,
+                thresholdPercent: tier.percentThreshold,
+              }))}
             />
           </Col>
         </Row>
       </div>
+
       <form onSubmit={saveConfig}>
         <Table
-          className='tiersTable'
+          className="tiersTable"
           pagination={false}
           dataSource={tierGroup}
           columns={tableColumns}
           title={() => (
             <ConfigurationTableSettings
-              title='New Budget'
+              title={`${selectedApi} Budget Configuration`}
               initialAmount={initialAmount}
               setInitialAmount={setInitialAmount}
               remainingBalance={remainingBalance}

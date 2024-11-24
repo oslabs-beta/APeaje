@@ -1,5 +1,5 @@
 import React, { ReactElement } from 'react';
-import { HomeOutlined, LoginOutlined, ProfileOutlined, SettingOutlined, TeamOutlined } from '@ant-design/icons';
+import { HomeOutlined, LoginOutlined, ProfileOutlined, SettingOutlined, TeamOutlined, PlusCircleOutlined } from '@ant-design/icons';
 
 // export the array of objects to the SideBar for each tab.
 // Define a TypeScript interface for the sidebar items
@@ -30,6 +30,11 @@ export const sideBarComp:SidebarItem[] = [
         label: "Profile", 
         icon: <ProfileOutlined />,
         link: "/profile"
+    },
+    {
+        label: "Add Model",
+        icon: <PlusCircleOutlined />,  
+        link: "/add-model"
     },
     {
         label: "Login", 

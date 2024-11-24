@@ -5,8 +5,8 @@ const config: any = {
   },
   apis: {
     openai: {
+      initialBudget: 10,
       tiers: {
-        initialBudget: 10,
         A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.12 },
         B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.08 },
         C: {

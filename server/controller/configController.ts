@@ -56,6 +56,7 @@ interface ConfigControllerInterface {
   listApiConfigs?: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   getUseTimeBasedTier: (req: Request, res: Response, next: NextFunction) => Promise<void>;
   validateApiConfig?: (config: any) => { isValid: boolean; errors: string[] };
+  getApiDashboard: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 }
 
 const configController: ConfigControllerInterface = {
@@ -401,6 +402,43 @@ const configController: ConfigControllerInterface = {
     }
 
     return { isValid: errors.length === 0, errors };
+  },
+
+  getApiDashboard: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { apiName } = req.params;
+      const db = res.locals.db as Database;
+
+      const budgetInfo = db.prepare(`
+      SELECT budget, spent, total_spent
+      FROM Budget
+      WHERE api_name = ?
+    `).get(apiName);
+
+      const tiers = db.prepare(`
+      SELECT t.tier_name, t.tier_config, t.thresholds, t.cost,
+             COALESCE(COUNT(q.id), 0) as request_count,
+             COALESCE(SUM(t.cost), 0) as spent
+      FROM Tiers t
+      LEFT JOIN Queries q ON t.id = q.tier_id
+      WHERE t.api_name = ?
+      GROUP BY t.id
+    `).all(apiName);
+
+      if (!budgetInfo) {
+        res.status(404).json({ error: 'API not found' });
+        return;
+      }
+
+      res.locals.dashboardData = {
+        budget: budgetInfo,
+        tiers: tiers
+      };
+      next();
+    } catch (error) {
+      console.error('Error fetching API dashboard data:', error);
+      res.status(500).json({ error: 'Failed to fetch API dashboard data' });
+    }
   }
 };
 
