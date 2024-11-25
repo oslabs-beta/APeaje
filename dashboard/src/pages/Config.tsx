@@ -47,6 +47,13 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
     remaining_balance: 0,
   });
   const [tableColumns, setTableColumns] = useState<TableProps<TierInfo>['columns']>([]);
+  const [totalRequests, setTotalRequests] = useState<number>(0);
+  const [displayData, setDisplayData] = useState({
+    initialBudget: 0,
+    remainingBalance: 0,
+    totalRequests: 0
+  });
+
 
   // Add missing functions
   const updatePercentThreshold = (val: number | null | undefined, index: number) => {

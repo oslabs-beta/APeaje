@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Input, Button, Card, Space, InputNumber, Select, Modal, Table, message } from 'antd';
+import { Card, Form, Input, Button, Space, InputNumber, Select, Modal, Table, message } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -19,7 +19,7 @@ interface ColumnConfig {
 interface ModelConfig {
     name: string;
     columns: ColumnConfig[];
-    tiers: TierData[]; // Make sure this is properly typed as TierData[]
+    tiers: TierData[];
 }
 
 interface TierData {
@@ -58,30 +58,35 @@ const OPENAI_PRESET = {
         }
     ],
     columns: [
-        { title: 'Model', dataIndex: 'model', type: 'text', required: true },
-        { title: 'Quality', dataIndex: 'quality', type: 'text', required: true },
-        { title: 'Size', dataIndex: 'size', type: 'text', required: true },
-        { title: 'Price', dataIndex: 'price', type: 'number', required: true }
+        { title: 'Model', dataIndex: 'model', type: 'text' as const, required: true },
+        { title: 'Quality', dataIndex: 'quality', type: 'text' as const, required: true },
+        { title: 'Size', dataIndex: 'size', type: 'text' as const, required: true },
+        { title: 'Price', dataIndex: 'price', type: 'number' as const, required: true }
     ],
     initialBudget: 100
 };
 
+const DEFAULT_CONFIG = {
+    name: '',
+    columns: OPENAI_PRESET.columns as ColumnConfig[],
+    tiers: [],
+    initialBudget: null 
+};
+
+
 const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
     const [form] = Form.useForm();
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [modelConfig, setModelConfig] = useState({
-        name: OPENAI_PRESET.name,
-        columns: OPENAI_PRESET.columns,
-        tiers: OPENAI_PRESET.tiers  
-    });
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [modelConfig, setModelConfig] = useState<ModelConfig>(DEFAULT_CONFIG);
     const [showColumnModal, setShowColumnModal] = useState(false);
     const [editingColumn, setEditingColumn] = useState<ColumnConfig | null>(null);
     const [columnForm] = Form.useForm();
-    const [tiers, setTiers] = useState<TierData[]>(OPENAI_PRESET.tiers);
+    const [tiers, setTiers] = useState<TierData[]>([]);
     const [availableModels, setAvailableModels] = useState<string[]>([]);
     const [selectedModel, setSelectedModel] = useState<string>('');
     const [isEditingPreset, setIsEditingPreset] = useState(false);
-    const [initialBudget, setInitialBudget] = useState<number>(OPENAI_PRESET.initialBudget);
+    const [initialBudget, setInitialBudget] = useState<number | null>(null);
+    const [showColumnManagement, setShowColumnManagement] = useState(true);
 
     useEffect(() => {
         fetchAvailableModels();
@@ -94,23 +99,20 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
             setAvailableModels(data.map(api => api.apiName));
         } catch (error) {
             console.error('Error fetching available models:', error);
+            message.error('Failed to fetch available models');
         }
     };
 
-    const handleModelSelect = (modelName: string) => {
+    const handleModelSelect = async (modelName: string) => {
         setSelectedModel(modelName);
         if (modelName === '') {
-            // Reset to OpenAI preset for new model
-            setModelConfig({
-                name: OPENAI_PRESET.name,
-                columns: OPENAI_PRESET.columns,
-                tiers: []
-            });
-            setTiers(OPENAI_PRESET.tiers);
-            setInitialBudget(OPENAI_PRESET.initialBudget);
+            setModelConfig(DEFAULT_CONFIG);
+            setTiers([]);
             setIsEditingPreset(false);
+            setShowColumnManagement(true); // Always show column management for new models
         } else {
-            fetchModelConfig(modelName);
+            await fetchModelConfig(modelName);
+            setShowColumnManagement(false); // Hide for existing models until Edit is clicked
         }
     };
 
@@ -130,7 +132,7 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
 
             setModelConfig({
                 name: modelName,
-                columns: OPENAI_PRESET.columns,
+                columns: OPENAI_PRESET.columns as ColumnConfig[],
                 tiers: processedTiers
             });
 
@@ -139,6 +141,33 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
         } catch (error) {
             console.error('Error fetching model config:', error);
             message.error('Failed to fetch model configuration');
+        }
+    };
+
+    const handleDeleteConfig = async () => {
+        try {
+            const response = await fetch(`/api-config/${selectedModel}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete configuration');
+            }
+
+            message.success('Configuration deleted successfully');
+            await fetchAvailableModels();
+
+            // Reset form state but keep the budget
+            setSelectedModel('');
+            setModelConfig(DEFAULT_CONFIG);
+            setTiers([]);
+            setIsEditingPreset(false);
+            setShowDeleteConfirm(false);
+            setShowColumnManagement(false);
+            // Don't reset initialBudget here
+        } catch (error) {
+            console.error('Error deleting configuration:', error);
+            message.error('Failed to delete configuration');
         }
     };
 
@@ -154,7 +183,11 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                 return;
             }
 
-            // Convert tiers to the format expected by the backend
+            if (!initialBudget && initialBudget !== 0) {
+                message.error('Please enter an initial budget');
+                return;
+            }
+
             const formattedTiers = {};
             tiers.forEach(tier => {
                 formattedTiers[tier.name] = {
@@ -169,6 +202,7 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                 apiName: modelConfig.name,
                 initialBudget,
                 tiers: formattedTiers,
+                columns: modelConfig.columns,
                 thresholds: {
                     budget: tiers.map((tier, index) => ({
                         tier: tier.name,
@@ -177,13 +211,8 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                 }
             };
 
-            let endpoint = '/api-config';
-            let method = 'POST';
-
-            if (selectedModel) {
-                endpoint = `/api-config/${modelConfig.name}/save`;
-                method = 'PUT';
-            }
+            const endpoint = selectedModel ? `/api-config/${selectedModel}/save` : '/api-config';
+            const method = selectedModel ? 'PUT' : 'POST';
 
             const response = await fetch(endpoint, {
                 method,
@@ -194,28 +223,22 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to save configuration');
+                throw new Error('Failed to save configuration');
             }
 
-            message.success('Model configuration saved successfully');
+            message.success('Configuration saved successfully');
             await fetchAvailableModels();
 
             if (!selectedModel) {
-                setModelConfig({
-                    name: OPENAI_PRESET.name,
-                    columns: OPENAI_PRESET.columns,
-                    tiers: []
-                });
-                setTiers(OPENAI_PRESET.tiers);
-                setInitialBudget(OPENAI_PRESET.initialBudget);
+                setModelConfig(DEFAULT_CONFIG);
+                setTiers([]);
+                // Don't reset the budget here
             }
         } catch (error) {
             console.error('Error saving configuration:', error);
-            message.error(error instanceof Error ? error.message : 'Failed to save configuration');
+            message.error('Failed to save configuration');
         }
     };
-
 
     const handleAddTier = () => {
         const newTier: TierData = {
@@ -234,132 +257,120 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
         setTiers(newTiers);
     };
 
-
-    const handleDeleteConfig = async () => {
-        if (!selectedModel) {
-            message.error('Please select a model to delete');
-            return;
-        }
-
-        try {
-            Modal.confirm({
-                title: 'Delete Configuration',
-                content: `Are you sure you want to delete the configuration for ${selectedModel}?`,
-                okText: 'Yes',
-                okType: 'danger',
-                cancelText: 'No',
-                onOk: async () => {
-                    const response = await fetch(`/api-config/${selectedModel}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'Failed to delete configuration');
-                    }
-
-                    message.success(`Configuration for ${selectedModel} deleted successfully`);
-                    await fetchAvailableModels();
-
-                    // Reset form state
-                    setSelectedModel('');
-                    setModelConfig({
-                        name: OPENAI_PRESET.name,
-                        columns: OPENAI_PRESET.columns,
-                        tiers: []
-                    });
-                    setTiers(OPENAI_PRESET.tiers);
-                    setInitialBudget(OPENAI_PRESET.initialBudget);
-                    setIsEditingPreset(false);
-                }
-            });
-        } catch (error) {
-            console.error('Error deleting configuration:', error);
-            message.error(error instanceof Error ? error.message : 'Failed to delete configuration');
-        }
-    };
-
     const handleTierChange = (index: number, field: string, value: any) => {
         const newTiers = [...tiers];
         newTiers[index][field] = value;
         setTiers(newTiers);
     };
 
-    const columns: ColumnsType<TierData> = [
-        {
-            title: 'Tier Name',
-            dataIndex: 'name',
-            render: (text: string, _, index: number) => (
-                <Input
-                    value={text}
-                    onChange={e => handleTierChange(index, 'name', e.target.value)}
-                    disabled={!isEditingPreset && Boolean(selectedModel)}
-                />
-            )
-        },
-        {
-            title: 'Model',
-            dataIndex: 'model',
-            render: (text: string, _, index: number) => (
-                <Input
-                    value={text}
-                    onChange={e => handleTierChange(index, 'model', e.target.value)}
-                    disabled={!isEditingPreset && Boolean(selectedModel)}
-                />
-            )
-        },
-        {
-            title: 'Quality',
-            dataIndex: 'quality',
-            render: (text: string, _, index: number) => (
-                <Input
-                    value={text}
-                    onChange={e => handleTierChange(index, 'quality', e.target.value)}
-                    disabled={!isEditingPreset && Boolean(selectedModel)}
-                />
-            )
-        },
-        {
-            title: 'Size',
-            dataIndex: 'size',
-            render: (text: string, _, index: number) => (
-                <Input
-                    value={text}
-                    onChange={e => handleTierChange(index, 'size', e.target.value)}
-                    disabled={!isEditingPreset && Boolean(selectedModel)}
-                />
-            )
-        },
-        {
-            title: 'Price',
-            dataIndex: 'price',
-            render: (value: number, _, index: number) => (
-                <InputNumber
-                    value={value}
-                    onChange={(value) => handleTierChange(index, 'price', value)}
-                    min={0}
-                    step={0.01}
-                    disabled={!isEditingPreset && Boolean(selectedModel)}
-                />
-            )
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            render: (_, __, index: number) => (
-                <Button
-                    type="text"
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => handleDeleteTier(index)}
-                    disabled={!isEditingPreset && Boolean(selectedModel)}
-                />
-            )
-        }
-    ];
+    const handleAddColumn = () => {
+        setEditingColumn(null);
+        columnForm.resetFields();
+        setShowColumnModal(true);
+    };
+
+    const handleEditColumn = (column: ColumnConfig) => {
+        setEditingColumn(column);
+        columnForm.setFieldsValue(column);
+        setShowColumnModal(true);
+    };
+
+    const handleColumnSave = () => {
+        columnForm.validateFields().then((values) => {
+            // Use the dataIndex value for both title and dataIndex
+            const columnConfig = {
+                title: values.dataIndex,
+                dataIndex: values.dataIndex,
+                type: values.type,
+                required: values.required
+            };
+
+            const newColumns = [...modelConfig.columns];
+            if (editingColumn) {
+                const index = newColumns.findIndex(c => c.dataIndex === editingColumn.dataIndex);
+                if (index !== -1) {
+                    newColumns[index] = columnConfig;
+                }
+            } else {
+                newColumns.push(columnConfig);
+            }
+            setModelConfig(prev => ({ ...prev, columns: newColumns }));
+            setShowColumnModal(false);
+        });
+    };
+
+    const handleDeleteColumn = (dataIndex: string) => {
+        const newColumns = modelConfig.columns.filter(c => c.dataIndex !== dataIndex);
+        setModelConfig(prev => ({ ...prev, columns: newColumns }));
+    };
+
+    const renderColumnControls = () => {
+        const columns: ColumnsType<TierData> = [
+            {
+                title: 'Tier Name',
+                dataIndex: 'name',
+                render: (text: string, _, index: number) => (
+                    <Input
+                        value={text}
+                        onChange={e => handleTierChange(index, 'name', e.target.value)}
+                        disabled={!isEditingPreset && Boolean(selectedModel)}
+                    />
+                )
+            },
+            ...modelConfig.columns.map(column => ({
+                title: (
+                    <Space>
+                        {column.dataIndex}
+                        {(!selectedModel || showColumnManagement || isEditingPreset) && (
+                            <Button
+                                type="text"
+                                icon={<EditOutlined />}
+                                onClick={() => handleEditColumn(column)}
+                                size="small"
+                            />
+                        )}
+                    </Space>
+                ),
+                dataIndex: column.dataIndex,
+                render: (text: string | number, _, index: number) => (
+                    column.type === 'number' ? (
+                        <InputNumber
+                            value={text as number}
+                            onChange={(value) => handleTierChange(index, column.dataIndex, value)}
+                            min={0}
+                            step={0.01}
+                            disabled={!isEditingPreset && Boolean(selectedModel)}
+                        />
+                    ) : (
+                        <Input
+                            value={text as string}
+                            onChange={e => handleTierChange(index, column.dataIndex, e.target.value)}
+                            disabled={!isEditingPreset && Boolean(selectedModel)}
+                        />
+                    )
+                )
+            })),
+            {
+                title: 'Actions',
+                key: 'actions',
+                render: (_, __, index: number) => (
+                    <Space>
+                        <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => handleDeleteTier(index)}
+                            disabled={!isEditingPreset && Boolean(selectedModel)}
+                        />
+                    </Space>
+                )
+            }
+        ];
+
+        return columns;
+    };
+
+
 
     return (
         <div style={{ padding: '24px' }}>
@@ -382,15 +393,18 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                                 <Button
                                     type="primary"
                                     ghost
-                                    onClick={() => setIsEditingPreset(!isEditingPreset)}
+                                    onClick={() => {
+                                        setIsEditingPreset(!isEditingPreset);
+                                        setShowColumnManagement(!isEditingPreset);
+                                    }}
                                 >
-                                    {isEditingPreset ? 'Cancel Editing' : 'Edit Structure'}
+                                    {isEditingPreset ? 'Cancel Editing' : 'Edit Configuration'}
                                 </Button>
                                 <Button
                                     type="primary"
                                     danger
                                     icon={<DeleteOutlined />}
-                                    onClick={handleDeleteConfig}
+                                    onClick={() => setShowDeleteConfirm(true)}
                                 >
                                     Delete Configuration
                                 </Button>
@@ -400,6 +414,15 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                 }
                 extra={
                     <Space>
+                        {(!selectedModel || showColumnManagement || isEditingPreset) && (
+                            <Button
+                                type="default"
+                                onClick={handleAddColumn}
+                                icon={<PlusOutlined />}
+                            >
+                                Add Column
+                            </Button>
+                        )}
                         <Button
                             type="primary"
                             onClick={handleSaveConfig}
@@ -410,6 +433,7 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                     </Space>
                 }
             >
+                {/* Form section */}
                 {(!selectedModel || isEditingPreset) && (
                     <Form form={form} layout="vertical" className="mb-4">
                         <Form.Item
@@ -428,16 +452,18 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                         <Form.Item label="Initial Budget">
                             <InputNumber
                                 value={initialBudget}
-                                onChange={(value) => setInitialBudget(value ?? OPENAI_PRESET.initialBudget)}
+                                onChange={(value) => setInitialBudget(value)}
                                 min={0}
                                 style={{ width: 200 }}
+                                placeholder="Enter initial budget"
                             />
                         </Form.Item>
                     </Form>
                 )}
 
+                {/* Table section */}
                 <Table
-                    columns={columns}
+                    columns={renderColumnControls()}
                     dataSource={tiers}
                     pagination={false}
                     rowKey="name"
@@ -453,22 +479,58 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                         </Button>
                     )}
                 />
-            </Card>
 
-            <Modal
-                title="Delete Configuration"
-                open={showDeleteModal}
-                onOk={async () => {
-                    await handleDeleteConfig();
-                    setShowDeleteModal(false);
-                }}
-                onCancel={() => setShowDeleteModal(false)}
-                okText="Delete"
-                okButtonProps={{ danger: true }}
-                cancelText="Cancel"
-            >
-                <p>Are you sure you want to delete this configuration? This action cannot be undone.</p>
-            </Modal>
+                {/* Column Edit Modal */}
+                <Modal
+                    title={editingColumn ? 'Edit Column' : 'Add Column'}
+                    open={showColumnModal}
+                    onOk={handleColumnSave}
+                    onCancel={() => setShowColumnModal(false)}
+                >
+                    <Form
+                        form={columnForm}
+                        layout="vertical"
+                    >
+                        <Form.Item
+                            name="dataIndex"
+                            label="Column Name"
+                            rules={[{ required: true, message: 'Please enter column name' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+                        <Form.Item
+                            name="type"
+                            label="Type"
+                            rules={[{ required: true, message: 'Please select type' }]}
+                        >
+                            <Select>
+                                <Select.Option value="text">Text</Select.Option>
+                                <Select.Option value="number">Number</Select.Option>
+                                <Select.Option value="select">Select</Select.Option>
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="required"
+                            valuePropName="checked"
+                        >
+                            <input type="checkbox" /> Required
+                        </Form.Item>
+                    </Form>
+                </Modal>
+
+                {/* Delete Confirmation Modal */}
+                <Modal
+                    title="Delete Configuration"
+                    open={showDeleteConfirm}
+                    onOk={handleDeleteConfig}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                    okText="Delete"
+                    okButtonProps={{ danger: true }}
+                    cancelText="Cancel"
+                >
+                    <p>Are you sure you want to delete this configuration? This action cannot be undone.</p>
+                </Modal>
+            </Card>
         </div>
     );
 };
