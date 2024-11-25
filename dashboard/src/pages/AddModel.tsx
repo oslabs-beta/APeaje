@@ -200,7 +200,7 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
 
             const payload = {
                 apiName: modelConfig.name,
-                initialBudget,
+                budget: initialBudget,  // Changed from initialBudget to budget
                 tiers: formattedTiers,
                 columns: modelConfig.columns,
                 thresholds: {
@@ -211,7 +211,8 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                 }
             };
 
-            const endpoint = selectedModel ? `/api-config/${selectedModel}/save` : '/api-config';
+            const endpoint = selectedModel ? `/api-config/${modelConfig.name}/save` : '/api-config';
+            // Use modelConfig.name instead of selectedModel to ensure consistency
             const method = selectedModel ? 'PUT' : 'POST';
 
             const response = await fetch(endpoint, {
@@ -232,7 +233,6 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
             if (!selectedModel) {
                 setModelConfig(DEFAULT_CONFIG);
                 setTiers([]);
-                // Don't reset the budget here
             }
         } catch (error) {
             console.error('Error saving configuration:', error);
@@ -322,12 +322,21 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                     <Space>
                         {column.dataIndex}
                         {(!selectedModel || showColumnManagement || isEditingPreset) && (
-                            <Button
-                                type="text"
-                                icon={<EditOutlined />}
-                                onClick={() => handleEditColumn(column)}
-                                size="small"
-                            />
+                            <>
+                                <Button
+                                    type="text"
+                                    icon={<EditOutlined />}
+                                    onClick={() => handleEditColumn(column)}
+                                    size="small"
+                                />
+                                <Button
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => handleDeleteColumn(column.dataIndex)}
+                                    size="small"
+                                />
+                            </>
                         )}
                     </Space>
                 ),

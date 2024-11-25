@@ -216,17 +216,15 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
       }
     };
     fetchApis();
-  }, []);
+  }, []); 
 
   const fetchData = async () => {
     try {
       const budgetResponse = await fetch(`/api-config/${selectedApi}/budget`);
       const budgetInfo = await budgetResponse.json();
 
-      if (isInitialLoad) {
-        setInputBudget(budgetInfo.budget);
-        setIsInitialLoad(false);
-      }
+      // Always update both budgets when API changes
+      setInputBudget(budgetInfo.budget);
       setInitialBudget(budgetInfo.budget);
       setInitialAmount({ budget: budgetInfo.budget });
 
@@ -235,10 +233,18 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
       const dashboardResponse = await fetch(`/api-config/${selectedApi}/dashboard`);
       const dashboardData = await dashboardResponse.json();
 
+      // Set remaining balance
       setRemainingBalance({
         remaining_balance: dashboardData.budget.budget - dashboardData.budget.spent
       });
 
+      // Calculate total requests from all tiers
+      const totalRequestCount = dashboardData.tiers.reduce((sum, tier) => {
+        return sum + (tier.request_count || 0);
+      }, 0);
+      setTotalRequests(totalRequestCount);
+
+      // Process tiers
       const processedTiers = dashboardData.tiers
         .filter(tier => tier.tier_name !== 'initialBudget')
         .map((tier) => {
@@ -353,22 +359,37 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
           value={selectedApi}
           onChange={setSelectedApi}
         >
-          {availableApis.map(api => (
-            <Select.Option key={api} value={api}>{api}</Select.Option>
-          ))}
+          {availableApis.length > 0 ? (
+            availableApis.map(api => (
+              <Select.Option key={api} value={api}>{api}</Select.Option>
+            ))
+          ) : (
+            <Select.Option value="openai">openai</Select.Option> // Fallback option
+          )}
         </Select>
       </Card>
 
       <div className="display">
         <Row>
           <Col span={4}>
-            <Display />
+            <Col span={4}>
+              <Display
+                selectedApi={selectedApi}
+                initialBudget={initialAmount.budget}
+                remainingBalance={remainingBalance.remaining_balance}
+                totalRequests={totalRequests}  // Make sure this is being set in your fetchData
+              />
+            </Col>
           </Col>
           <Col span={10}>
-            <ThresholdsPieChart
-              currentTheme={currentTheme}
-              lightTheme={lightTheme}
-            />
+            <Col span={10}>
+              <ThresholdsPieChart
+                currentTheme={currentTheme}
+                lightTheme={lightTheme}
+                selectedApi={selectedApi}
+                standalone={false}
+              />
+            </Col>
           </Col>
           <Col span={10}>
             <PreviousChange

@@ -1,18 +1,35 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { Col, Row } from 'antd';
 import * as d3 from 'd3';
 
-const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
+interface ThresholdsPieChartProps {
+  currentTheme: string;
+  lightTheme: string;
+  selectedApi?: string;
+  standalone?: boolean;
+}
+
+const ThresholdsPieChart: React.FC<ThresholdsPieChartProps> = ({
+  currentTheme,
+  lightTheme,
+  selectedApi = 'openai',
+  standalone = true
+}) => {
   const [data, setData] = useState([]);
   const svgRef = useRef(null);
 
-  const calculateRequests = (budget, price) => {
+  const calculateRequests = (budget: number, price: number) => {
     return Math.floor(budget / price);
   };
 
   useEffect(() => {
     const fetchThresholds = async () => {
       try {
-        const response = await fetch('/dashboard/thresholdsChart');
+        const response = await fetch(
+          standalone
+            ? '/dashboard/thresholdsChart'
+            : `/dashboard/thresholdsChart?apiName=${selectedApi}`
+        );
         const thresholds = await response.json();
         const chart = thresholds.map((row) => {
           const thresholdData = JSON.parse(row.thresholds || '{}');
@@ -29,7 +46,7 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
       }
     };
     fetchThresholds();
-  }, []);
+  }, [selectedApi, standalone]);
 
   useEffect(() => {
     if (data.length > 0) {
@@ -38,9 +55,11 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
       const height = 250;
       const radius = Math.min(width, height) / 2;
 
-      svg.attr('viewBox', `0 0 ${width} ${height}`);
+      svg.attr('width', width)
+        .attr('height', height)
+        .attr('viewBox', `0 0 ${width} ${height}`);
 
-      svg.selectAll('*').remove(); // Clear previous drawings
+      svg.selectAll('*').remove();
 
       const g = svg
         .append('g')
@@ -117,16 +136,41 @@ const ThresholdsPieChart = ({ currentTheme, lightTheme }) => {
           .attr('y', 12)
           .style('font-size', '12px')
           .style('fill', currentTheme === lightTheme ? '#000' : '#FFF')
+          .style('border', `1px ${currentTheme === lightTheme ? '#FFF' : '#000'} solid`)
           .text(`$${budget.toFixed(2)} (${requests} req(s))`);
       });
+
+      arcGroup
+        .select('path')
+        .transition()
+        .duration(750)
+        .attrTween('d', function (d) {
+          const interpolate = d3.interpolate({ startAngle: 0, endAngle: 0 }, d);
+          return function (t) {
+            return arc(interpolate(t));
+          };
+        });
     }
   }, [data, currentTheme, lightTheme]);
 
   return (
-    <div className='pie-chart'>
-      <h6 className='center'>Threshold Breakdown</h6>
-      <svg ref={svgRef}></svg>
-    </div>
+    <Row>
+      <Col span={24}>
+        <div className='pie-chart'>
+          <h6 className='center'>
+            {standalone ? 'Threshold Breakdown' : `${selectedApi} Thresholds`}
+          </h6>
+          <svg
+            ref={svgRef}
+            style={{
+              width: '100%',
+              minWidth: '465px',
+              height: '250px'
+            }}
+          />
+        </div>
+      </Col>
+    </Row>
   );
 };
 
