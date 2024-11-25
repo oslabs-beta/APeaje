@@ -88,7 +88,7 @@ dashboardSQL.tierInfo = async (req: Request, res: Response, next: NextFunction) 
 
 dashboardSQL.thresholdsInfo = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const apiName = req.query.apiName || 'openai'; // Default to openai if no API specified
+    const apiName = req.query.apiName || 'openai'; // default to openai if no API specified
 
     const thresholdsBreakdown = await sqliteController.query(res.locals.db, `
             WITH QueryCosts AS (

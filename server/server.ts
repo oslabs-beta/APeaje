@@ -455,7 +455,6 @@ app.put(
   }
 );
 
-// Add this dashboard endpoint
 app.get('/api-config/:apiName/dashboard', configController.getApiDashboard, (req, res) => {
   res.status(200).json(res.locals.dashboardData);
 });

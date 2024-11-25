@@ -109,10 +109,10 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
             setModelConfig(DEFAULT_CONFIG);
             setTiers([]);
             setIsEditingPreset(false);
-            setShowColumnManagement(true); // Always show column management for new models
+            setShowColumnManagement(true); // always show column management for new models
         } else {
             await fetchModelConfig(modelName);
-            setShowColumnManagement(false); // Hide for existing models until Edit is clicked
+            setShowColumnManagement(false); // hide for existing models until "edit" is clicked
         }
     };
 
@@ -157,14 +157,13 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
             message.success('Configuration deleted successfully');
             await fetchAvailableModels();
 
-            // Reset form state but keep the budget
+            // reset form state but keep the budget
             setSelectedModel('');
             setModelConfig(DEFAULT_CONFIG);
             setTiers([]);
             setIsEditingPreset(false);
             setShowDeleteConfirm(false);
             setShowColumnManagement(false);
-            // Don't reset initialBudget here
         } catch (error) {
             console.error('Error deleting configuration:', error);
             message.error('Failed to delete configuration');
@@ -200,7 +199,7 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
 
             const payload = {
                 apiName: modelConfig.name,
-                budget: initialBudget,  // Changed from initialBudget to budget
+                budget: initialBudget,  
                 tiers: formattedTiers,
                 columns: modelConfig.columns,
                 thresholds: {
@@ -212,7 +211,6 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
             };
 
             const endpoint = selectedModel ? `/api-config/${modelConfig.name}/save` : '/api-config';
-            // Use modelConfig.name instead of selectedModel to ensure consistency
             const method = selectedModel ? 'PUT' : 'POST';
 
             const response = await fetch(endpoint, {
@@ -277,7 +275,6 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
 
     const handleColumnSave = () => {
         columnForm.validateFields().then((values) => {
-            // Use the dataIndex value for both title and dataIndex
             const columnConfig = {
                 title: values.dataIndex,
                 dataIndex: values.dataIndex,
@@ -442,7 +439,6 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                     </Space>
                 }
             >
-                {/* Form section */}
                 {(!selectedModel || isEditingPreset) && (
                     <Form form={form} layout="vertical" className="mb-4">
                         <Form.Item
@@ -470,7 +466,6 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                     </Form>
                 )}
 
-                {/* Table section */}
                 <Table
                     columns={renderColumnControls()}
                     dataSource={tiers}
@@ -489,7 +484,6 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                     )}
                 />
 
-                {/* Column Edit Modal */}
                 <Modal
                     title={editingColumn ? 'Edit Column' : 'Add Column'}
                     open={showColumnModal}
@@ -526,8 +520,6 @@ const AddModel: React.FC<AddModelProps> = ({ currentTheme, lightTheme }) => {
                         </Form.Item>
                     </Form>
                 </Modal>
-
-                {/* Delete Confirmation Modal */}
                 <Modal
                     title="Delete Configuration"
                     open={showDeleteConfirm}

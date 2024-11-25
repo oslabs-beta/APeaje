@@ -22,7 +22,7 @@ const Display = ({
     });
 
     const fetchData = async () => {
-        if (!standalone) return; // Don't fetch if data is provided via props
+        if (!standalone) return; // don't fetch if data is provided via props
 
         try {
             const initialValueResponse = await fetch('/dashboard/initialAmount');
@@ -31,7 +31,7 @@ const Display = ({
             const numberOfRequestResponse = await fetch('/dashboard/totalRequests');
             const numberOfRequest = await numberOfRequestResponse.json();
 
-            // Calculate remaining balance based on input budget and total spent
+  
             const totalSpent = numberOfRequest[0].total_requests * 0.12;
 
             setDisplayData({

@@ -55,7 +55,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
   });
 
 
-  // Add missing functions
+
   const updatePercentThreshold = (val: number | null | undefined, index: number) => {
     if (val === undefined || val === null) return;
 
@@ -97,7 +97,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
     );
   };
 
-  // Define columns
+
   const budgetColumns: TableProps<TierInfo>['columns'] = [
     {
       title: 'Tier',
@@ -204,7 +204,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
     },
   ];
 
-  // Fetch available APIs
+
   useEffect(() => {
     const fetchApis = async () => {
       try {
@@ -223,7 +223,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
       const budgetResponse = await fetch(`/api-config/${selectedApi}/budget`);
       const budgetInfo = await budgetResponse.json();
 
-      // Always update both budgets when API changes
+      // always update both budgets when API changes
       setInputBudget(budgetInfo.budget);
       setInitialBudget(budgetInfo.budget);
       setInitialAmount({ budget: budgetInfo.budget });
@@ -233,18 +233,18 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
       const dashboardResponse = await fetch(`/api-config/${selectedApi}/dashboard`);
       const dashboardData = await dashboardResponse.json();
 
-      // Set remaining balance
+
       setRemainingBalance({
         remaining_balance: dashboardData.budget.budget - dashboardData.budget.spent
       });
 
-      // Calculate total requests from all tiers
+
       const totalRequestCount = dashboardData.tiers.reduce((sum, tier) => {
         return sum + (tier.request_count || 0);
       }, 0);
       setTotalRequests(totalRequestCount);
 
-      // Process tiers
+      // process tiers
       const processedTiers = dashboardData.tiers
         .filter(tier => tier.tier_name !== 'initialBudget')
         .map((tier) => {
@@ -364,7 +364,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
               <Select.Option key={api} value={api}>{api}</Select.Option>
             ))
           ) : (
-            <Select.Option value="openai">openai</Select.Option> // Fallback option
+            <Select.Option value="openai">openai</Select.Option> 
           )}
         </Select>
       </Card>
@@ -377,7 +377,7 @@ const Config: React.FC<ConfigProps> = ({ currentTheme, lightTheme }) => {
                 selectedApi={selectedApi}
                 initialBudget={initialAmount.budget}
                 remainingBalance={remainingBalance.remaining_balance}
-                totalRequests={totalRequests}  // Make sure this is being set in your fetchData
+                totalRequests={totalRequests}  
               />
             </Col>
           </Col>
