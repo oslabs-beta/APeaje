@@ -1,11 +1,12 @@
 const config: any = {
   database: {
-    filename: 'test.db',
+    filename: 'apeaje.db',
     verbose: console.log,
   },
   apis: {
     openai: {
       tiers: {
+        initialBudget: 10,
         A: { model: 'dall-e-3', quality: 'hd', size: '1024x1792', price: 0.12 },
         B: { model: 'dall-e-3', quality: 'hd', size: '1024x1024', price: 0.08 },
         C: {
@@ -33,27 +34,26 @@ const config: any = {
           price: 0.016,
         },
       },
-      initialBudget: 1,
       thresholds: {
         A: {
-          percentage: 20,
+          percentage: 1,
           time: { start: '22:00', end: '23:59' },
         },
         B: {
-          percentage: 30,
+          percentage: 8,
         },
         C: {
-          percentage: 20,
+          percentage: 1,
           time: { start: '06:00', end: '22:00' },
         },
         D: {
           percentage: 20,
         },
         E: {
-          percentage: 5,
+          percentage: 30,
         },
         F: {
-          percentage: 5,
+          percentage: 40,
           time: { start: '00:00', end: '06:00' },
         },
       },
@@ -75,7 +75,7 @@ const config: any = {
       email: 'mickster418@gmail.com',
       role: 'Admin',
     },
-  ]
+  ],
 };
 
 export default config;

@@ -133,28 +133,20 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-<<<<<<< HEAD
-*/test.db-shm
-*/test.db-wal
-
-.DS_Store
-=======
-server/database/test.db-shm
-server/database/test.db-wal
->>>>>>> bb11d08 (running on mickeys comp)
-
+server/database/test.db
 server/database/test.db-shm
 server/database/test.db-wal
 
+server/database/apeaje.db
+server/database/apeaje.db-shm
+server/database/apeaje.db-wal
+
+*/test.db
 */test.db-shm
 */test.db-wal
 
-.DS_Store
-
-server/database/test.db-shm
-server/database/test.db-wal
-
-*/test.db-shm
-*/test.db-wal
+test.db
 
 .DS_Store
+
+dist/

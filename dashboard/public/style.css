@@ -23,7 +23,11 @@ body{
     margin-top: 70px;
 }
 
-.display {
-    display:flex;
-    justify-content:space-between;
+.center{
+    text-align: center;
+}
+
+.pie-chart {
+    height:100%; 
+    width:auto;
 }

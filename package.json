@@ -1,11 +1,13 @@
 {
   "name": "apeaje",
-  "description": "",
-  "version": "1.0.0",
+  "description": "an API gateway to transform queries to optimize for cost and quality.",
+  "version": "0.1.0",
   "main": "server/server.ts",
   "scripts": {
     "start": "nodemon server/server.ts & webpack-dev-server",
-    "dev": "nodemon server/server.ts",
+    "tsx-server": "tsx server/server.ts",
+    "node-server": "node server/server.js",
+    "prod-server": "node dist/server/server.js",
     "dash": "webpack-dev-server",
     "build": "webpack --mode production",
     "ts-coverage": "typescript-coverage-report",
@@ -40,7 +42,10 @@
     "react-bootstrap": "^2.10.4",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsc": "^2.0.4",
+    "tsx": "^4.19.2",
+    "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.7",
@@ -68,7 +73,7 @@
     "style-loader": "^4.0.0",
     "terser-webpack-plugin": "^5.3.10",
     "ts-loader": "^9.5.1",
-    "typescript": "^5.3.3",
+    "typescript": "^5.6.3",
     "typescript-eslint": "^7.1.0",
     "webpack": "^5.92.1",
     "webpack-cli": "^5.1.4",

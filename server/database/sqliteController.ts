@@ -81,7 +81,8 @@ const createTables = (db: Database): void => {
 
 const insertTiers = (db: Database): void => {
   // First check if tiers exist
-  const existingTiers = db.prepare('SELECT COUNT(*) as count FROM Tiers WHERE api_name = ?')
+  const existingTiers = db
+    .prepare('SELECT COUNT(*) as count FROM Tiers WHERE api_name = ?')
     .get('openai') as { count: number };
 
   // Only insert if no tiers exist
@@ -92,17 +93,16 @@ const insertTiers = (db: Database): void => {
     `);
 
     console.log('\n=== Inserting Initial Tiers ===');
-    for (const [tierName, tierConfig] of Object.entries(config.apis.openai.tiers)) {
+    for (const [tierName, tierConfig] of Object.entries(
+      config.apis.openai.tiers
+    )) {
       try {
         const thresholdData = config.apis.openai.thresholds[tierName];
         insertTier.run(
           'openai',
           tierName,
           JSON.stringify(tierConfig),
-          JSON.stringify({
-            percentage: null,
-            time: { start: "00:00", end: "00:00" }
-          }), // Initialize with empty thresholds
+          JSON.stringify(thresholdData), // Initialize with thresholds from config
           (tierConfig as TierConfig).price
         );
         console.log(`✓ Inserted tier ${tierName}`);
@@ -116,7 +116,12 @@ const insertTiers = (db: Database): void => {
 };
 
 // Also let's add a function to update tier configs without touching thresholds
-const updateTierConfig = (db: Database, apiName: string, tierName: string, config: TierConfig): void => {
+const updateTierConfig = (
+  db: Database,
+  apiName: string,
+  tierName: string,
+  config: TierConfig
+): void => {
   const updateStmt = db.prepare(`
     UPDATE Tiers 
     SET tier_config = ?, cost = ?
@@ -127,7 +132,7 @@ const updateTierConfig = (db: Database, apiName: string, tierName: string, confi
     JSON.stringify({
       model: config.model,
       quality: config.quality,
-      size: config.size
+      size: config.size,
     }),
     config.price,
     apiName,
@@ -137,7 +142,9 @@ const updateTierConfig = (db: Database, apiName: string, tierName: string, confi
 
 const initializeBudget = (db: Database): void => {
   // only insert if no budget exists
-  const existingBudget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get('openai');
+  const existingBudget = db
+    .prepare('SELECT * FROM Budget WHERE api_name = ?')
+    .get('openai');
   if (!existingBudget) {
     const insertBudget = db.prepare(`
       INSERT INTO Budget (api_name, budget, spent, total_spent)
@@ -153,11 +160,29 @@ const initializeAccounts = (db: Database): void => {
     const { initialAccounts } = config;
     initialAccounts.forEach((account: InitialAccount) => {
       account.type === 'username'
-        ? sqliteController.addNewUser(db, account.username, account.username, 'pre', `pre-${account.role}`)
+        ? sqliteController.addNewUser(
+            db,
+            account.username,
+            account.username,
+            'pre',
+            `pre-${account.role}`
+          )
         : account.type === 'email'
-        ? sqliteController.addNewUser(db, account.email, account.email, 'pre', `pre-${account.role}`)
+        ? sqliteController.addNewUser(
+            db,
+            account.email,
+            account.email,
+            'pre',
+            `pre-${account.role}`
+          )
         : account.type === 'both'
-        ? sqliteController.addNewUser(db, account.username, account.email, 'pre', `pre-${account.role}`)
+        ? sqliteController.addNewUser(
+            db,
+            account.username,
+            account.email,
+            'pre',
+            `pre-${account.role}`
+          )
         : null;
     });
     console.log('\n=== Accounts initialized ===');
@@ -231,6 +256,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
       createTables(db);
       insertTiers(db);
       initializeBudget(db);
+      initializeAccounts(db);
       logDatabaseContent(db);
     },
     close: () => {
@@ -243,7 +269,7 @@ const createDatabaseController = (dbPath: string): DatabaseController => {
 export const initializeDatabase = (): DatabaseController => {
   const dbPath = path.join(__dirname, config.database.filename);
   const controller = createDatabaseController(dbPath);
-  controller.initialize();
+  //controller.initialize();
   return controller;
 };
 
@@ -264,65 +290,48 @@ export const databaseMiddleware =
   };
 
 export const sqliteController = {
-
-  query: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).all(params),
-  run: (db: Database, sql: string, params: any[] = []) => db.prepare(sql).run(params),
-  get: (db: Database, sql: string, params: any[] = []): any => db.prepare(sql).get(params),
+  query: (db: Database, sql: string, params: any[] = []) =>
+    db.prepare(sql).all(params),
+  run: (db: Database, sql: string, params: any[] = []) =>
+    db.prepare(sql).run(params),
+  get: (db: Database, sql: string, params: any[] = []): any =>
+    db.prepare(sql).get(params),
   getAllUsers: (req: Request, res: Response, next: NextFunction) => {
-      const db = res.locals.db;
-      const users = sqliteController.query(db, 'SELECT * FROM Users');
-      console.log(users)
-      res.locals.users = users;
-      return next();
+    const db = res.locals.db;
+    const users = sqliteController.query(db, 'SELECT * FROM Users');
+    console.log(users);
+    res.locals.users = users;
+    return next();
   },
 
- addNewUser : (
-  db: Database,
-  username: string,
-  email: string,
-  password: string,
-  role: string
-) => {
-  // first check if user exists
-  const existingUser = sqliteController.get(
-    db,
-    'SELECT username FROM Users WHERE username = ? OR email = ?',
-    [username, email]
-  );
+  addNewUser: (
+    db: Database,
+    username: string,
+    email: string,
+    password: string,
+    role: string
+  ) => {
+    return sqliteController.run(
+      db,
+      'INSERT INTO Users (username, email, password, role) VALUES (?, ?, ?, ?)',
+      [username, email, password, role]
+    );
+  },
 
-  if (existingUser) {
-    console.log(`User ${username} already exists, skipping...`);
-    return;
-  }
-
-  return sqliteController.run(
-    db,
-    'INSERT INTO Users (username, email, password, role) VALUES (?, ?, ?, ?)',
-    [username, email, password, role]
-  );
-},
-
-updateUserRole : (db: Database, userId: number, newRole: string) => {
-  return sqliteController.run(db, 'UPDATE Users SET role = ? WHERE id = ?', [
-    newRole,
-    userId,
-  ]);
-},
-
-updateInitialUser : (db: Database, userId: number, newUsername: string, newEmail: string, newRole: string) => {
-    return sqliteController.run(db, 'UPDATE Users SET username = ?, email = ?, role = ? WHERE id = ?', [
-      newUsername,
-      newEmail,  
+  updateUserRole: (db: Database, userId: number, newRole: string) => {
+    return sqliteController.run(db, 'UPDATE Users SET role = ? WHERE id = ?', [
       newRole,
       userId,
     ]);
   },
 
-  getUserById : (db: Database, userId: number) => {
-  return sqliteController.get(db, 'SELECT * FROM Users WHERE id = ?', [userId]);
-},
+  getUserById: (db: Database, userId: number) => {
+    return sqliteController.get(db, 'SELECT * FROM Users WHERE id = ?', [
+      userId,
+    ]);
+  },
 
-deleteUser :(db: Database, userId: number) => {
+  deleteUser: (db: Database, userId: number) => {
     return sqliteController.run(db, 'DELETE FROM Users WHERE id = ?', [userId]);
-}
-}
+  },
+};

@@ -14,14 +14,15 @@ const BarChart: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null >(null);
   
   const legendData = [
-    {label: 'Cost', color: 'pink'},
-    {label: 'Request', color: 'white'}
+    {label: 'Cost', color: 'skyblue'},
+    {label: 'Request', color: 'lightYellow'}
   ]
 
-  
+
     const fetchData = async () => {
       try {
         const response = await fetch('/dashboard/chart');
+        console.log('response', response)
         const data1 = await response.json();
 
          console.log('data1', data1);
@@ -51,10 +52,10 @@ const BarChart: React.FC = () => {
 
     const svg = d3.select(chartBox);
     const width = 800;
-    const height = 400;
+    const height = 450;
 
     svg.attr('width', width).attr('height', height);
-    const margin = { top: 30, right: 45, bottom: 50, left: 40 };
+    const margin = { top: 100, right: 40, bottom: 50, left: 40 };
 
     svg.selectAll('*').remove(); // Clear previous contents
 
@@ -125,10 +126,10 @@ const BarChart: React.FC = () => {
 
       // Append label for left y-axis (Cost)
       svg.append('text')
-      .attr('fill', 'skyblue')
+      .attr('fill', 'blue')
       .attr('class','axis-label')
       .attr('x', 40)
-      .attr('y', 15)
+      .attr('y', 70)
       .attr('dy', '.25em')
       .attr('text-anchor', 'end')
       .text('Cost');
@@ -140,9 +141,9 @@ const BarChart: React.FC = () => {
       .attr('transform', `translate(${width - margin.right}, 0)`)
       .call(yAxisRight)
       .append('text')
-      .attr('fill', 'skyblue')
+      .attr('fill', 'blue')
       .attr('x', 0)
-      .attr('y', 15)
+      .attr('y', 70)
       .attr('dy', '.25em')
       .attr('text-anchor', 'start')
       .text('Requests');
@@ -159,7 +160,7 @@ const BarChart: React.FC = () => {
       .attr('y', (d) => y1(d.cost))
       .attr('width', x.bandwidth() / 2)
       .attr('height', (d) => height - margin.bottom - y1(d.cost))
-      .attr('fill', 'pink')
+      .attr('fill', 'skyblue')
       
 
     // Append bars for requests
@@ -174,9 +175,9 @@ const BarChart: React.FC = () => {
       .attr('y', (d) => y2(d.requests))
       .attr('width', x.bandwidth() / 2)
       .attr('height', (d) => height - margin.bottom - y2(d.requests))
-      .attr('fill', 'white');
+      .attr('fill', 'lightYellow');
 
-      const legend = svg.append("g").attr("transform", "translate(550, 10)"); // Adjust position here
+      const legend = svg.append("g").attr("transform", "translate(650, 10)"); // Adjust position here
 
       const legends = legend
         .selectAll(".legend")
@@ -184,21 +185,23 @@ const BarChart: React.FC = () => {
         .enter()
         .append("g")
         .attr("class", "legend")
-        .attr("transform", (d, i) => `translate(0, ${i * 20})`); // Adjust vertical spacing
+        .attr("transform", (d, i) => `translate(0, ${i * 30})`); // Adjust vertical spacing
 
       legends
         .append("rect")
         .attr("x", 0)
         .attr("width", 18)
-        .attr("height", 18)
+        .attr("height", 20)
         .attr("fill", d=> d.color);
 
       legends
         .append("text")
         .attr("x", 25)
-        .attr("y", 9)
-        .attr("dy", "0.35em") // Center text vertically
-        .text((d) =>`d. label`);
+        .attr("y", 15)
+        .attr("dy", "0.25em") // Center text vertically
+        .style('fill', 'blue')
+        .text((d) => d. label);
+     
 
 
   }, [data]);

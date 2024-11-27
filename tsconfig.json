@@ -1,12 +1,33 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
-    "target": "es2017",
-    "module": "commonjs",
-    "esModuleInterop": true,
+    //type checking
+    "strict": false,
     "noImplicitAny": false,
+
+    //modules
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "./",
+    "resolveJsonModule": true,
+    
+    //js support
+    "allowJs": true,
+
+    //emit
+    "outDir": "./dist/",
+
+    //interop constraints
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    //language & environment
     "jsx": "react",
+    "target": "es2020",
+
+    //completeness
+    "skipLibCheck": true
   },
-  "include": ["/**/*.ts", "/**/*.tsx", "server/apiUtils.ts"],
-  "exclude": ["node_modules"]
+  "include": ["server/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -13,7 +13,8 @@ interface AuthContextType {
   logout: () => void;
   isAuth: Boolean;
   username: string;
-  role: string
+  role: string;
+  loading: Boolean
 }
 
 // for ts it will have a user (string or null), a login function, and a logout function
@@ -29,16 +30,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const [username, setUsername] = useState<string | null >(null);
   const [role, setRole] = useState<string | null >(null);
-  const [isAuth, setAuth] = useState<Boolean>(false)
+  const [isAuth, setAuth] = useState<Boolean>(false);
+  const [loading, setLoading] = useState<Boolean>(true);
 
   useEffect(() => {
     //console.log('autheffect');
     const token = Cookies.get('authToken');
-    console.log('token', token);
+    //console.log('token', token);
     if (token) {
       try {
         const decodedToken: any = jwtDecode(token);
-        console.log('decoded',decodedToken);
+        //console.log('decoded',decodedToken);
         const currentTime = Date.now() / 1000;
 
         if (decodedToken.exp < currentTime) {
@@ -51,14 +53,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         }
       } catch (error) {
         logout();
+      } finally {
+        setLoading(false)
       }
-    }
+    } else setLoading(false)
   }, []);
 
   const login = (username: string, role: string) => {
     setUsername(username);
     setRole(role);
-    setAuth(true)
+    setAuth(true);
+    setLoading(false)
   };
 
   const logout = () => {
@@ -66,10 +71,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setUsername(null);
     setRole(null);
     setAuth(false);
+    setLoading(false)
   };
 
   return (
-    <AuthContext.Provider value={{ login, logout, isAuth, username, role }}>
+    <AuthContext.Provider value={{ login, logout, isAuth, username, role, loading }}>
       {children}
     </AuthContext.Provider>
   );
