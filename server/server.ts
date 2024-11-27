@@ -6,6 +6,7 @@ import jwt from 'jsonwebtoken';
 import cookieParser from 'cookie-parser';
 import path from 'path';
 import 'dotenv/config'
+import DatabaseConstructor, { Database } from 'better-sqlite3';
 
 //our controllers
 import authController from './controller/authController';
@@ -13,7 +14,7 @@ import configController from './controller/configController';
 import dashboardSQL from './controller/dashboardSQL'
 import { initializeDatabase, connectDatabase, resetDatabase, DatabaseController, databaseMiddleware, sqliteController } from './database/sqliteController';
 import { setupDummyDatabase } from './database/dummyDB';
-import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, updateSpent, selectTier } from './apiUtils';
+import { selectTierBasedOnBudget, selectTierBasedOnTime, updateBudget, updateSpent, selectTier, checkBudget } from './apiUtils';
 import newRole from './controller/manageController'
 interface User {
   id: number;

@@ -18,7 +18,7 @@ const BarChart: React.FC = () => {
     {label: 'Request', color: 'white'}
   ]
 
-  useEffect(() => {
+  
     const fetchData = async () => {
       try {
         const response = await fetch('/dashboard/chart');
@@ -39,7 +39,7 @@ const BarChart: React.FC = () => {
         console.log('error found from barChart fetchData');
       }
     };
-
+    useEffect(() => {
     fetchData();
   }, []);
 

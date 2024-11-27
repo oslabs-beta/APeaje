@@ -68,6 +68,12 @@ function loadAPIConfigs(db: Database) {
   return apiConfigs;
 }
 
+function checkBudget(db: Database, api_name: string): BudgetInfo {
+  const budget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get(api_name) as BudgetInfo;
+  console.log('Budget information:', budget);
+  return budget;
+}
+
 
 function updateBudget(db: Database, api_name: string, cost: number): void {
   const updateBudget = db.prepare(`
@@ -83,12 +89,6 @@ function updateBudget(db: Database, api_name: string, cost: number): void {
   console.log(`Updated budget for ${api_name}:`, updatedBudget);
 }
 
-
-function checkBudget(db: Database, api_name: string): BudgetInfo {
-  const budget = db.prepare('SELECT * FROM Budget WHERE api_name = ?').get(api_name) as BudgetInfo;
-  console.log('Budget information:', budget);
-  return budget;
-}
 
 function updateSpent(db: Database, api_name: string, cost: number): void {
   const updateSpent = db.prepare(`

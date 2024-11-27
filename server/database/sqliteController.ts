@@ -275,9 +275,8 @@ export const sqliteController = {
       res.locals.users = users;
       return next();
   },
-};
 
-const addNewUser = (
+ addNewUser : (
   db: Database,
   username: string,
   email: string,
@@ -301,30 +300,29 @@ const addNewUser = (
     'INSERT INTO Users (username, email, password, role) VALUES (?, ?, ?, ?)',
     [username, email, password, role]
   );
-};
+},
 
-const updateUserRole = (db: Database, userId: number, newRole: string) => {
+updateUserRole : (db: Database, userId: number, newRole: string) => {
   return sqliteController.run(db, 'UPDATE Users SET role = ? WHERE id = ?', [
     newRole,
     userId,
   ]);
-};
+},
 
-const updateInitialUser = (db: Database, userId: number, newUsername: string, newEmail: string, newRole: string) => {
+updateInitialUser : (db: Database, userId: number, newUsername: string, newEmail: string, newRole: string) => {
     return sqliteController.run(db, 'UPDATE Users SET username = ?, email = ?, role = ? WHERE id = ?', [
       newUsername,
       newEmail,  
       newRole,
       userId,
     ]);
-  };
+  },
 
-const getUserById = (db: Database, userId: number) => {
+  getUserById : (db: Database, userId: number) => {
   return sqliteController.get(db, 'SELECT * FROM Users WHERE id = ?', [userId]);
-};
+},
 
 deleteUser :(db: Database, userId: number) => {
     return sqliteController.run(db, 'DELETE FROM Users WHERE id = ?', [userId]);
 }
-
 }

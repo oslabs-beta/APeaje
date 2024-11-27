@@ -1,5 +1,6 @@
-import React from 'react';
-import { Col, Row, Select, InputNumber } from 'antd';
+import React,{useState} from 'react';
+import { Col, Row, Select, InputNumber, Modal } from 'antd';
+import PreviousChange from './PreviousChange';
 
 interface ConfigurationTableSettingsProps {
   initialAmount: { budget: number };
@@ -20,6 +21,15 @@ const ConfigurationTableSettings: React.FC<ConfigurationTableSettingsProps> = ({
   inputBudget,
   setInputBudget,
 }) => {
+
+  const [previewData, setPreviewData] = useState<{ budget: Number, threshold : string } | null>(null);
+  const seePreview =() => {
+    setPreviewData({
+      budget: initialAmount.budget,
+      threshold: useTimeBased ? 'Time' : 'Budget'
+    })
+  }
+
   const handleBudgetChange = (value: number | null) => {
     if (value !== null) {
       setInputBudget(value);
@@ -69,10 +79,26 @@ const ConfigurationTableSettings: React.FC<ConfigurationTableSettingsProps> = ({
         />
       </Col>
       <Col span={3}>
+        <button type = "button" onClick={seePreview} className ="see-preview">Preview</button>
         <button type="submit" className="config-save">
           Save
         </button>
       </Col>
+
+          {previewData && (
+            <Modal title="Preview Configuration"
+            visible= {true}
+            onCancel = {()=> setPreviewData(null)}
+            footer = {[
+              <button key="cancel" onClick={() => setPreviewData(null)}>
+                Close
+              </button>,
+            ]}
+            >
+              <p><strong>Budget:</strong> ${previewData.budget.toLocaleString()}</p>
+              <p><strong>Threshold:</strong> ${previewData.threshold}</p>
+            </Modal>
+          )}
     </Row>
   );
 };
